@@ -42,8 +42,8 @@ class MarketDataService:
         # Join symbols with commas for the API request
         symbols_param = ",".join(symbols)
 
-        # Make the API request
-        response = await self.http_client.get(f"/v3/marketdata/symbols/{symbols_param}/details")
+        # Make the API request - Note: per OpenAPI spec, the endpoint doesn't have a '/details' suffix
+        response = await self.http_client.get(f"/v3/marketdata/symbols/{symbols_param}")
 
         # Parse the response into the SymbolDetailsResponse model
         return SymbolDetailsResponse.model_validate(response)

@@ -50,14 +50,14 @@ async def main():
     try:
         print("\n=== TradeStation API Symbol Details Example ===")
         print("\nImportant API Notes:")
-        print("1. The API may interpret symbols differently between environments")
-        print("2. In Simulation mode, the API may return test data not matching your request")
-        print("3. In some cases, the API breaks symbols into individual characters")
-        print("4. Your account permissions determine which symbols are accessible")
+        print("1. The API endpoint used is: /v3/marketdata/symbols/{symbols}")
+        print("2. According to the OpenAPI spec, symbols should be comma-separated")
+        print("3. Example: 'MSFT,BTCUSD' (up to 50 symbols per request)")
+        print("4. In Simulation mode, the API may return test data not matching your request")
+        print("5. Your account permissions determine which symbols are accessible")
         print("\nDebugging Tips:")
         print("- Check status codes for requests (2xx means success)")
         print("- Verify you have appropriate permissions for requested symbols")
-        print("- Try individual symbols rather than comma-separated lists")
         print("- Consult the TradeStation API documentation for expected formats")
         print("- Use debug=True when initializing the client for verbose logging")
         print("  Example: client = TradeStationClient(debug=True)")
@@ -96,14 +96,14 @@ async def main():
         # Handle the response
         print_symbol_response(response)
 
-        # Example 3: Get details for a forex pair
-        print("\nExample 3: Get details for a forex pair")
+        # Example 3: Multiple symbols in a single request
+        print("\nExample 3: Multiple symbols in a single request")
         print("----------------------------------------------")
 
-        forex_symbol = "EUR/USD"
-        print(f"Requesting symbol: {forex_symbol}")
+        symbols = "MSFT,AAPL,SPY,QQQ"  # Multiple common stocks
+        print(f"Requesting symbols: {symbols}")
 
-        response = await client.market_data.get_symbol_details(forex_symbol)
+        response = await client.market_data.get_symbol_details(symbols)
 
         # Check status code when available
         if hasattr(response, "_status_code"):
@@ -113,12 +113,13 @@ async def main():
         print_symbol_response(response)
 
         print("\n=== End of Example ===")
-        print("Note: If you received individual letter symbols (like 'S', 'M', etc.)")
-        print("instead of the requested symbols, this is likely due to:")
+        print("Note: If you're not seeing the expected results, this may be due to:")
         print("1. Using the Simulation environment which returns test data")
-        print("2. The API parsing the requested symbol in an unexpected way")
-        print("3. Limitations in your API account permissions")
-        print("\nContact TradeStation support if you need assistance with API access.")
+        print("2. API permissions or account limitations")
+        print("3. Invalid symbol formats for your broker/region")
+        print("\nSee the OpenAPI specification for detailed information on this endpoint:")
+        print("- Endpoint: /v3/marketdata/symbols/{symbols}")
+        print("- Doc Reference: tradestation-webapi-v3-openapi.json")
 
     except Exception as e:
         print(f"\nError occurred: {type(e).__name__}: {e}")
@@ -166,8 +167,10 @@ def print_symbol_response(response):
                 # Additional attributes if available
                 if hasattr(symbol, "Country") and symbol.Country:
                     print(f"  Country: {symbol.Country}")
-                if hasattr(symbol, "RolloverOne") and symbol.RolloverOne:
-                    print(f"  Rollover 1: {symbol.RolloverOne}")
+                if hasattr(symbol, "Root") and symbol.Root:
+                    print(f"  Root: {symbol.Root}")
+                if hasattr(symbol, "Underlying") and symbol.Underlying:
+                    print(f"  Underlying: {symbol.Underlying}")
 
                 print("  " + "-" * 40)
         else:

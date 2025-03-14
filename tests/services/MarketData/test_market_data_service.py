@@ -67,7 +67,7 @@ class TestMarketDataService:
         result = await market_data_service.get_symbol_details(symbols)
 
         # Assert
-        http_client_mock.get.assert_called_once_with("/v3/marketdata/symbols/MSFT/details")
+        http_client_mock.get.assert_called_once_with("/v3/marketdata/symbols/MSFT")
         assert isinstance(result, SymbolDetailsResponse)
         assert len(result.Symbols) == 1
         assert result.Symbols[0].Symbol == "MSFT"
@@ -136,7 +136,7 @@ class TestMarketDataService:
         result = await market_data_service.get_symbol_details(symbols)
 
         # Assert
-        http_client_mock.get.assert_called_once_with("/v3/marketdata/symbols/MSFT,AAPL/details")
+        http_client_mock.get.assert_called_once_with("/v3/marketdata/symbols/MSFT,AAPL")
         assert isinstance(result, SymbolDetailsResponse)
         assert len(result.Symbols) == 2
         assert result.Symbols[0].Symbol == "MSFT"
@@ -182,7 +182,7 @@ class TestMarketDataService:
         result = await market_data_service.get_symbol_details(symbols)
 
         # Assert
-        http_client_mock.get.assert_called_once_with("/v3/marketdata/symbols/MSFT,INVALID/details")
+        http_client_mock.get.assert_called_once_with("/v3/marketdata/symbols/MSFT,INVALID")
         assert isinstance(result, SymbolDetailsResponse)
         assert len(result.Symbols) == 1
         assert result.Symbols[0].Symbol == "MSFT"
