@@ -8,13 +8,13 @@ with TradeStation.
 __version__ = "0.1.0"
 
 # Main client
-from .client.tradestation_client import TradeStationClient
+from src.tradestation_api.client.tradestation_client import TradeStationClient
 
 # Types
-from .ts_types.config import ClientConfig
+from src.ts_types.config import ClientConfig
 
 # Market Data Types
-from .ts_types.market_data import (
+from src.ts_types.market_data import (
     Quote,
     Bar,
     BarHistoryParams,
@@ -26,7 +26,7 @@ from .ts_types.market_data import (
 )
 
 # Order Types
-from .ts_types.order_execution import (
+from src.ts_types.order_execution import (
     OrderType,
     OrderDuration,
     OrderStatus,
@@ -39,7 +39,7 @@ from .ts_types.order_execution import (
 )
 
 # Brokerage Types
-from .ts_types.brokerage import (
+from src.ts_types.brokerage import (
     Account,
     AccountType,
     TradingType,
@@ -58,9 +58,9 @@ from .ts_types.brokerage import (
 )
 
 # Services
-from .services.MarketData.market_data_service import MarketDataService
-from .services.OrderExecution.order_execution_service import OrderExecutionService
-from .services.Brokerage.brokerage_service import BrokerageService
+from src.services.MarketData.market_data_service import MarketDataService
+from src.services.OrderExecution.order_execution_service import OrderExecutionService
+from src.services.Brokerage.brokerage_service import BrokerageService
 
 __all__ = [
     # Main client
