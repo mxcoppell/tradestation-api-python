@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 
 from src.client.tradestation_client import TradeStationClient
-from src.ts_types.config import ClientConfig
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,12 +14,12 @@ async def main():
     env = os.environ.get("ENVIRONMENT", "Live")
     env = "Simulation" if env.lower() == "simulation" else "Live"
 
-    config = ClientConfig(
-        client_id=os.environ.get("CLIENT_ID"),
-        client_secret=os.environ.get("CLIENT_SECRET"),
-        refresh_token=os.environ.get("REFRESH_TOKEN"),
-        environment=env,
-    )
+    config = {
+        "client_id": os.environ.get("CLIENT_ID"),
+        "client_secret": os.environ.get("CLIENT_SECRET"),
+        "refresh_token": os.environ.get("REFRESH_TOKEN"),
+        "environment": env,
+    }
     client = TradeStationClient(config)
 
     try:
