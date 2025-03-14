@@ -4,6 +4,7 @@ import os
 from ..ts_types.config import ClientConfig
 from .http_client import HttpClient
 from ..streaming.stream_manager import StreamManager
+from src.services.MarketData.market_data_service import MarketDataService
 
 
 class TradeStationClient:
@@ -11,64 +12,66 @@ class TradeStationClient:
     Main client for TradeStation API interactions
     """
 
-    def __init__(self, config: Optional[ClientConfig] = None):
+    def __init__(
+        self,
+        config: Union[Dict[str, Any], "ClientConfig"] = None,
+        refresh_token: Optional[str] = None,
+        environment: Optional[str] = None,
+    ):
         """
-        Creates a new TradeStationClient instance
+        Initialize a new TradeStationClient with the provided configuration.
 
         Args:
-            config: Optional configuration object. If not provided, values will be read from environment variables
-
-        Example:
-            # Using environment variables (CLIENT_ID and CLIENT_SECRET must be set)
-            client = TradeStationClient(
-                refresh_token='your_refresh_token',
-                environment='Simulation'  # or 'Live'
-            )
-
-            # Using explicit configuration
-            client = TradeStationClient({
-                'client_id': 'your_client_id',
-                'client_secret': 'your_client_secret',
-                'refresh_token': 'your_refresh_token',
-                'environment': 'Simulation'  # or 'Live'
-            })
-
-        Raises:
-            ValueError: If environment is not specified either in config or ENVIRONMENT env var
+            config: Dictionary or ClientConfig object with configuration options.
+            refresh_token: A refresh token to initialize the client with.
+            environment: Either "Live" or "Simulation".
         """
-        # Import services here to avoid circular imports
-        from ..services.MarketData.market_data_service import MarketDataService
-        from ..services.OrderExecution.order_execution_service import OrderExecutionService
-        from ..services.Brokerage.brokerage_service import BrokerageService
+        from src.ts_types.config import ClientConfig
 
-        # If config is None, initialize it as an empty dict
         if config is None:
             config = {}
 
-        # Get environment from config or env var
-        environment = config.get("environment") or os.environ.get("ENVIRONMENT")
-
-        # Normalize environment to proper case
-        if environment:
-            environment = "Simulation" if environment.lower() == "simulation" else "Live"
+        # Convert ClientConfig to dict if needed
+        if isinstance(config, ClientConfig):
+            config_dict = config.model_dump()
         else:
-            raise ValueError(
-                "Environment must be specified either in config or ENVIRONMENT env var"
-            )
+            config_dict = config
 
-        # Get refresh token from config or env var
-        refresh_token = config.get("refresh_token") or os.environ.get("REFRESH_TOKEN")
+        # Load from environment if not in config
+        if not config_dict.get("client_id"):
+            config_dict["client_id"] = os.environ.get("CLIENT_ID")
+        if not config_dict.get("client_secret"):
+            config_dict["client_secret"] = os.environ.get("CLIENT_SECRET")
 
-        # Create final config with normalized environment and refresh token
-        final_config = {**config, "environment": environment, "refresh_token": refresh_token}
+        # Override config with parameters if provided
+        if refresh_token:
+            config_dict["refresh_token"] = refresh_token
+        elif not config_dict.get("refresh_token"):
+            config_dict["refresh_token"] = os.environ.get("REFRESH_TOKEN")
 
-        self.http_client = HttpClient(**final_config)
-        self.stream_manager = StreamManager(self.http_client, final_config)
+        # Get environment from parameter, config, or environment variable
+        if environment:
+            # Normalize environment to proper case
+            environment = "Simulation" if environment.lower() == "simulation" else "Live"
+            config_dict["environment"] = environment
+        elif config_dict.get("environment"):
+            # Environment is already in config_dict (and normalized if from ClientConfig)
+            pass
+        else:
+            env = os.environ.get("ENVIRONMENT")
+            if not env:
+                raise ValueError(
+                    "Environment must be specified either in config or ENVIRONMENT env var"
+                )
+            # Normalize environment to proper case
+            environment = "Simulation" if env.lower() == "simulation" else "Live"
+            config_dict["environment"] = environment
+
+        self.http_client = HttpClient(config_dict)
+        self.stream_manager = StreamManager(config_dict)
 
         # Initialize services
         self.market_data = MarketDataService(self.http_client, self.stream_manager)
-        self.order_execution = OrderExecutionService(self.http_client, self.stream_manager)
-        self.brokerage = BrokerageService(self.http_client, self.stream_manager)
 
     def get_refresh_token(self) -> Optional[str]:
         """
@@ -84,3 +87,10 @@ class TradeStationClient:
         Closes all active streams
         """
         self.stream_manager.close_all_streams()
+
+    async def close(self):
+        """Close the client and release resources."""
+        if hasattr(self, "http_client") and hasattr(self.http_client, "close"):
+            await self.http_client.close()
+        if hasattr(self, "stream_manager") and hasattr(self.stream_manager, "close"):
+            await self.stream_manager.close()

@@ -2,11 +2,12 @@
 HttpClient module for handling HTTP requests to the TradeStation API.
 """
 
+import asyncio
 import json
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
-from aiohttp import ClientResponse, ClientSession
+from aiohttp import ClientResponse, ClientSession, ClientError, ClientTimeout
 
 from src.ts_types.config import ClientConfig
 from src.utils.rate_limiter import RateLimiter
@@ -19,13 +20,19 @@ class HttpClient:
     Handles authentication, rate limiting, and response processing.
     """
 
-    def __init__(self, config: Optional[ClientConfig] = None):
+    def __init__(self, config: Union[Dict[str, Any], "ClientConfig"] = None):
         """
         Initialize the HttpClient with the specified configuration.
 
         Args:
-            config: Configuration settings for the client
+            config: Configuration settings for the client (dict or ClientConfig object)
         """
+        from src.ts_types.config import ClientConfig
+
+        # Convert config to ClientConfig if it's a dict
+        if config is not None and not isinstance(config, ClientConfig):
+            config = ClientConfig(**config)
+
         self.token_manager = TokenManager(config)
         self.rate_limiter = RateLimiter()
         self._session: Optional[ClientSession] = None
@@ -33,8 +40,10 @@ class HttpClient:
         # Determine base URL based on environment
         if config and config.environment and config.environment.lower() == "simulation":
             self.base_url = "https://sim.api.tradestation.com"
+            print(f"Using Simulation environment (base URL: {self.base_url})")
         else:
             self.base_url = "https://api.tradestation.com"
+            print(f"Using Live environment (base URL: {self.base_url})")
 
     async def _ensure_session(self) -> ClientSession:
         """
@@ -99,10 +108,33 @@ class HttpClient:
         headers = await self._prepare_request(url)
 
         full_url = f"{self.base_url}{url}"
-        async with session.get(full_url, params=params, headers=headers) as response:
-            await self._process_response(response, url)
-            await response.raise_for_status()
-            return await response.json()
+
+        # Debug print
+        print(f"Making GET request to: {full_url}")
+        print(f"Headers: {headers}")
+
+        try:
+            async with session.get(full_url, params=params, headers=headers) as response:
+                if response is None:
+                    raise ValueError("Response object is None")
+
+                # Debug print
+                print(f"Response status: {response.status}")
+
+                # Process response headers for rate limiting
+                await self._process_response(response, url)
+
+                # Handle HTTP errors
+                if response.status >= 400:
+                    error_text = await response.text()
+                    print(f"Error response: {error_text}")
+                    response.raise_for_status()  # This will raise an appropriate HTTPError
+
+                # Get JSON response
+                return await response.json()
+        except Exception as e:
+            print(f"Request error: {str(e)}")
+            raise
 
     async def post(
         self, url: str, data: Any = None, params: Optional[Dict[str, Any]] = None
@@ -199,7 +231,11 @@ class HttpClient:
 
         return response.content
 
-    async def close(self):
-        """Close the underlying HTTP session."""
-        if self._session and not self._session.closed:
+    async def close(self) -> None:
+        """
+        Close the HTTP client and clean up resources.
+        """
+        if self._session:
             await self._session.close()
+            self._session = None
+            print("HTTP client session closed")
