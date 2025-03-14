@@ -1,4 +1,4 @@
-from typing import List, Optional, Union, Literal
+from typing import List, Optional, Union, Literal, ForwardRef
 from pydantic import BaseModel, Field
 
 
@@ -47,7 +47,7 @@ class Account(BaseModel):
     # - 90 Day Restriction-Closing Transaction Only
     Status: str
     # Detailed account information
-    AccountDetail: Optional[AccountDetail] = None
+    AccountDetail: Optional["AccountDetail"] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -102,11 +102,11 @@ class Balance(BaseModel):
 
     AccountID: str
     AccountType: Optional[str] = None
-    BalanceDetail: Optional[BalanceDetail] = None
+    BalanceDetail: Optional["BalanceDetail"] = None
     BuyingPower: Optional[str] = None
     CashBalance: Optional[str] = None
     Commission: Optional[str] = None
-    CurrencyDetails: Optional[List[CurrencyDetail]] = None
+    CurrencyDetails: Optional[List["CurrencyDetail"]] = None
     Equity: Optional[str] = None
     MarketValue: Optional[str] = None
     TodaysProfitLoss: Optional[str] = None
@@ -131,7 +131,7 @@ class Balances(BaseModel):
     """
 
     Balances: List[Balance]
-    Errors: Optional[List[BalanceError]] = None
+    Errors: Optional[List["BalanceError"]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -210,7 +210,7 @@ class Positions(BaseModel):
     # Array of positions
     Positions: List[PositionResponse]
     # Array of errors that occurred during the request
-    Errors: Optional[List[PositionError]] = None
+    Errors: Optional[List["PositionError"]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -324,8 +324,8 @@ class BODBalance(BaseModel):
 
     AccountID: str
     AccountType: Optional[str] = None
-    BalanceDetail: Optional[BODBalanceDetail] = None
-    CurrencyDetails: Optional[List[BODCurrencyDetail]] = None
+    BalanceDetail: Optional["BODBalanceDetail"] = None
+    CurrencyDetails: Optional[List["BODCurrencyDetail"]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -336,7 +336,7 @@ class BalancesBOD(BaseModel):
     """
 
     BODBalances: List[BODBalance]
-    Errors: Optional[List[BalanceError]] = None
+    Errors: Optional[List["BalanceError"]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -464,9 +464,9 @@ class OrderBase(BaseModel):
     # The good till date for GTD orders
     GoodTillDate: Optional[str] = None
     # The legs of the order for multi-leg orders
-    Legs: Optional[List[OrderLeg]] = None
+    Legs: Optional[List["OrderLeg"]] = None
     # Market activation rules for conditional orders
-    MarketActivationRules: Optional[List[MarketActivationRule]] = None
+    MarketActivationRules: Optional[List["MarketActivationRule"]] = None
     # The unique identifier for the order
     OrderID: str
     # The date and time when the order was opened
@@ -506,11 +506,11 @@ class HistoricalOrder(OrderBase):
     # The stop price for stop and stop-limit orders
     StopPrice: Optional[str] = None
     # Trailing stop information
-    TrailingStop: Optional[TrailingStop] = None
+    TrailingStop: Optional["TrailingStop"] = None
     # Only applies to equities. Will contain a value if the order has received a routing fee
     UnbundledRouteFee: Optional[str] = None
     # Conditional orders associated with this order
-    ConditionalOrders: Optional[List[ConditionalOrder]] = None
+    ConditionalOrders: Optional[List["ConditionalOrder"]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -536,7 +536,7 @@ class HistoricalOrders(BaseModel):
     # Array of historical orders
     Orders: List[HistoricalOrder]
     # Array of errors that occurred during the request
-    Errors: Optional[List[OrderError]] = None
+    Errors: Optional[List["OrderError"]] = None
     # Token for paginated results to retrieve the next page
     NextToken: Optional[str] = None
 
@@ -566,7 +566,7 @@ class HistoricalOrdersById(BaseModel):
     # Array of historical orders
     Orders: List[HistoricalOrder]
     # Array of errors that occurred during the request
-    Errors: Optional[List[OrderByIDError]] = None
+    Errors: Optional[List["OrderByIDError"]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -583,7 +583,7 @@ class Order(OrderBase):
     # The stop price for StopLimit and StopMarket orders
     StopPrice: Optional[str] = None
     # Trailing stop information
-    TrailingStop: Optional[TrailingStop] = None
+    TrailingStop: Optional["TrailingStop"] = None
     # Only applies to equities. Will contain a value if the order has received a routing fee
     UnbundledRouteFee: Optional[str] = None
     # The limit price for this order
@@ -598,7 +598,7 @@ class Orders(BaseModel):
     # Array of orders
     Orders: List[Order]
     # Array of errors that occurred during the request
-    Errors: Optional[List[OrderError]] = None
+    Errors: Optional[List["OrderError"]] = None
     # Token for paginated results to retrieve the next page
     NextToken: Optional[str] = None
 
@@ -613,7 +613,7 @@ class OrdersById(BaseModel):
     # Array of orders
     Orders: List[Order]
     # Array of errors that occurred during the request
-    Errors: Optional[List[OrderByIDError]] = None
+    Errors: Optional[List["OrderByIDError"]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -665,9 +665,9 @@ class StreamOrderResponseData(BaseModel):
     # The good till date for GTD orders
     GoodTillDate: Optional[str] = None
     # The legs of the order for multi-leg orders
-    Legs: Optional[List[OrderLeg]] = None
+    Legs: Optional[List["OrderLeg"]] = None
     # Market activation rules for conditional orders
-    MarketActivationRules: Optional[List[MarketActivationRule]] = None
+    MarketActivationRules: Optional[List["MarketActivationRule"]] = None
     # The date and time when the order was opened
     OpenedDateTime: Optional[str] = None
     # The price used for buying power calculations

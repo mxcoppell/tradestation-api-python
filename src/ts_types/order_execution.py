@@ -129,9 +129,9 @@ class TrailingStop(BaseModel):
 class AdvancedOptions(BaseModel):
     """Advanced options for order placement."""
 
-    TrailingStop: Optional[Union[TrailingStop, dict]] = None
-    MarketActivationRules: Optional[List[MarketActivationRule]] = None
-    TimeActivationRules: Optional[List[TimeActivationRule]] = None
+    TrailingStop: Optional[Union["TrailingStop", dict]] = None
+    MarketActivationRules: Optional[List["MarketActivationRule"]] = None
+    TimeActivationRules: Optional[List["TimeActivationRule"]] = None
     CommissionFee: Optional[float] = None
     DoNotReduceFlag: Optional[bool] = None
     AllOrNone: Optional[bool] = None
@@ -167,11 +167,11 @@ class OrderRequest(BaseModel):
     Quantity: str
     OrderType: OrderType
     TradeAction: OrderSide
-    TimeInForce: TimeInForce
+    TimeInForce: "TimeInForce"
     Route: str
     LimitPrice: Optional[str] = None
     StopPrice: Optional[str] = None
-    AdvancedOptions: Optional[AdvancedOptions] = None
+    AdvancedOptions: Optional["AdvancedOptions"] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -226,7 +226,7 @@ class OrderReplaceTrailingStop(BaseModel):
 class OrderReplaceAdvancedOptions(BaseModel):
     """Advanced options for order replacement."""
 
-    TrailingStop: Optional[OrderReplaceTrailingStop] = None
+    TrailingStop: Optional["OrderReplaceTrailingStop"] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -295,9 +295,9 @@ class OrderReplaceRequest(BaseModel):
     Quantity: Optional[str] = None
     LimitPrice: Optional[str] = None
     StopPrice: Optional[str] = None
-    OrderType: Optional[Union[OrderType, str]] = None
-    TimeInForce: Optional[Union[OrderReplaceTimeInForce, dict]] = None
-    AdvancedOptions: Optional[Union[OrderReplaceAdvancedOptions, dict]] = None
+    OrderType: Optional[Union["OrderType", str]] = None
+    TimeInForce: Optional[Union["OrderReplaceTimeInForce", dict]] = None
+    AdvancedOptions: Optional[Union["OrderReplaceAdvancedOptions", dict]] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -344,7 +344,7 @@ class GroupOrderRequest(BaseModel):
     """
 
     Type: Literal["BRK", "OCO"]
-    Orders: List[OrderRequest]
+    Orders: List["OrderRequest"]
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -424,7 +424,7 @@ class GroupOrderResponseError(BaseModel):
 class GroupOrderResponse(BaseModel):
     """Response from placing a group order."""
 
-    Orders: List[GroupOrderResponseSuccess]
+    Orders: List["GroupOrderResponseSuccess"]
     Errors: Optional[List[GroupOrderResponseError]] = None
 
     model_config = {"arbitrary_types_allowed": True}
@@ -433,7 +433,7 @@ class GroupOrderResponse(BaseModel):
 class GroupOrderConfirmationResponse(BaseModel):
     """Response from confirming a group order."""
 
-    Orders: List[GroupOrderResponseSuccess]
+    Orders: List["GroupOrderResponseSuccess"]
     Errors: Optional[List[GroupOrderResponseError]] = None
 
     model_config = {"arbitrary_types_allowed": True}
@@ -451,6 +451,6 @@ class OSO(BaseModel):
     """One-Sends-Other (OSO) order group."""
 
     Type: Literal["NORMAL", "BRK", "OCO"]
-    Orders: List[OrderRequest]
+    Orders: List["OrderRequest"]
 
     model_config = {"arbitrary_types_allowed": True}

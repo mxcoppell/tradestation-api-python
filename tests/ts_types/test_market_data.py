@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.types import (
+from src.ts_types import (
     MarketFlags,
     Quote,
     QuoteError,
