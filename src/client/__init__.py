@@ -2,6 +2,7 @@
 TradeStation API Python client module.
 """
 
-from src.client.http_client import HttpClient
+from .tradestation_client import TradeStationClient
+from .http_client import HttpClient
 
-__all__ = ["HttpClient"]
+__all__ = ["TradeStationClient", "HttpClient"]

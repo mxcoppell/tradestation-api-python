@@ -439,3 +439,10 @@ class StreamManager:
             Dict[str, bool]: A dictionary mapping stream IDs to their connection status.
         """
         return {stream_id: self.is_connected(stream_id) for stream_id in self._connections}
+
+    def close_all_streams(self) -> None:
+        """
+        Closes all active streams
+        """
+        # This is a placeholder until the full implementation
+        pass
