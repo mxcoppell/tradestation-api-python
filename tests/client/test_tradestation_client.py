@@ -60,15 +60,15 @@ class TestTradeStationClient:
                 "src.client.tradestation_client.StreamManager", return_value=mock_stream_manager
             ) as mock_stream_manager_cls,
             patch(
-                "src.client.tradestation_client.MarketDataService",
+                "src.services.MarketData.market_data_service.MarketDataService",
                 return_value=mock_services["market_data"],
             ) as mock_market_data_cls,
             patch(
-                "src.client.tradestation_client.OrderExecutionService",
+                "src.services.OrderExecution.order_execution_service.OrderExecutionService",
                 return_value=mock_services["order_execution"],
             ) as mock_order_execution_cls,
             patch(
-                "src.client.tradestation_client.BrokerageService",
+                "src.services.Brokerage.brokerage_service.BrokerageService",
                 return_value=mock_services["brokerage"],
             ) as mock_brokerage_cls,
         ):
@@ -99,9 +99,9 @@ class TestTradeStationClient:
         with (
             patch("src.client.tradestation_client.HttpClient") as mock_http_client,
             patch("src.client.tradestation_client.StreamManager"),
-            patch("src.client.tradestation_client.MarketDataService"),
-            patch("src.client.tradestation_client.OrderExecutionService"),
-            patch("src.client.tradestation_client.BrokerageService"),
+            patch("src.services.MarketData.market_data_service.MarketDataService"),
+            patch("src.services.OrderExecution.order_execution_service.OrderExecutionService"),
+            patch("src.services.Brokerage.brokerage_service.BrokerageService"),
         ):
 
             client = TradeStationClient(config_lower)
@@ -129,15 +129,15 @@ class TestTradeStationClient:
             patch("src.client.tradestation_client.HttpClient", return_value=mock_http_client),
             patch("src.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
             patch(
-                "src.client.tradestation_client.MarketDataService",
+                "src.services.MarketData.market_data_service.MarketDataService",
                 return_value=mock_services["market_data"],
             ),
             patch(
-                "src.client.tradestation_client.OrderExecutionService",
+                "src.services.OrderExecution.order_execution_service.OrderExecutionService",
                 return_value=mock_services["order_execution"],
             ),
             patch(
-                "src.client.tradestation_client.BrokerageService",
+                "src.services.Brokerage.brokerage_service.BrokerageService",
                 return_value=mock_services["brokerage"],
             ),
         ):
@@ -162,15 +162,15 @@ class TestTradeStationClient:
             patch("src.client.tradestation_client.HttpClient", return_value=mock_http_client),
             patch("src.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
             patch(
-                "src.client.tradestation_client.MarketDataService",
+                "src.services.MarketData.market_data_service.MarketDataService",
                 return_value=mock_services["market_data"],
             ),
             patch(
-                "src.client.tradestation_client.OrderExecutionService",
+                "src.services.OrderExecution.order_execution_service.OrderExecutionService",
                 return_value=mock_services["order_execution"],
             ),
             patch(
-                "src.client.tradestation_client.BrokerageService",
+                "src.services.Brokerage.brokerage_service.BrokerageService",
                 return_value=mock_services["brokerage"],
             ),
         ):
