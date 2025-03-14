@@ -30,6 +30,7 @@ ENV/
 # IDE
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 .DS_Store
@@ -88,8 +89,3 @@ config.local.json
 
 # Generated documentation
 docs/_build/ 
-
-# Cursor 
-.cursorrules
-.cursor
-poetry.lock

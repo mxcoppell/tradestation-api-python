@@ -6,7 +6,7 @@ authors = ["mxcoppell <mxcoppell@example.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/mxcoppell/tradestation-api-python"
-packages = [{ include = "tradestation_api", from = "src" }]
+packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
