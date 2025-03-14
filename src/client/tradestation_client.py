@@ -4,9 +4,6 @@ import os
 from ..ts_types.config import ClientConfig
 from .http_client import HttpClient
 from ..streaming.stream_manager import StreamManager
-from ..services.MarketData.market_data_service import MarketDataService
-from ..services.OrderExecution.order_execution_service import OrderExecutionService
-from ..services.Brokerage.brokerage_service import BrokerageService
 
 
 class TradeStationClient:
@@ -39,6 +36,11 @@ class TradeStationClient:
         Raises:
             ValueError: If environment is not specified either in config or ENVIRONMENT env var
         """
+        # Import services here to avoid circular imports
+        from ..services.MarketData.market_data_service import MarketDataService
+        from ..services.OrderExecution.order_execution_service import OrderExecutionService
+        from ..services.Brokerage.brokerage_service import BrokerageService
+
         # If config is None, initialize it as an empty dict
         if config is None:
             config = {}

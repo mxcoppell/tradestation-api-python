@@ -1,15 +1,13 @@
 from typing import Any, Dict, List, Optional, Union
 
-from ...client.http_client import HttpClient
-from ...streaming.stream_manager import StreamManager
-from ...ts_types.market_data import SymbolDetailsResponse
+from tradestation_api.client.http_client import HttpClient
+from tradestation_api.streaming.stream_manager import StreamManager
+from tradestation_api.ts_types.market_data import SymbolDetailsResponse
 
 
 class MarketDataService:
     """
     Service for accessing TradeStation market data
-
-    This is a placeholder until the full implementation in a separate task.
     """
 
     def __init__(self, http_client: HttpClient, stream_manager: StreamManager):
