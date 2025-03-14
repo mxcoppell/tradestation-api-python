@@ -9,7 +9,7 @@ import aiohttp
 import pytest
 
 from src.utils.token_manager import TokenManager
-from ts_types.config import AuthResponse, ClientConfig
+from src.ts_types.config import AuthResponse, ClientConfig
 
 
 class MockResponse:

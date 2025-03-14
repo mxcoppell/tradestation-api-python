@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, TypedDict, cast
 import aiohttp
 from pydantic import ValidationError
 
-from ts_types.config import ApiError, AuthResponse, ClientConfig
+from ..ts_types.config import ApiError, AuthResponse, ClientConfig
 
 
 class TokenManager:

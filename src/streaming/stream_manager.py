@@ -13,9 +13,9 @@ from urllib.parse import urljoin
 import aiohttp
 from pydantic import ValidationError
 
-from ts_types.config import ClientConfig
-from ts_types.market_data import Heartbeat, StreamErrorResponse
-from utils.token_manager import TokenManager
+from ..ts_types.config import ClientConfig
+from ..ts_types.market_data import Heartbeat, StreamErrorResponse
+from ..utils.token_manager import TokenManager
 
 
 logger = logging.getLogger(__name__)
