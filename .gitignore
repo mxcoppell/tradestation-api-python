@@ -88,8 +88,3 @@ config.local.json
 
 # Generated documentation
 docs/_build/ 
-
-# Cursor 
-.cursorrules
-.cursor
-poetry.lock
