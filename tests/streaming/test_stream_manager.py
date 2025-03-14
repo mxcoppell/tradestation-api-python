@@ -48,11 +48,13 @@ async def cleanup_after_test(stream_manager):
     """Fixture to clean up after each test."""
     yield
 
-    # Cancel any active tasks
+    # Cancel any active tasks (use MagicMocks that don't need awaiting)
     for task_dict in [stream_manager._reconnection_tasks, stream_manager._message_processing_tasks]:
         for task in list(task_dict.values()):
-            if not task.done():
-                task.cancel()
+            if hasattr(task, "done") and callable(task.done) and not task.done():
+                # Use cancel method that doesn't return a coroutine
+                if hasattr(task, "cancel") and callable(task.cancel):
+                    task.cancel()
         task_dict.clear()
 
     # Reset states
@@ -65,14 +67,18 @@ async def cleanup_after_test(stream_manager):
 async def test_connect_stream_success(stream_manager):
     """Test successful connection to a stream."""
     # Mock the WebSocket connection and session
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
-    mock_session.ws_connect = AsyncMock(return_value=mock_ws)
+    mock_ws = MagicMock()  # Use MagicMock instead of AsyncMock
+    mock_session = MagicMock()
 
-    # Mock create_task to immediately return a controlled task
-    process_task = AsyncMock()
+    # Make ws_connect a proper AsyncMock that returns a value
+    mock_ws_connect = AsyncMock()
+    mock_ws_connect.return_value = mock_ws
+    mock_session.ws_connect = mock_ws_connect
+
+    # Mock create_task to return a MagicMock (not AsyncMock)
+    process_task = MagicMock()
     process_task.done.return_value = False
-    process_task.cancel = AsyncMock()
+    process_task.cancel = MagicMock()  # Regular MagicMock, not AsyncMock
 
     # Mock the event loop time
     mock_time = 12345.0
@@ -85,6 +91,8 @@ async def test_connect_stream_success(stream_manager):
         patch("aiohttp.ClientSession", return_value=mock_session),
         patch("asyncio.create_task", return_value=process_task),
         patch("asyncio.get_event_loop", return_value=mock_loop),
+        # Mock _process_messages to be a MagicMock that returns None
+        patch.object(stream_manager, "_process_messages", return_value=None),
     ):
         # Connect to a test stream
         await stream_manager.connect_stream("/test/stream", "test_stream")
@@ -108,16 +116,21 @@ async def test_connect_stream_success(stream_manager):
 async def test_connect_stream_already_connected(stream_manager):
     """Test connecting to an already connected stream."""
     # Mock the WebSocket connection and session
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
-    mock_session.ws_connect = AsyncMock(return_value=mock_ws)
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
-    # Mock create_task to immediately return a controlled task
-    process_task = AsyncMock()
+    # Make ws_connect a proper AsyncMock that returns a value
+    mock_ws_connect = AsyncMock()
+    mock_ws_connect.return_value = mock_ws
+    mock_session.ws_connect = mock_ws_connect
+
+    # Mock create_task to return a MagicMock (not AsyncMock)
+    process_task = MagicMock()
 
     with (
         patch("aiohttp.ClientSession", return_value=mock_session),
         patch("asyncio.create_task", return_value=process_task),
+        patch.object(stream_manager, "_process_messages", return_value=None),
     ):
         # Connect to a test stream
         await stream_manager.connect_stream("/test/stream", "test_stream")
@@ -133,16 +146,21 @@ async def test_connect_stream_already_connected(stream_manager):
 async def test_connect_stream_maximum_limit(stream_manager):
     """Test that connecting more streams than the maximum limit raises an error."""
     # Mock the WebSocket connection and session
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
-    mock_session.ws_connect = AsyncMock(return_value=mock_ws)
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
-    # Mock create_task to immediately return a controlled task
-    process_task = AsyncMock()
+    # Make ws_connect a proper AsyncMock that returns a value
+    mock_ws_connect = AsyncMock()
+    mock_ws_connect.return_value = mock_ws
+    mock_session.ws_connect = mock_ws_connect
+
+    # Mock create_task to return a MagicMock (not AsyncMock)
+    process_task = MagicMock()
 
     with (
         patch("aiohttp.ClientSession", return_value=mock_session),
         patch("asyncio.create_task", return_value=process_task),
+        patch.object(stream_manager, "_process_messages", return_value=None),
     ):
         # Connect to 5 streams (the maximum)
         for i in range(5):
@@ -157,8 +175,11 @@ async def test_connect_stream_maximum_limit(stream_manager):
 async def test_connect_stream_connection_error(stream_manager):
     """Test that a connection error is properly handled."""
     # Mock the session to raise an error on connection
-    mock_session = AsyncMock()
-    mock_session.ws_connect = AsyncMock(side_effect=aiohttp.ClientError("Connection failed"))
+    mock_session = MagicMock()
+
+    # Make ws_connect a proper AsyncMock that raises an exception
+    mock_ws_connect = AsyncMock(side_effect=aiohttp.ClientError("Connection failed"))
+    mock_session.ws_connect = mock_ws_connect
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
         # Try to connect, which should raise ConnectionError
@@ -170,17 +191,29 @@ async def test_connect_stream_connection_error(stream_manager):
 async def test_disconnect_stream_success(stream_manager):
     """Test successful disconnection from a stream."""
     # Mock the WebSocket connection and session
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
-    mock_session.ws_connect = AsyncMock(return_value=mock_ws)
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
-    # Mock create_task to immediately return a controlled task
-    process_task = AsyncMock()
+    # Need to use AsyncMock for the close methods that will be awaited
+    mock_ws_close = AsyncMock()
+    mock_session_close = AsyncMock()
+    mock_ws.close = mock_ws_close
+    mock_session.close = mock_session_close
+
+    # Make ws_connect a proper AsyncMock that returns a value
+    mock_ws_connect = AsyncMock()
+    mock_ws_connect.return_value = mock_ws
+    mock_session.ws_connect = mock_ws_connect
+
+    # Mock create_task to return a MagicMock (not AsyncMock)
+    process_task = MagicMock()
     process_task.done.return_value = False
+    process_task.cancel = MagicMock()  # Not AsyncMock
 
     with (
         patch("aiohttp.ClientSession", return_value=mock_session),
         patch("asyncio.create_task", return_value=process_task),
+        patch.object(stream_manager, "_process_messages", return_value=None),
     ):
         # Connect to a test stream
         await stream_manager.connect_stream("/test/stream", "test_stream")
@@ -192,8 +225,8 @@ async def test_disconnect_stream_success(stream_manager):
         await stream_manager.disconnect_stream("test_stream")
 
         # Verify the stream was disconnected
-        mock_ws.close.assert_called_once()
-        mock_session.close.assert_called_once()
+        mock_ws_close.assert_called_once()
+        mock_session_close.assert_called_once()
         process_task.cancel.assert_called_once()
         assert not stream_manager.is_connected("test_stream")
         assert "test_stream" not in stream_manager._active_streams
@@ -211,32 +244,48 @@ async def test_disconnect_nonexistent_stream(stream_manager):
 @pytest.mark.asyncio
 async def test_disconnect_all_streams(stream_manager):
     """Test disconnecting from all streams."""
-    # Mock the WebSocket connection and session
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
-    mock_session.ws_connect = AsyncMock(return_value=mock_ws)
+    # Create mock websockets and sessions with AsyncMock close methods
+    streams = {}
+    for i in range(3):
+        stream_id = f"test_stream{i}"
+        mock_ws = MagicMock()
+        mock_session = MagicMock()
 
-    # Mock create_task to immediately return a controlled task
-    process_tasks = [AsyncMock() for _ in range(3)]
+        # Use AsyncMock for close methods
+        mock_ws.close = AsyncMock()
+        mock_session.close = AsyncMock()
 
-    with (
-        patch("aiohttp.ClientSession", return_value=mock_session),
-        patch("asyncio.create_task", side_effect=process_tasks),
-    ):
-        # Connect to multiple test streams
-        for i in range(3):
-            await stream_manager.connect_stream(f"/test/stream{i}", f"test_stream{i}")
-            stream_manager._message_processing_tasks[f"test_stream{i}"] = process_tasks[i]
+        # Set up the connections in the stream manager directly
+        stream_manager._connections[stream_id] = {
+            "websocket": mock_ws,
+            "session": mock_session,
+            "active": True,
+            "uri": f"/test/stream{i}",
+            "last_heartbeat": 0,
+        }
+        stream_manager._active_streams.add(stream_id)
 
-        # Disconnect from all streams
-        await stream_manager.disconnect_all()
+        # Create a mock task
+        process_task = MagicMock()
+        process_task.done.return_value = False
+        process_task.cancel = MagicMock()
+        stream_manager._message_processing_tasks[stream_id] = process_task
 
-        # Verify all streams were disconnected
-        assert mock_ws.close.call_count == 3
-        assert mock_session.close.call_count == 3
-        assert len(stream_manager._active_streams) == 0
-        for task in process_tasks:
-            task.cancel.assert_called_once()
+        # Store for later assertion
+        streams[stream_id] = {"websocket": mock_ws, "session": mock_session, "task": process_task}
+
+    # Disconnect from all streams
+    await stream_manager.disconnect_all()
+
+    # Verify all streams were disconnected
+    for stream_id, mocks in streams.items():
+        mocks["websocket"].close.assert_called_once()
+        mocks["session"].close.assert_called_once()
+        mocks["task"].cancel.assert_called_once()
+
+    assert len(stream_manager._active_streams) == 0
+    assert len(stream_manager._connections) == 0
+    assert len(stream_manager._message_processing_tasks) == 0
 
 
 @pytest.mark.asyncio
@@ -265,8 +314,8 @@ async def test_message_callbacks(stream_manager):
 async def test_process_text_message(stream_manager):
     """Test processing text messages."""
     # Setup mock connection
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
     # Mock the event loop time
     mock_time = 12345.0
@@ -305,8 +354,8 @@ async def test_process_text_message(stream_manager):
 async def test_process_heartbeat_message(stream_manager):
     """Test processing a heartbeat message."""
     # Setup mock connection
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
     # Initial and updated heartbeat times
     initial_time = 1000.0
@@ -343,8 +392,8 @@ async def test_process_heartbeat_message(stream_manager):
 async def test_process_error_message(stream_manager):
     """Test processing an error message."""
     # Setup mock connection
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
     # Mock the event loop time
     mock_time = 12345.0
@@ -381,8 +430,8 @@ async def test_process_error_message(stream_manager):
 async def test_process_invalid_json(stream_manager):
     """Test processing invalid JSON."""
     # Setup mock connection
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
     # Mock the event loop time
     mock_time = 12345.0
@@ -418,15 +467,20 @@ async def test_process_invalid_json(stream_manager):
 @pytest.mark.asyncio
 async def test_process_messages_reconnect(stream_manager):
     """Test that a disconnected stream attempts to reconnect."""
-    # Setup mock connection
-    mock_ws = AsyncMock()
-    mock_ws.receive = AsyncMock(
-        side_effect=[
-            MockWebSocketResponse(json.dumps({"data": "test"})),
-            MockWebSocketResponse(None, WSMsgType.CLOSED),  # Simulate connection close
-        ]
-    )
-    mock_session = AsyncMock()
+    # Setup mock connection with MagicMock (not AsyncMock)
+    mock_ws = MagicMock()
+
+    # Make receive return an async function that returns the mock responses
+    mock_responses = [
+        MockWebSocketResponse(json.dumps({"data": "test"})),
+        MockWebSocketResponse(None, WSMsgType.CLOSED),  # Simulate connection close
+    ]
+
+    async def mock_receive():
+        return mock_responses.pop(0)
+
+    mock_ws.receive = mock_receive
+    mock_session = MagicMock()
 
     # Mock the event loop time
     mock_time = 12345.0
@@ -435,7 +489,19 @@ async def test_process_messages_reconnect(stream_manager):
     mock_loop = MagicMock()
     mock_loop.time = MagicMock(return_value=mock_time)
 
-    with patch("asyncio.get_event_loop", return_value=mock_loop):
+    # Mock asyncio.wait_for to immediately return the next mock response
+    async def mock_wait_for(coro, timeout):
+        return await coro
+
+    # Create a MagicMock task for reconnection
+    reconnect_task = MagicMock()
+
+    with (
+        patch("asyncio.get_event_loop", return_value=mock_loop),
+        patch("asyncio.wait_for", mock_wait_for),
+        patch.object(stream_manager, "_attempt_reconnection") as mock_reconnect,
+        patch("asyncio.create_task", return_value=reconnect_task),
+    ):
         stream_manager._connections = {
             "test_stream": {
                 "websocket": mock_ws,
@@ -447,31 +513,22 @@ async def test_process_messages_reconnect(stream_manager):
         }
         stream_manager._active_streams.add("test_stream")
 
-        # Mock asyncio.wait_for to immediately return the next mock response
-        async def mock_wait_for(coro, timeout):
-            return await coro
+        # Mock _handle_text_message to avoid coroutine issues
+        stream_manager._handle_text_message = AsyncMock()
 
-        # Mock the reconnection method to prevent actual reconnection attempts
-        reconnect_task = AsyncMock()
+        # Process messages until connection closes
+        await stream_manager._process_messages("test_stream")
 
-        with (
-            patch("asyncio.wait_for", mock_wait_for),
-            patch.object(stream_manager, "_attempt_reconnection") as mock_reconnect,
-            patch("asyncio.create_task", return_value=reconnect_task),
-        ):
-            # Process messages until connection closes
-            await stream_manager._process_messages("test_stream")
-
-            # Verify reconnection was attempted
-            mock_reconnect.assert_called_once_with("test_stream")
+        # Verify reconnection was attempted
+        mock_reconnect.assert_called_once_with("test_stream")
 
 
 @pytest.mark.asyncio
 async def test_reconnect_with_backoff_success(stream_manager):
     """Test successful reconnection with backoff."""
     # Setup original connection
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
     # Mock the event loop time
     mock_time = 12345.0
@@ -509,8 +566,8 @@ async def test_reconnect_with_backoff_success(stream_manager):
 async def test_reconnect_with_backoff_failure(stream_manager):
     """Test failed reconnection with backoff."""
     # Setup original connection
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
 
     # Mock the event loop time
     mock_time = 12345.0
@@ -559,8 +616,8 @@ async def test_reconnect_with_backoff_failure(stream_manager):
 async def test_is_connected(stream_manager):
     """Test the is_connected method."""
     # Setup connection
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
     stream_manager._connections = {
         "active_stream": {
             "websocket": mock_ws,
@@ -589,8 +646,8 @@ async def test_is_connected(stream_manager):
 async def test_get_connection_status(stream_manager):
     """Test the get_connection_status method."""
     # Setup connections
-    mock_ws = AsyncMock()
-    mock_session = AsyncMock()
+    mock_ws = MagicMock()
+    mock_session = MagicMock()
     stream_manager._connections = {
         "active_stream": {
             "websocket": mock_ws,
