@@ -6,7 +6,7 @@ authors = ["mxcoppell <mxcoppell@example.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/mxcoppell/tradestation-api-python"
-packages = [{include = "tradestation_api", from = "src"}]
+packages = [{ include = "tradestation_api", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -42,4 +42,8 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-disallow_incomplete_defs = true 
+disallow_incomplete_defs = true
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = "E203"
