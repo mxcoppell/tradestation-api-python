@@ -1,31 +1,43 @@
+"""
+Get Symbol Details Example
+
+This example demonstrates how to get symbol details using the TradeStation API Python wrapper.
+Symbol details provide information about financial instruments including asset type, exchange,
+price format, and asset-specific properties.
+"""
+
 import asyncio
 import os
 from dotenv import load_dotenv
 
+# Import from the TradeStation Python wrapper
 from src.client.tradestation_client import TradeStationClient
+from src.ts_types.config import ClientConfig
 
 # Load environment variables from .env file
 load_dotenv()
 
 
 async def main():
-    # Initialize the TradeStation client with configuration from environment variables
-    # Properly capitalize the environment value
+    # Get environment and normalize it
     env = os.environ.get("ENVIRONMENT", "Live")
     env = "Simulation" if env.lower() == "simulation" else "Live"
 
-    config = {
-        "client_id": os.environ.get("CLIENT_ID"),
-        "client_secret": os.environ.get("CLIENT_SECRET"),
-        "refresh_token": os.environ.get("REFRESH_TOKEN"),
-        "environment": env,
-    }
+    # Create a ClientConfig object with credentials from environment variables
+    config = ClientConfig(
+        client_id=os.environ.get("CLIENT_ID"),
+        client_secret=os.environ.get("CLIENT_SECRET"),
+        refresh_token=os.environ.get("REFRESH_TOKEN"),
+        environment=env,
+    )
+
+    # Initialize the TradeStation client with the config
     client = TradeStationClient(config)
 
     try:
         # Example 1: Get details for a single stock
+        print("\nExample 1: Get details for a single stock")
         msft_details = await client.market_data.get_symbol_details(["MSFT"])
-        print("\nDetails for MSFT:")
         msft_symbol = msft_details.Symbols[0]
         print(f"Asset Type: {msft_symbol.AssetType}")
         print(f"Description: {msft_symbol.Description}")
@@ -41,6 +53,7 @@ async def main():
         )
 
         # Example 2: Get details for multiple symbols of different types
+        print("\nExample 2: Get details for multiple symbols of different types")
         symbols = [
             "MSFT",  # Stock
             "MSFT 240119C400",  # Option
@@ -51,7 +64,6 @@ async def main():
         details = await client.market_data.get_symbol_details(symbols)
 
         # Process successful results
-        print("\nDetails for Multiple Symbols:")
         for symbol in details.Symbols:
             print(f"\n{symbol.Symbol} ({symbol.AssetType}):")
             print(f"Description: {symbol.Description}")
@@ -77,10 +89,11 @@ async def main():
                 print(f"{error.Symbol}: {error.Message}")
 
         # Example 3: Format prices using symbol details
-        stock = details.Symbols[0]
+        print("\nExample 3: Format prices using symbol details")
+        stock = details.Symbols[0]  # Use the first symbol (MSFT) as an example
         price = 123.456
 
-        print("\nPrice Formatting Example:")
+        # Format the price according to the symbol's price format
         if stock.PriceFormat.Format == "Decimal":
             if stock.PriceFormat.Decimals:
                 print(f"Formatted Price: {price:.{int(stock.PriceFormat.Decimals)}f}")
