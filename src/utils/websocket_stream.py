@@ -9,21 +9,28 @@ class WebSocketStream:
     Manages a WebSocket connection to the TradeStation API for streaming data.
     """
 
-    def __init__(self, url: str, headers: Dict[str, str]):
+    def __init__(self, url: str, headers: Dict[str, str], debug: bool = False):
         """
         Initialize a WebSocket stream.
 
         Args:
             url: The WebSocket URL to connect to
             headers: Headers to send with the connection request
+            debug: Whether to print debug messages
         """
         self.url = url
         self.headers = headers
+        self.debug = debug
         self.session: Optional[aiohttp.ClientSession] = None
         self.ws: Optional[aiohttp.ClientWebSocketResponse] = None
         self.is_connected = False
         self.callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None
         self._task: Optional[asyncio.Task] = None
+
+    def _debug_print(self, message: str) -> None:
+        """Print a debug message if debug mode is enabled."""
+        if self.debug:
+            print(message)
 
     async def connect(self) -> None:
         """
@@ -36,7 +43,7 @@ class WebSocketStream:
         try:
             self.ws = await self.session.ws_connect(self.url, headers=self.headers)
             self.is_connected = True
-            print(f"Connected to WebSocket: {self.url}")
+            self._debug_print(f"Connected to WebSocket: {self.url}")
 
             # Start listening for messages if a callback is set
             if self.callback:
@@ -68,15 +75,17 @@ class WebSocketStream:
                         data = json.loads(msg.data)
                         await self.callback(data)
                     except json.JSONDecodeError:
-                        print(f"Received non-JSON message: {msg.data}")
+                        self._debug_print(f"Received non-JSON message: {msg.data}")
                 elif msg.type == aiohttp.WSMsgType.ERROR:
-                    print(f"WebSocket connection closed with exception: {self.ws.exception()}")
+                    self._debug_print(
+                        f"WebSocket connection closed with exception: {self.ws.exception()}"
+                    )
                     break
                 elif msg.type == aiohttp.WSMsgType.CLOSED:
-                    print("WebSocket connection closed")
+                    self._debug_print("WebSocket connection closed")
                     break
         except Exception as e:
-            print(f"Error in WebSocket listener: {e}")
+            self._debug_print(f"Error in WebSocket listener: {e}")
         finally:
             await self.close()
 

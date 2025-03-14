@@ -24,11 +24,11 @@ async def main():
     # This will automatically load configuration from environment variables:
     # - CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN from .env
     # - ENVIRONMENT from .env (case-insensitive, defaults to "Live")
-    client = TradeStationClient()
+    client = TradeStationClient(debug=False)  # Set debug=False to disable debug output
 
     # Alternative initialization options:
     # 1. Explicitly specify some parameters:
-    # client = TradeStationClient(environment="Simulation")
+    # client = TradeStationClient(environment="Simulation", debug=True)
     #
     # 2. Using a dictionary for configuration:
     # client = TradeStationClient({
@@ -36,7 +36,7 @@ async def main():
     #     "client_secret": "your_client_secret",
     #     "refresh_token": "your_refresh_token",
     #     "environment": "simulation"  # case-insensitive
-    # })
+    # }, debug=False)
     #
     # 3. Using a ClientConfig object:
     # from src.ts_types.config import ClientConfig
@@ -46,7 +46,7 @@ async def main():
     #     refresh_token="your_refresh_token",
     #     environment="simulation"
     # )
-    # client = TradeStationClient(config)
+    # client = TradeStationClient(config, debug=False)
 
     try:
         # Example 1: Get details for a single stock

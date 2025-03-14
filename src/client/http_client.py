@@ -4,6 +4,7 @@ HttpClient module for handling HTTP requests to the TradeStation API.
 
 import asyncio
 import json
+import logging
 from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
@@ -20,14 +21,17 @@ class HttpClient:
     Handles authentication, rate limiting, and response processing.
     """
 
-    def __init__(self, config: Union[Dict[str, Any], "ClientConfig"] = None):
+    def __init__(self, config: Union[Dict[str, Any], "ClientConfig"] = None, debug: bool = False):
         """
         Initialize the HttpClient with the specified configuration.
 
         Args:
             config: Configuration settings for the client (dict or ClientConfig object)
+            debug: Whether to print debug messages
         """
         from src.ts_types.config import ClientConfig
+
+        self.debug = debug
 
         # Convert config to ClientConfig if it's a dict
         if config is not None and not isinstance(config, ClientConfig):
@@ -40,10 +44,17 @@ class HttpClient:
         # Determine base URL based on environment
         if config and config.environment and config.environment.lower() == "simulation":
             self.base_url = "https://sim.api.tradestation.com"
-            print(f"Using Simulation environment (base URL: {self.base_url})")
+            if self.debug:
+                print(f"Using Simulation environment (base URL: {self.base_url})")
         else:
             self.base_url = "https://api.tradestation.com"
-            print(f"Using Live environment (base URL: {self.base_url})")
+            if self.debug:
+                print(f"Using Live environment (base URL: {self.base_url})")
+
+    def _debug_print(self, message: str) -> None:
+        """Print a debug message if debug mode is enabled."""
+        if self.debug:
+            print(message)
 
     async def _ensure_session(self) -> ClientSession:
         """
@@ -110,8 +121,8 @@ class HttpClient:
         full_url = f"{self.base_url}{url}"
 
         # Debug print
-        print(f"Making GET request to: {full_url}")
-        print(f"Headers: {headers}")
+        self._debug_print(f"Making GET request to: {full_url}")
+        self._debug_print(f"Headers: {headers}")
 
         try:
             async with session.get(full_url, params=params, headers=headers) as response:
@@ -119,7 +130,7 @@ class HttpClient:
                     raise ValueError("Response object is None")
 
                 # Debug print
-                print(f"Response status: {response.status}")
+                self._debug_print(f"Response status: {response.status}")
 
                 # Process response headers for rate limiting
                 await self._process_response(response, url)
@@ -127,13 +138,13 @@ class HttpClient:
                 # Handle HTTP errors
                 if response.status >= 400:
                     error_text = await response.text()
-                    print(f"Error response: {error_text}")
+                    self._debug_print(f"Error response: {error_text}")
                     response.raise_for_status()  # This will raise an appropriate HTTPError
 
                 # Get JSON response
                 return await response.json()
         except Exception as e:
-            print(f"Request error: {str(e)}")
+            self._debug_print(f"Request error: {str(e)}")
             raise
 
     async def post(
@@ -238,4 +249,4 @@ class HttpClient:
         if self._session:
             await self._session.close()
             self._session = None
-            print("HTTP client session closed")
+            self._debug_print("HTTP client session closed")

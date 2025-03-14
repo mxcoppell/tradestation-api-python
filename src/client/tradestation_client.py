@@ -3,7 +3,7 @@ import os
 
 from ..ts_types.config import ClientConfig
 from .http_client import HttpClient
-from ..streaming.stream_manager import StreamManager
+from ..utils.stream_manager import StreamManager
 from src.services.MarketData.market_data_service import MarketDataService
 
 
@@ -17,6 +17,7 @@ class TradeStationClient:
         config: Union[Dict[str, Any], "ClientConfig"] = None,
         refresh_token: Optional[str] = None,
         environment: Optional[str] = None,
+        debug: bool = False,
     ):
         """
         Initialize a new TradeStationClient with the provided configuration.
@@ -25,6 +26,7 @@ class TradeStationClient:
             config: Dictionary or ClientConfig object with configuration options.
             refresh_token: A refresh token to initialize the client with.
             environment: Either "Live" or "Simulation".
+            debug: Whether to print debug messages.
         """
         from src.ts_types.config import ClientConfig
 
@@ -67,8 +69,8 @@ class TradeStationClient:
             environment = "Simulation" if env.lower() == "simulation" else "Live"
             config_dict["environment"] = environment
 
-        self.http_client = HttpClient(config_dict)
-        self.stream_manager = StreamManager(config_dict)
+        self.http_client = HttpClient(config_dict, debug=debug)
+        self.stream_manager = StreamManager(config_dict, debug=debug)
 
         # Initialize services
         self.market_data = MarketDataService(self.http_client, self.stream_manager)

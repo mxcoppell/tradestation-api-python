@@ -6,12 +6,13 @@ from src.utils.websocket_stream import WebSocketStream
 
 
 class StreamManager:
-    def __init__(self, config: Union[Dict[str, Any], ClientConfig]):
+    def __init__(self, config: Union[Dict[str, Any], ClientConfig], debug: bool = False):
         """
         Initialize StreamManager with configuration.
 
         Args:
             config: Configuration settings (dict or ClientConfig object)
+            debug: Whether to print debug messages
         """
         # Convert config to ClientConfig if it's a dict
         if not isinstance(config, ClientConfig):
@@ -19,6 +20,7 @@ class StreamManager:
 
         self.max_concurrent_streams = config.max_concurrent_streams or 10
         self.active_streams: Dict[str, WebSocketStream] = {}
+        self.debug = debug
 
     async def create_stream(self, url: str, headers: Dict[str, str]) -> WebSocketStream:
         """
@@ -36,7 +38,7 @@ class StreamManager:
                 f"Maximum number of concurrent streams ({self.max_concurrent_streams}) reached"
             )
 
-        stream = WebSocketStream(url, headers)
+        stream = WebSocketStream(url, headers, debug=self.debug)
         await stream.connect()
 
         # Store the stream with a unique ID
