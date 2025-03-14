@@ -11,9 +11,9 @@ import aiohttp
 from aiohttp import WSMsgType
 from pydantic import ValidationError
 
-from streaming.stream_manager import StreamManager
-from ts_types.config import ClientConfig
-from utils.token_manager import TokenManager
+from src.streaming.stream_manager import StreamManager
+from src.ts_types.config import ClientConfig
+from src.utils.token_manager import TokenManager
 
 # Filter out all AsyncMock coroutine warnings - these are expected in testing
 pytestmark = pytest.mark.filterwarnings("ignore::RuntimeWarning")

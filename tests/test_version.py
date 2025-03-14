@@ -2,7 +2,7 @@
 
 import pytest
 
-from tradestation_api import __version__
+from src.tradestation_api import __version__
 
 
 def test_version():
