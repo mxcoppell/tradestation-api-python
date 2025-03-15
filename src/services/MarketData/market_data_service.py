@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames, Expirations
+from ...ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames, Expirations, BarsResponse
 
 
 class MarketDataService:
@@ -203,3 +203,113 @@ class MarketDataService:
 
         # Parse the response into the Expirations model
         return Expirations.model_validate(response)
+
+    async def get_bar_history(self, symbol: str, params: Dict[str, Any] = None) -> BarsResponse:
+        """
+        Fetches marketdata bars for the given symbol, interval, and timeframe.
+        The maximum amount of intraday bars a user can fetch is 57,600 per request.
+        This is calculated either by the amount of barsback or bars within a timeframe requested.
+
+        Args:
+            symbol: The valid symbol string.
+            params: Parameters for the bar history request
+                interval: Default: 1. Interval that each bar will consist of - for minute bars, the number of minutes
+                          aggregated in a single bar. For bar units other than minute, value must be 1.
+                          For unit Minute the max allowed Interval is 1440.
+                unit: Default: Daily. The unit of time for each bar interval.
+                      Valid values are: Minute, Daily, Weekly, Monthly.
+                barsback: Default: 1. Number of bars back to fetch. The maximum number of intraday bars back
+                          that a user can query is 57,600. There is no limit on daily, weekly, or monthly bars.
+                          This parameter is mutually exclusive with firstdate.
+                firstdate: The first date formatted as YYYY-MM-DD or 2020-04-20T18:00:00Z.
+                           This parameter is mutually exclusive with barsback.
+                lastdate: Defaults to current timestamp. The last date formatted as YYYY-MM-DD or 2020-04-20T18:00:00Z.
+                          This parameter is mutually exclusive with startdate and should be used instead of that parameter.
+                sessiontemplate: United States (US) stock market session templates, that extend bars returned to include
+                                those outside of the regular trading session. Ignored for non-US equity symbols.
+                                Valid values are: USEQPre, USEQPost, USEQPreAndPost, USEQ24Hour, Default.
+
+        Returns:
+            BarsResponse containing an array of Bar objects.
+
+        Raises:
+            ValueError: If the interval is invalid for the specified unit
+            ValueError: If the maximum number of intraday bars is exceeded
+            ValueError: If mutually exclusive parameters are specified
+            Exception: If the request fails due to network issues or invalid authentication
+
+        Example:
+            ```python
+            # Get daily bars for the last 5 days
+            bars = await market_data.get_bar_history('MSFT', {
+                'unit': 'Daily',
+                'barsback': 5
+            })
+            print(bars.Bars[0])
+            # {
+            #   "High": "218.32",
+            #   "Low": "212.42",
+            #   "Open": "214.02",
+            #   "Close": "216.39",
+            #   "TimeStamp": "2020-11-04T21:00:00Z",
+            #   "TotalVolume": "42311777",
+            #   "DownTicks": 231021,
+            #   "DownVolume": 19575455,
+            #   "OpenInterest": "0",
+            #   "IsRealtime": false,
+            #   "IsEndOfHistory": false,
+            #   "TotalTicks": 460552,
+            #   "UpTicks": 229531,
+            #   "UpVolume": 22736321,
+            #   "Epoch": 1604523600000,
+            #   "BarStatus": "Closed"
+            # }
+
+            # Get 1-minute bars for a specific date range with extended hours
+            bars = await market_data.get_bar_history('MSFT', {
+                'unit': 'Minute',
+                'interval': '1',
+                'firstdate': '2024-01-01T14:30:00Z',
+                'lastdate': '2024-01-01T21:00:00Z',
+                'sessiontemplate': 'USEQPreAndPost'
+            })
+            ```
+        """
+        if not symbol:
+            raise ValueError("Symbol is required")
+
+        # Initialize params if not provided
+        if params is None:
+            params = {}
+
+        # Validate interval for non-minute bars
+        if (params.get("unit") and params["unit"] != "Minute" and 
+                params.get("interval") and params["interval"] != "1"):
+            raise ValueError("Interval must be 1 for non-minute bars")
+
+        # Validate interval for minute bars
+        if params.get("unit") == "Minute" and params.get("interval"):
+            interval_num = int(params["interval"])
+            if interval_num > 1440:
+                raise ValueError("Maximum interval for minute bars is 1440")
+
+        # Validate barsback for intraday
+        if (params.get("unit") == "Minute" and params.get("barsback") and 
+                params["barsback"] > 57600):
+            raise ValueError("Maximum of 57,600 intraday bars allowed per request")
+
+        # Validate mutually exclusive parameters
+        if params.get("barsback") and params.get("firstdate"):
+            raise ValueError("barsback and firstdate parameters are mutually exclusive")
+
+        if params.get("lastdate") and "startdate" in params:
+            raise ValueError("lastdate and startdate parameters are mutually exclusive. "
+                            "startdate is deprecated, use lastdate instead")
+
+        # Make the API request
+        response = await self.http_client.get(
+            f"/v3/marketdata/barcharts/{symbol}", params=params
+        )
+
+        # Parse the response into the BarsResponse model
+        return BarsResponse.model_validate(response)
