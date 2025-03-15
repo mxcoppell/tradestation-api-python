@@ -8,7 +8,7 @@ with TradeStation.
 __version__ = "0.1.0"
 
 # Main client
-from src.tradestation_api.client.tradestation_client import TradeStationClient
+from src.client.tradestation_client import TradeStationClient
 
 # Types
 from src.ts_types.config import ClientConfig
