@@ -77,7 +77,7 @@ class TradeStationClient:
             config_dict["environment"] = "Simulation" if env.lower() == "simulation" else "Live"
 
         self.http_client = HttpClient(config_dict, debug=debug)
-        self.stream_manager = StreamManager(self.http_client, debug=debug)
+        self.stream_manager = StreamManager(config_dict, debug=debug)
 
         # Initialize services
         self.market_data = MarketDataService(self.http_client, self.stream_manager)
