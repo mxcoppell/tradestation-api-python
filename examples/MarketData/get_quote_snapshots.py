@@ -11,10 +11,13 @@ Note that the 'ENVIRONMENT' variable in your .env file determines which API endp
 
 import asyncio
 import os
+import json
 from dotenv import load_dotenv
 
-from src.client.tradestation_client import TradeStationClient
-from src.ts_types.config import ClientConfig
+# Direct imports to avoid client initialization issues
+from src.client.http_client import HttpClient
+from src.services.MarketData.market_data_service import MarketDataService
+from src.utils.stream_manager import StreamManager
 
 
 async def main():
@@ -22,7 +25,7 @@ async def main():
     # Load environment variables from .env file
     load_dotenv()
 
-    # Initialize the client with explicit configuration
+    # Initialize components directly to bypass client initialization issues
     config = {
         "client_id": os.environ.get("CLIENT_ID"),
         "client_secret": os.environ.get("CLIENT_SECRET"),
@@ -30,7 +33,14 @@ async def main():
         "environment": os.environ.get("ENVIRONMENT", "Simulation"),
     }
 
-    client = TradeStationClient(config=config)
+    # Create HTTP client
+    http_client = HttpClient(config)
+
+    # Create a dummy stream manager (not used for quote snapshots, but required by MarketDataService)
+    stream_manager = StreamManager(config)
+
+    # Create the market data service directly
+    market_data = MarketDataService(http_client, stream_manager)
 
     try:
         print("\n=== Quote Snapshots API Example ===\n")
@@ -38,9 +48,15 @@ async def main():
         # Example 1: Stock Symbol
         print("Example 1: Stock Symbol (MSFT)")
         print("---------------------------------")
-        symbol = "MSFT"
+        symbol = "MSFT"  # Simple string
         print(f"Requesting quote snapshot for: {symbol}")
-        response = await client.market_data.get_quote_snapshots(symbol)
+
+        # Debug: Use the direct HTTP client to see raw response
+        response_data = await http_client.get(f"/v3/marketdata/quotes/{symbol}")
+        print("Raw API response:")
+        print(json.dumps(response_data, indent=2))
+
+        response = await market_data.get_quote_snapshots(symbol)
         print_quote_response(response)
 
         # Example 2: Futures Contract
@@ -48,7 +64,7 @@ async def main():
         print("---------------------------------")
         symbol = "ESM24"  # E-mini S&P 500 Future June 2024
         print(f"Requesting quote snapshot for: {symbol}")
-        response = await client.market_data.get_quote_snapshots(symbol)
+        response = await market_data.get_quote_snapshots(symbol)
         print_quote_response(response)
 
         # Example 3: Options Contract
@@ -56,7 +72,7 @@ async def main():
         print("---------------------------------")
         symbol = "TSLA 270115P270"  # Tesla Put Option
         print(f"Requesting quote snapshot for: {symbol}")
-        response = await client.market_data.get_quote_snapshots(symbol)
+        response = await market_data.get_quote_snapshots(symbol)
         print_quote_response(response)
 
         # Example 4: Continuous Futures Symbol
@@ -64,7 +80,7 @@ async def main():
         print("---------------------------------")
         symbol = "@S"  # Continuous Soybean Futures
         print(f"Requesting quote snapshot for: {symbol}")
-        response = await client.market_data.get_quote_snapshots(symbol)
+        response = await market_data.get_quote_snapshots(symbol)
         print_quote_response(response)
 
         # Example 5: Index Symbol
@@ -72,16 +88,25 @@ async def main():
         print("---------------------------------")
         symbol = "$SPX.X"  # S&P 500 Index
         print(f"Requesting quote snapshot for: {symbol}")
-        response = await client.market_data.get_quote_snapshots(symbol)
+        response = await market_data.get_quote_snapshots(symbol)
         print_quote_response(response)
 
         # Example 6: Multiple Symbols in One Request
         print("\nExample 6: Multiple Symbols in One Request")
         print("---------------------------------")
         # You can request up to 100 symbols in a single API call
-        symbols = ["MSFT", "AAPL", "GOOGL", "AMZN", "META"]
-        print(f"Requesting quote snapshots for multiple symbols: {symbols}")
-        response = await client.market_data.get_quote_snapshots(symbols)
+        # Demonstrate two ways to pass multiple symbols:
+
+        # Option 1: Comma-separated string
+        symbols_str = "MSFT,AAPL,GOOGL"
+        print(f"Requesting quote snapshots for symbols (comma-string): {symbols_str}")
+        response = await market_data.get_quote_snapshots(symbols_str)
+        print_quote_response(response)
+
+        # Option 2: List of symbols
+        symbols_list = ["AMZN", "META"]
+        print(f"Requesting quote snapshots for symbols (list): {symbols_list}")
+        response = await market_data.get_quote_snapshots(symbols_list)
         print_quote_response(response)
 
     except Exception as e:
@@ -89,8 +114,8 @@ async def main():
         raise
 
     finally:
-        # Properly close client resources
-        await client.close()
+        # Properly close the HTTP client
+        await http_client.close()
 
 
 def print_quote_response(response):

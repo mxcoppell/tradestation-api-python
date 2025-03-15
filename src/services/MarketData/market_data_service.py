@@ -54,7 +54,7 @@ class MarketDataService:
         # Parse the response into the SymbolDetailsResponse model
         return SymbolDetailsResponse.model_validate(response)
 
-    async def get_quote_snapshots(self, symbols: List[str]) -> QuoteSnapshot:
+    async def get_quote_snapshots(self, symbols: Union[str, List[str]]) -> QuoteSnapshot:
         """
         Fetches a full snapshot of the latest Quote for the given Symbols.
         For realtime Quote updates, users should use the Quote Stream endpoint.
@@ -68,7 +68,8 @@ class MarketDataService:
         - Market flags (delayed, halted, etc.)
 
         Args:
-            symbols: List of valid symbols. For example: ["MSFT", "BTCUSD"].
+            symbols: List of valid symbols or a string of comma-separated symbols.
+                    For example: ["MSFT", "BTCUSD"] or "MSFT,BTCUSD".
                     No more than 100 symbols per request.
 
         Returns:
@@ -103,12 +104,26 @@ class MarketDataService:
             print(snapshot.Errors)  # Any errors for invalid symbols
             ```
         """
+        # Convert to list if string
+        if isinstance(symbols, str):
+            # If comma-separated, split it; otherwise, put the single symbol in a list
+            if "," in symbols:
+                symbols_list = symbols.split(",")
+            else:
+                symbols_list = [symbols]
+        else:
+            symbols_list = symbols
+
         # Validate maximum symbols
-        if len(symbols) > 100:
+        if len(symbols_list) > 100:
             raise ValueError("Maximum of 100 symbols allowed per request")
 
         # Join symbols with commas and make the request
-        response = await self.http_client.get(f"/v3/marketdata/quotes/{','.join(symbols)}")
+        response = await self.http_client.get(f"/v3/marketdata/quotes/{','.join(symbols_list)}")
+
+        # Ensure 'Errors' field exists in the response to meet model requirements
+        if "Errors" not in response:
+            response["Errors"] = []
 
         # Parse the response into the QuoteSnapshot model
         return QuoteSnapshot.model_validate(response)
