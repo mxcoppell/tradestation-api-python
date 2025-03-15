@@ -80,7 +80,7 @@ class TestTradeStationClient:
 
             # Check StreamManager created with correct args
             assert mock_stream_manager_cls.call_count == 1
-            assert mock_stream_manager_cls.call_args[0][0] == mock_http_client
+            assert mock_stream_manager_cls.call_args[0][0] == config
 
             # Check services created with correct args
             assert mock_market_data_cls.call_count == 1
