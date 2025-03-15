@@ -27,15 +27,15 @@ class Quote(BaseModel):
     DailyOpenInterest: str
     High: str
     Low: str
-    High52Week: str
-    High52WeekTimestamp: str
+    High52Week: Optional[str] = None
+    High52WeekTimestamp: Optional[str] = None
     Last: str
     MinPrice: Optional[str] = None
     MaxPrice: Optional[str] = None
     FirstNoticeDate: Optional[str] = None
     LastTradingDate: Optional[str] = None
-    Low52Week: str
-    Low52WeekTimestamp: str
+    Low52Week: Optional[str] = None
+    Low52WeekTimestamp: Optional[str] = None
     MarketFlags: MarketFlags
     NetChange: str
     NetChangePct: str
