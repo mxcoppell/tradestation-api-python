@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames
+from ...ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames, Expirations
 
 
 class MarketDataService:
@@ -144,3 +144,62 @@ class MarketDataService:
 
         # Parse the response into the QuoteSnapshot model
         return QuoteSnapshot.model_validate(response)
+
+    async def get_option_expirations(
+        self, underlying: str, strike_price: Optional[float] = None
+    ) -> Expirations:
+        """
+        Get the available expiration dates for option contracts on the specified underlying symbol.
+        This endpoint returns a list of expiration dates available for option trading, which can be
+        filtered by strike price.
+
+        Args:
+            underlying: The symbol for the underlying security (stock or index).
+                       Must be a valid equity or index symbol. For example: 'AAPL', 'MSFT', 'SPX', etc.
+            strike_price: Optional. The strike price to filter expirations.
+                         Must be a positive number.
+
+        Returns:
+            A Promise that resolves to an Expirations object containing:
+            - Expirations: Array of expiration date objects, each with:
+              - Date: The expiration date in ISO8601 format
+              - Type: The type of expiration (Monthly, Weekly, Quarterly)
+
+        Raises:
+            ValueError: If the underlying symbol is not provided
+            ValueError: If the strike price is not a positive number
+            Exception: If the request fails due to network issues
+            Exception: If the request fails due to invalid authentication
+
+        Example:
+            ```python
+            # Get all expirations for AAPL
+            expirations = await market_data.get_option_expirations('AAPL')
+            print(expirations.Expirations)
+            # [
+            #   { "Date": "2024-01-19T00:00:00Z", "Type": "Monthly" },
+            #   { "Date": "2024-01-26T00:00:00Z", "Type": "Weekly" },
+            #   { "Date": "2024-02-16T00:00:00Z", "Type": "Monthly" }
+            # ]
+
+            # Get expirations for MSFT at strike price 400
+            msft_expirations = await market_data.get_option_expirations('MSFT', 400)
+            ```
+        """
+        if not underlying:
+            raise ValueError("Underlying symbol is required")
+
+        if strike_price is not None and strike_price <= 0:
+            raise ValueError("Strike price must be a positive number")
+
+        params: Dict[str, Any] = {}
+        if strike_price is not None:
+            params["strikePrice"] = strike_price
+
+        # Make the API request
+        response = await self.http_client.get(
+            f"/v3/marketdata/options/expirations/{underlying}", params=params
+        )
+
+        # Parse the response into the Expirations model
+        return Expirations.model_validate(response)
