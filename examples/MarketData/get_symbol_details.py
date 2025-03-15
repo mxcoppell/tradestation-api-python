@@ -13,7 +13,20 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from src.client.tradestation_client import TradeStationClient
+from src.client.http_client import HttpClient
+from src.utils.stream_manager import WebSocketStream
+from src.services.MarketData.market_data_service import MarketDataService
+
+
+class MinimalStreamManager:
+    """A minimal implementation of StreamManager for this example."""
+
+    def __init__(self):
+        pass
+
+    async def close(self):
+        """Dummy close method."""
+        pass
 
 
 async def main():
@@ -21,8 +34,26 @@ async def main():
     # Load environment variables from .env file
     load_dotenv()
 
-    # Initialize the client using environment variables
-    client = TradeStationClient()
+    # Get environment from env var
+    environment = os.environ.get("ENVIRONMENT", "Simulation")
+    environment = "Simulation" if environment.lower() == "simulation" else "Live"
+
+    # Create config dict
+    config = {
+        "client_id": os.environ.get("CLIENT_ID"),
+        "client_secret": os.environ.get("CLIENT_SECRET"),
+        "refresh_token": os.environ.get("REFRESH_TOKEN"),
+        "environment": environment,
+    }
+
+    # Initialize HTTP client directly
+    http_client = HttpClient(config)
+
+    # Create a minimal stream manager
+    stream_manager = MinimalStreamManager()
+
+    # Initialize MarketDataService directly
+    market_data_service = MarketDataService(http_client, stream_manager)
 
     try:
         print("\n=== Symbol Details API Example ===\n")
@@ -32,7 +63,7 @@ async def main():
         print("---------------------------------")
         symbol = "MSFT"
         print(f"Requesting details for: {symbol}")
-        response = await client.market_data.get_symbol_details(symbol)
+        response = await market_data_service.get_symbol_details([symbol])
         print_symbol_response(response)
 
         # Example 2: Futures Contract
@@ -40,7 +71,7 @@ async def main():
         print("---------------------------------")
         symbol = "ESM24"  # E-mini S&P 500 Future June 2024
         print(f"Requesting details for: {symbol}")
-        response = await client.market_data.get_symbol_details(symbol)
+        response = await market_data_service.get_symbol_details([symbol])
         print_symbol_response(response)
 
         # Example 3: Options Contract
@@ -48,88 +79,64 @@ async def main():
         print("---------------------------------")
         symbol = "TSLA 270115P270"  # Tesla Put Option
         print(f"Requesting details for: {symbol}")
-        response = await client.market_data.get_symbol_details(symbol)
+        response = await market_data_service.get_symbol_details([symbol])
         print_symbol_response(response)
 
-        # Example 4: Continuous Futures Symbol
-        print("\nExample 4: Continuous Futures (@S)")
+        # Example 4: Continuous Future
+        print("\nExample 4: Continuous Future (@ES)")
         print("---------------------------------")
-        symbol = "@S"  # Continuous Soybean Futures
+        symbol = "@ES"  # E-mini S&P 500 Continuous Future
         print(f"Requesting details for: {symbol}")
-        response = await client.market_data.get_symbol_details(symbol)
+        response = await market_data_service.get_symbol_details([symbol])
         print_symbol_response(response)
 
-        # Example 5: Index Symbol
-        print("\nExample 5: Index Symbol ($SPX.X)")
+        # Example 5: Multiple Symbols
+        print("\nExample 5: Multiple Symbols (MSFT, AAPL, GOOGL)")
         print("---------------------------------")
-        symbol = "$SPX.X"  # S&P 500 Index
-        print(f"Requesting details for: {symbol}")
-        response = await client.market_data.get_symbol_details(symbol)
-        print_symbol_response(response)
-
-        # Example 6: Multiple Symbols in One Request
-        print("\nExample 6: Multiple Symbols in One Request")
-        print("---------------------------------")
-        # You can request up to 50 symbols in a single API call
-        symbols = ["MSFT", "ESM24", "TSLA 270115P270", "@S", "$SPX.X"]
-        print(f"Requesting details for multiple symbols: {symbols}")
-        response = await client.market_data.get_symbol_details(symbols)
+        symbols = ["MSFT", "AAPL", "GOOGL"]
+        print(f"Requesting details for: {symbols}")
+        response = await market_data_service.get_symbol_details(symbols)
         print_symbol_response(response)
 
     except Exception as e:
-        print(f"\nError occurred: {e}")
-        raise
-
+        print(f"Error: {e}")
     finally:
-        # Properly close client resources
-        if hasattr(client, "http_client") and hasattr(client.http_client, "close"):
-            await client.http_client.close()
-        if hasattr(client, "stream_manager") and hasattr(client.stream_manager, "close"):
-            await client.stream_manager.close()
+        # Close the HTTP client
+        await http_client.close()
 
 
 def print_symbol_response(response):
-    """Print the symbol details response in a formatted way."""
-    if not hasattr(response, "Symbols") or not response.Symbols:
-        print("No symbols found in the response")
-        return
+    """Print the symbol details response in a human-readable format."""
+    if response.Symbols:
+        for symbol in response.Symbols:
+            print_symbol_details(symbol)
+    else:
+        print("No symbols found in response.")
 
-    print(f"Found {len(response.Symbols)} symbol(s):")
-
-    for symbol in response.Symbols:
-        print(f"\n• {symbol.Symbol} ({symbol.AssetType}):")
-        print_symbol_details(symbol)
-
-    # Print errors if any
-    if hasattr(response, "Errors") and response.Errors:
+    if response.Errors:
         print("\nErrors:")
         for error in response.Errors:
-            print(f"  {error.Symbol}: {error.Message}")
+            print(f"  • {error.Symbol}: {error.Message}")
 
 
 def print_symbol_details(symbol):
     """Print details for a single symbol."""
+    print(f"• {symbol.Symbol} ({symbol.AssetType}):")
     print(f"  Description: {symbol.Description}")
     print(f"  Exchange: {symbol.Exchange}")
+    print(f"  Country: {symbol.Country}")
     print(f"  Currency: {symbol.Currency}")
+    print(f"  Root: {symbol.Root}")
 
-    # Show asset-type specific details
-    if hasattr(symbol, "ExpirationDate") and symbol.ExpirationDate:
-        print(f"  Expiration: {symbol.ExpirationDate}")
+    # Special handling for options
     if hasattr(symbol, "StrikePrice") and symbol.StrikePrice:
         print(f"  Strike Price: {symbol.StrikePrice}")
-    if hasattr(symbol, "OptionType") and symbol.OptionType:
-        print(f"  Option Type: {symbol.OptionType}")
-    if hasattr(symbol, "Root") and symbol.Root:
-        print(f"  Root: {symbol.Root}")
-
-    # Show price formatting info
-    if hasattr(symbol, "PriceFormat") and symbol.PriceFormat:
-        print(
-            f"  Price Format: {symbol.PriceFormat.Format} "
-            f"(increment: {symbol.PriceFormat.Increment})"
-        )
+    if hasattr(symbol, "ExpirationDate") and symbol.ExpirationDate:
+        print(f"  Expiration Date: {symbol.ExpirationDate}")
+    if hasattr(symbol, "ExerciseStyle") and symbol.ExerciseStyle:
+        print(f"  Exercise Style: {symbol.ExerciseStyle}")
 
 
 if __name__ == "__main__":
+    # Run the async main function
     asyncio.run(main())
