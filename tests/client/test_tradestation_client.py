@@ -107,9 +107,9 @@ class TestTradeStationClient:
             client = TradeStationClient(config_lower)
 
             # Check the config was normalized
-            # Extract kwargs from the HttpClient constructor call
-            call_kwargs = mock_http_client.call_args[1]
-            assert call_kwargs["environment"] == "Simulation"
+            # Extract args from the HttpClient constructor call - it should be the first positional arg
+            call_args = mock_http_client.call_args[0]
+            assert call_args[0]["environment"] == "Simulation"
 
     def test_throws_error_when_environment_not_specified(self, config):
         # Create config without environment

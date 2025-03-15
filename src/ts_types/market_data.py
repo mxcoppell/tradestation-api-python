@@ -233,9 +233,9 @@ class MarketDepthParams(BaseModel):
 
 
 # Asset types for symbols
-AssetType = Literal["STOCK", "FUTURE", "STOCKOPTION", "INDEXOPTION", "FOREX", "CRYPTO"]
+AssetType = Literal["STOCK", "FUTURE", "STOCKOPTION", "INDEXOPTION", "FOREX", "CRYPTO", "INDEX"]
 # Option types
-CallPut = Literal["Call", "Put"]
+CallPut = Literal["Call", "Put", "CALL", "PUT"]
 
 
 class PriceFormat(BaseModel):
@@ -247,8 +247,8 @@ class PriceFormat(BaseModel):
     Decimals: Optional[str] = None
     Fraction: Optional[str] = None
     SubFraction: Optional[str] = None
-    IncrementStyle: Literal["Simple"]
-    Increment: str
+    IncrementStyle: Literal["Simple", "Schedule"]
+    Increment: Optional[str] = None
     PointValue: str
 
 

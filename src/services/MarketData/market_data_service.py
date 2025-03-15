@@ -23,12 +23,13 @@ class MarketDataService:
         self.http_client = http_client
         self.stream_manager = stream_manager
 
-    async def get_symbol_details(self, symbols: List[str]) -> SymbolDetailsResponse:
+    async def get_symbol_details(self, symbols: Union[str, List[str]]) -> SymbolDetailsResponse:
         """
         Gets detailed information about one or more symbols.
 
         Args:
-            symbols: List of symbols to get details for
+            symbols: A symbol string or list of symbol strings to get details for.
+                     If a string containing multiple symbols, they should be comma-separated.
 
         Returns:
             SymbolDetailsResponse containing details for each symbol and any errors
@@ -39,8 +40,13 @@ class MarketDataService:
         if not symbols:
             raise ValueError("At least one symbol must be provided")
 
-        # Join symbols with commas for the API request
-        symbols_param = ",".join(symbols)
+        # Handle single string vs list of strings
+        if isinstance(symbols, str):
+            # Already a comma-separated string or single symbol
+            symbols_param = symbols
+        else:
+            # Join symbols list with commas for the API request
+            symbols_param = ",".join(symbols)
 
         # Make the API request - Note: per OpenAPI spec, the endpoint doesn't have a '/details' suffix
         response = await self.http_client.get(f"/v3/marketdata/symbols/{symbols_param}")

@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
 
-from tradestation_api.client.http_client import HttpClient
-from tradestation_api.streaming.stream_manager import StreamManager
-from tradestation_api.ts_types.market_data import SymbolDetailsResponse
+from src.client.http_client import HttpClient
+from src.streaming.stream_manager import StreamManager
+from src.ts_types.market_data import SymbolDetailsResponse
 
 
 class MarketDataService:

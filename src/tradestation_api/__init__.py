@@ -57,10 +57,8 @@ from src.ts_types.brokerage import (
     StreamOrderErrorResponse,
 )
 
-# Services
-from src.services.MarketData.market_data_service import MarketDataService
-from src.services.OrderExecution.order_execution_service import OrderExecutionService
-from src.services.Brokerage.brokerage_service import BrokerageService
+# Remove service imports from here to avoid circular imports
+# Services will be imported after the __all__ declaration
 
 __all__ = [
     # Main client
@@ -107,3 +105,8 @@ __all__ = [
     "OrderExecutionService",
     "BrokerageService",
 ]
+
+# Import services after __all__ declaration to avoid circular imports
+from src.services.MarketData.market_data_service import MarketDataService
+from src.services.OrderExecution.order_execution_service import OrderExecutionService
+from src.services.Brokerage.brokerage_service import BrokerageService

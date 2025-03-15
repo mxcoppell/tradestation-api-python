@@ -169,6 +169,9 @@ class TestHttpClient:
         client._prepare_request = AsyncMock(return_value={"Authorization": "Bearer test-token"})
         client._process_response = AsyncMock()
 
+        # Set response status to 200 so raise_for_status is not called
+        mock_response.status = 200
+
         session_method = getattr(mock_client_session, method_name)
         session_method.return_value.__aenter__.return_value = mock_response
 
@@ -195,7 +198,8 @@ class TestHttpClient:
 
         # Common assertions for all methods
         client._process_response.assert_called_once_with(mock_response, "/test")
-        mock_response.raise_for_status.assert_awaited_once()
+        # Since status is 200, raise_for_status should not be called
+        mock_response.raise_for_status.assert_not_awaited()
         mock_response.json.assert_awaited_once()
         assert result == {"data": "test"}
 

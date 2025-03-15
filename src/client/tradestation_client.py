@@ -4,7 +4,9 @@ import os
 from ..ts_types.config import ClientConfig
 from .http_client import HttpClient
 from ..utils.stream_manager import StreamManager
-from src.services.MarketData.market_data_service import MarketDataService
+
+# Remove this import to avoid circular dependency
+# from src.services.MarketData.market_data_service import MarketDataService
 
 
 class TradeStationClient:
@@ -29,6 +31,11 @@ class TradeStationClient:
             debug: Whether to print debug messages.
         """
         from src.ts_types.config import ClientConfig
+
+        # Import here to avoid circular dependency
+        from src.services.MarketData.market_data_service import MarketDataService
+        from src.services.OrderExecution.order_execution_service import OrderExecutionService
+        from src.services.Brokerage.brokerage_service import BrokerageService
 
         if config is None:
             config = {}
@@ -57,8 +64,9 @@ class TradeStationClient:
             environment = "Simulation" if environment.lower() == "simulation" else "Live"
             config_dict["environment"] = environment
         elif config_dict.get("environment"):
-            # Environment is already in config_dict (and normalized if from ClientConfig)
-            pass
+            # Normalize environment in config_dict to proper case
+            env = config_dict["environment"]
+            config_dict["environment"] = "Simulation" if env.lower() == "simulation" else "Live"
         else:
             env = os.environ.get("ENVIRONMENT")
             if not env:
@@ -66,14 +74,15 @@ class TradeStationClient:
                     "Environment must be specified either in config or ENVIRONMENT env var"
                 )
             # Normalize environment to proper case
-            environment = "Simulation" if env.lower() == "simulation" else "Live"
-            config_dict["environment"] = environment
+            config_dict["environment"] = "Simulation" if env.lower() == "simulation" else "Live"
 
         self.http_client = HttpClient(config_dict, debug=debug)
-        self.stream_manager = StreamManager(config_dict, debug=debug)
+        self.stream_manager = StreamManager(self.http_client, debug=debug)
 
         # Initialize services
         self.market_data = MarketDataService(self.http_client, self.stream_manager)
+        self.order_execution = OrderExecutionService(self.http_client, self.stream_manager)
+        self.brokerage = BrokerageService(self.http_client, self.stream_manager)
 
     def get_refresh_token(self) -> Optional[str]:
         """

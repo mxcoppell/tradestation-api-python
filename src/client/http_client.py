@@ -139,7 +139,7 @@ class HttpClient:
                 if response.status >= 400:
                     error_text = await response.text()
                     self._debug_print(f"Error response: {error_text}")
-                    response.raise_for_status()  # This will raise an appropriate HTTPError
+                    await response.raise_for_status()  # This will raise an appropriate HTTPError
 
                 # Get JSON response
                 return await response.json()
@@ -147,16 +147,13 @@ class HttpClient:
             self._debug_print(f"Request error: {str(e)}")
             raise
 
-    async def post(
-        self, url: str, data: Any = None, params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    async def post(self, url: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Make a POST request to the specified endpoint.
 
         Args:
             url: The endpoint URL
-            data: Request body data
-            params: Query parameters
+            data: JSON body to send
 
         Returns:
             Response data as dictionary
@@ -165,21 +162,38 @@ class HttpClient:
         headers = await self._prepare_request(url)
 
         full_url = f"{self.base_url}{url}"
-        async with session.post(full_url, json=data, params=params, headers=headers) as response:
-            await self._process_response(response, url)
-            await response.raise_for_status()
-            return await response.json()
 
-    async def put(
-        self, url: str, data: Any = None, params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        # Debug print
+        self._debug_print(f"Making POST request to: {full_url}")
+        self._debug_print(f"Data: {data}")
+
+        try:
+            async with session.post(full_url, json=data, headers=headers) as response:
+                # Debug print
+                self._debug_print(f"Response status: {response.status}")
+
+                # Process response headers for rate limiting
+                await self._process_response(response, url)
+
+                # Handle HTTP errors
+                if response.status >= 400:
+                    error_text = await response.text()
+                    self._debug_print(f"Error response: {error_text}")
+                    await response.raise_for_status()  # This will raise an appropriate HTTPError
+
+                # Get JSON response
+                return await response.json()
+        except Exception as e:
+            self._debug_print(f"Request error: {str(e)}")
+            raise
+
+    async def put(self, url: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Make a PUT request to the specified endpoint.
 
         Args:
             url: The endpoint URL
-            data: Request body data
-            params: Query parameters
+            data: JSON body to send
 
         Returns:
             Response data as dictionary
@@ -188,18 +202,37 @@ class HttpClient:
         headers = await self._prepare_request(url)
 
         full_url = f"{self.base_url}{url}"
-        async with session.put(full_url, json=data, params=params, headers=headers) as response:
-            await self._process_response(response, url)
-            await response.raise_for_status()
-            return await response.json()
 
-    async def delete(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        # Debug print
+        self._debug_print(f"Making PUT request to: {full_url}")
+        self._debug_print(f"Data: {data}")
+
+        try:
+            async with session.put(full_url, json=data, headers=headers) as response:
+                # Debug print
+                self._debug_print(f"Response status: {response.status}")
+
+                # Process response headers for rate limiting
+                await self._process_response(response, url)
+
+                # Handle HTTP errors
+                if response.status >= 400:
+                    error_text = await response.text()
+                    self._debug_print(f"Error response: {error_text}")
+                    await response.raise_for_status()  # This will raise an appropriate HTTPError
+
+                # Get JSON response
+                return await response.json()
+        except Exception as e:
+            self._debug_print(f"Request error: {str(e)}")
+            raise
+
+    async def delete(self, url: str) -> Dict[str, Any]:
         """
         Make a DELETE request to the specified endpoint.
 
         Args:
             url: The endpoint URL
-            params: Query parameters
 
         Returns:
             Response data as dictionary
@@ -208,10 +241,29 @@ class HttpClient:
         headers = await self._prepare_request(url)
 
         full_url = f"{self.base_url}{url}"
-        async with session.delete(full_url, params=params, headers=headers) as response:
-            await self._process_response(response, url)
-            await response.raise_for_status()
-            return await response.json()
+
+        # Debug print
+        self._debug_print(f"Making DELETE request to: {full_url}")
+
+        try:
+            async with session.delete(full_url, headers=headers) as response:
+                # Debug print
+                self._debug_print(f"Response status: {response.status}")
+
+                # Process response headers for rate limiting
+                await self._process_response(response, url)
+
+                # Handle HTTP errors
+                if response.status >= 400:
+                    error_text = await response.text()
+                    self._debug_print(f"Error response: {error_text}")
+                    await response.raise_for_status()  # This will raise an appropriate HTTPError
+
+                # Get JSON response
+                return await response.json()
+        except Exception as e:
+            self._debug_print(f"Request error: {str(e)}")
+            raise
 
     async def create_stream(
         self, url: str, params: Optional[Dict[str, Any]] = None
