@@ -19,7 +19,6 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 from src.client.tradestation_client import TradeStationClient
-from src.ts_types.config import ClientConfig
 
 
 async def main():
@@ -37,17 +36,9 @@ async def main():
             print("Please check your .env file or set these variables manually.")
             return 1
 
-        # Create client configuration from environment variables
-        config = ClientConfig(
-            client_id=os.getenv("CLIENT_ID", ""),
-            client_secret=os.getenv("CLIENT_SECRET", ""),
-            redirect_uri=os.getenv("REDIRECT_URI", "https://example.com/callback"),  # Use a default if not provided
-            refresh_token=os.getenv("REFRESH_TOKEN", ""),
-            environment=os.getenv("ENVIRONMENT", "Simulation"),
-        )
-
-        # Create TradeStation client
-        client = TradeStationClient(config)
+        # Create TradeStation client using the simple form
+        # This automatically loads credentials from environment variables
+        client = TradeStationClient()
 
         try:
             # Example 1: Get daily bars for the last 5 days
