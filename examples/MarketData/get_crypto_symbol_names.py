@@ -14,20 +14,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from src.client.http_client import HttpClient
-from src.utils.stream_manager import WebSocketStream
-from src.services.MarketData.market_data_service import MarketDataService
-
-
-class MinimalStreamManager:
-    """A minimal implementation of StreamManager for this example."""
-
-    def __init__(self):
-        pass
-
-    async def close(self):
-        """Dummy close method."""
-        pass
+from src.client.tradestation_client import TradeStationClient
 
 
 async def main():
@@ -35,32 +22,14 @@ async def main():
     # Load environment variables from .env file
     load_dotenv()
 
-    # Get environment from env var
-    environment = os.environ.get("ENVIRONMENT", "Simulation")
-    environment = "Simulation" if environment.lower() == "simulation" else "Live"
-
-    # Create config dict
-    config = {
-        "client_id": os.environ.get("CLIENT_ID"),
-        "client_secret": os.environ.get("CLIENT_SECRET"),
-        "refresh_token": os.environ.get("REFRESH_TOKEN"),
-        "environment": environment,
-    }
-
-    # Initialize HTTP client directly
-    http_client = HttpClient(config)
-
-    # Create a minimal stream manager
-    stream_manager = MinimalStreamManager()
-
-    # Initialize MarketDataService directly
-    market_data_service = MarketDataService(http_client, stream_manager)
+    # Create TradeStationClient (configuration loaded from environment variables)
+    client = TradeStationClient()
 
     try:
         print("\n=== Crypto Symbol Names API Example ===\n")
 
         print("Requesting available crypto symbol names...")
-        response = await market_data_service.get_crypto_symbol_names()
+        response = await client.market_data.get_crypto_symbol_names()
 
         # Print the response
         print("\nAvailable Crypto Symbols:")
@@ -83,8 +52,8 @@ async def main():
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        # Close the HTTP client
-        await http_client.close()
+        # Close the client
+        await client.close()
 
 
 if __name__ == "__main__":

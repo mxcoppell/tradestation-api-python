@@ -12,40 +12,20 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from src.client.http_client import HttpClient
-from src.utils.stream_manager import StreamManager
-from src.services.MarketData.market_data_service import MarketDataService
+from src.client.tradestation_client import TradeStationClient
 
 
 async def main():
     # Load environment variables from .env file
     load_dotenv()
 
-    # Get environment from env var
-    environment = os.environ.get("ENVIRONMENT", "Simulation")
-    environment = "Simulation" if environment.lower() == "simulation" else "Live"
-
-    # Create config dict
-    config = {
-        "client_id": os.environ.get("CLIENT_ID"),
-        "client_secret": os.environ.get("CLIENT_SECRET"),
-        "refresh_token": os.environ.get("REFRESH_TOKEN"),
-        "environment": environment,
-    }
-
-    # Initialize HTTP client directly
-    http_client = HttpClient(config)
-
-    # Create a stream manager (not used for option expirations, but required by MarketDataService)
-    stream_manager = StreamManager(config)
-
-    # Initialize MarketDataService directly
-    market_data = MarketDataService(http_client, stream_manager)
+    # Create TradeStationClient (configuration loaded from environment variables)
+    client = TradeStationClient()
 
     try:
         # Get all option expirations for AAPL
         print("\nGetting option expirations for AAPL:")
-        expirations = await market_data.get_option_expirations("AAPL")
+        expirations = await client.market_data.get_option_expirations("AAPL")
 
         # Print the expirations
         print(f"Found {len(expirations.Expirations)} expirations:")
@@ -54,7 +34,7 @@ async def main():
 
         # Get option expirations for MSFT at strike price 400
         print("\nGetting option expirations for MSFT at strike price 400:")
-        msft_expirations = await market_data.get_option_expirations("MSFT", 400)
+        msft_expirations = await client.market_data.get_option_expirations("MSFT", 400)
 
         # Print the expirations
         print(f"Found {len(msft_expirations.Expirations)} expirations:")
@@ -64,8 +44,8 @@ async def main():
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        # Close the HTTP client
-        await http_client.close()
+        # Close the client
+        await client.close()
 
 
 if __name__ == "__main__":
