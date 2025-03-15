@@ -19,14 +19,8 @@ async def main():
     # Load environment variables from .env file
     load_dotenv()
 
-    # Get environment from env var
-    environment = os.environ.get("ENVIRONMENT", "Simulation")
-    environment = "Simulation" if environment.lower() == "simulation" else "Live"
-
-    # Create TradeStationClient with environment variables
-    client = TradeStationClient(
-        refresh_token=os.environ.get("REFRESH_TOKEN"), environment=environment
-    )
+    # Create TradeStationClient (configuration loaded from environment variables)
+    client = TradeStationClient()
 
     try:
         # Get all option expirations for AAPL
