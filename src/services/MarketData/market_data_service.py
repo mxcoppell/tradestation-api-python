@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot
+from ...ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames
 
 
 class MarketDataService:
@@ -53,6 +53,23 @@ class MarketDataService:
 
         # Parse the response into the SymbolDetailsResponse model
         return SymbolDetailsResponse.model_validate(response)
+
+    async def get_crypto_symbol_names(self) -> SymbolNames:
+        """
+        Fetches crypto Symbol Names for all available symbols, i.e., BTCUSD, ETHUSD, LTCUSD and BCHUSD.
+        Note that while data can be obtained for these symbols, they cannot be traded.
+
+        Returns:
+            SymbolNames containing a list of available crypto symbol names
+
+        Raises:
+            Exception: If the API request fails
+        """
+        # Make the API request
+        response = await self.http_client.get("/v3/marketdata/symbollists/cryptopairs/symbolnames")
+
+        # Parse the response into the SymbolNames model
+        return SymbolNames.model_validate(response)
 
     async def get_quote_snapshots(self, symbols: Union[str, List[str]]) -> QuoteSnapshot:
         """
@@ -116,7 +133,7 @@ class MarketDataService:
 
         # Validate maximum symbols
         if len(symbols_list) > 100:
-            raise ValueError("Maximum of 100 symbols allowed per request")
+            raise ValueError("Too many symbols")
 
         # Join symbols with commas and make the request
         response = await self.http_client.get(f"/v3/marketdata/quotes/{','.join(symbols_list)}")

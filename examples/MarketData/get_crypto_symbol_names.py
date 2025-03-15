@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 from src.client.http_client import HttpClient
 from src.utils.stream_manager import WebSocketStream
-from src.tradestation_api.services.MarketData.market_data_service import MarketDataService
+from src.services.MarketData.market_data_service import MarketDataService
 
 
 class MinimalStreamManager:

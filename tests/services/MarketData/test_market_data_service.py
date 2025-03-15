@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.tradestation_api.services.MarketData.market_data_service import MarketDataService
+from src.services.MarketData.market_data_service import MarketDataService
 from src.ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames
 
 
