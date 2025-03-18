@@ -148,7 +148,6 @@ For each implemented feature:
 
 1. After your PR is approved and merged, the issue will be closed automatically
 2. If not closed automatically, update the issue with a comment linking to the merged PR
-3. Set the issue status to "Closed"
 
 ## Troubleshooting Common Issues
 
