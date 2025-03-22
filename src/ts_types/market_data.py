@@ -563,13 +563,17 @@ class Expirations(BaseModel):
 
 class RiskRewardLeg(BaseModel):
     """
-    Provides information about one leg of a potential option spread trade.
+    Represents a leg in an option spread for risk/reward analysis.
     """
-
+    # The option symbol (e.g., 'AAPL 240119C150')
     Symbol: str
+    # Position ratio (positive for long, negative for short)
     Ratio: int
+    # Option's opening price
     OpenPrice: str
+    # Target price for profit taking
     TargetPrice: str
+    # Stop price for loss protection
     StopPrice: str
 
 
@@ -577,8 +581,9 @@ class RiskRewardAnalysisInput(BaseModel):
     """
     Provides the required information to analyze the risk vs. reward of a potential option spread trade.
     """
-
+    # The current price of the spread
     SpreadPrice: str
+    # Array of legs in the option spread
     Legs: List[RiskRewardLeg]
 
 
@@ -586,12 +591,17 @@ class RiskRewardAnalysis(BaseModel):
     """
     Result of analyzing the risk vs. reward of a potential option spread trade.
     """
-
+    # The current price of the spread
     SpreadPrice: str
+    # Maximum potential gain from the spread
     MaxGain: str
+    # Maximum potential loss from the spread
     MaxLoss: str
+    # Risk/Reward ratio (higher is better)
     RiskRewardRatio: str
+    # Estimated commission costs
     Commission: str
+    # The legs of the spread with their individual metrics
     Legs: List[RiskRewardLeg]
 
 
