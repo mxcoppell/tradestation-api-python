@@ -313,3 +313,78 @@ class MarketDataService:
 
         # Parse the response into the BarsResponse model
         return BarsResponse.model_validate(response)
+
+    async def get_option_risk_reward(self, analysis: Union[Dict[str, Any], "RiskRewardAnalysisInput"]) -> "RiskRewardAnalysis":
+        """
+        Calculates risk and reward metrics for an option spread strategy.
+        
+        This endpoint calculates key risk/reward metrics for one or more option legs, including:
+        - Maximum profit potential
+        - Maximum loss potential
+        - Risk/Reward ratio
+        - Commission costs
+        
+        Args:
+            analysis: A RiskRewardAnalysisInput object or dict containing:
+                     - SpreadPrice: The current price of the spread
+                     - Legs: Array of legs, each with:
+                       - Symbol: Option symbol string
+                       - Ratio: Position ratio (positive for long, negative for short)
+                       - OpenPrice: Option's opening price
+                       - TargetPrice: Target price for profit taking
+                       - StopPrice: Stop price for loss protection
+        
+        Returns:
+            A RiskRewardAnalysis object containing the risk/reward metrics
+        
+        Raises:
+            ValueError: If no legs are provided
+            Exception: If the request fails due to network issues or invalid authentication
+            Exception: If the API returns an error (e.g., invalid symbols, expiration date mismatch)
+        
+        Example:
+            ```python
+            # Analyze a vertical call spread
+            analysis = await market_data.get_option_risk_reward({
+                "SpreadPrice": "0.24",
+                "Legs": [
+                    {
+                        "Symbol": "AAPL 240119C150",
+                        "Ratio": 1,
+                        "OpenPrice": "3.50",
+                        "TargetPrice": "5.00",
+                        "StopPrice": "2.00"
+                    },
+                    {
+                        "Symbol": "AAPL 240119C152.5",
+                        "Ratio": -1,
+                        "OpenPrice": "2.00",
+                        "TargetPrice": "1.00",
+                        "StopPrice": "3.00"
+                    }
+                ]
+            })
+            
+            # Access the risk/reward metrics
+            print(f"Max Gain: {analysis.MaxGain}")
+            print(f"Max Loss: {analysis.MaxLoss}")
+            print(f"Risk/Reward Ratio: {analysis.RiskRewardRatio}")
+            ```
+        """
+        # Validate legs
+        if not analysis.get("Legs") or (hasattr(analysis, "Legs") and not analysis.Legs):
+            raise ValueError("At least one leg is required")
+        
+        # Make the API request
+        response = await self.http_client.post(
+            "/v3/marketdata/options/riskreward",
+            data=analysis
+        )
+        
+        # Check for errors in the response
+        if "Error" in response:
+            raise Exception(response.get("Message", "Unknown API error"))
+        
+        # Parse the response into the RiskRewardAnalysis model
+        from ...ts_types.market_data import RiskRewardAnalysis
+        return RiskRewardAnalysis.model_validate(response)
