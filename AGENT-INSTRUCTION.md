@@ -165,6 +165,85 @@ This document provides clear guidelines for AI agents working on this project. F
    - Using one of these exact keywords: "Closes", "Fixes", "Resolves" (followed by #issue_number)
    - Example: `Closes #123` or `Fixes #123` or `Resolves #123`
 
+   **RECOMMENDED WORKFLOW FOR PR DESCRIPTIONS:**
+   
+   Follow these exact steps to create a comprehensive PR description:
+   
+   1. First, create the PR with a minimal description:
+   ```bash
+   # Create the PR with minimal information
+   gh pr create --title "Implement [feature] for issue #XXX" --body "Implementation of issue #XXX"
+   # Note the PR number from the response (e.g., #311)
+   ```
+   
+   2. Generate a complete PR description in a temporary markdown file:
+   ```bash
+   # Create a comprehensive PR description file following the requirements below
+   cat > PR_DESCRIPTION.md << EOL
+   # PR: Title of Your PR
+
+   ## Overview
+   [Description of the PR]
+
+   ## What was implemented
+   - [Feature 1]
+   - [Feature 2]
+   
+   ## Implementation details
+   
+   ### Design Approach
+   [Explain design patterns and architecture]
+   
+   ### Files Changed
+   | File | Changes |
+   |------|---------|
+   | \`file1.py\` | [Description of changes] |
+   
+   ### Architecture Flow
+   \`\`\`mermaid
+   sequenceDiagram
+       Client->>+Service: request_data()
+       Service->>+API: make_api_call()
+       API-->>-Service: response
+       Service-->>-Client: processed_data
+   \`\`\`
+   
+   ## Testing
+   [Explain testing approach]
+   
+   ## How to test the changes
+   \`\`\`bash
+   [Test commands]
+   \`\`\`
+   
+   Closes #XXX
+   EOL
+   ```
+   
+   3. Update the PR with the comprehensive description:
+   ```bash
+   # Update the PR with the full description
+   gh pr edit [PR_NUMBER] --body-file PR_DESCRIPTION.md
+   
+   # Verify the PR description was updated
+   gh pr view [PR_NUMBER]
+   
+   # Clean up the temporary file
+   rm PR_DESCRIPTION.md
+   ```
+
+   If the above method fails (some GitHub CLI versions have issues with large markdown files), try:
+   ```bash
+   # Direct approach with the exact PR number
+   cat PR_DESCRIPTION.md | gh pr edit [PR_NUMBER] -F -
+   
+   # Verify the update worked
+   gh pr view [PR_NUMBER] --json body | head -20
+   
+   # Clean up
+   rm PR_DESCRIPTION.md
+   ```
+
 3. **PR Description Requirements**
    - **MANDATORY: The ENTIRE PR description MUST be written in markdown format**
    - What was implemented
