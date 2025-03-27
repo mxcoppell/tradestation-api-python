@@ -159,41 +159,130 @@ This document provides clear guidelines for AI agents working on this project. F
    gh pr create --title "Implement [feature] for issue #XXX" --body "Closes #XXX"
    ```
 
+   **CRITICAL: When creating the PR through GitHub CLI or web interface, you MUST include "Closes #XXX" or "Fixes #XXX" at the BOTTOM of the PR description.** GitHub specifically looks for these keywords followed by the issue number to create the automatic link for closing issues. The issue closing reference MUST be:
+   - On its own line
+   - At the bottom of the PR description
+   - Using one of these exact keywords: "Closes", "Fixes", "Resolves" (followed by #issue_number)
+   - Example: `Closes #123` or `Fixes #123` or `Resolves #123`
+
 3. **PR Description Requirements**
    - What was implemented
    - References to the issue number
    - Any important implementation details
    - How to test the changes
-   - Include "Closes #XXX" to auto-close the issue when merged
    - **Knowledge Base Updates:** Mention if you added new entries to `CONTINUOUS-SELF-LEARNING.md` and summarize what knowledge was captured
-   - **Proper Formatting:**
+   - **Issue Closure Reference:**
+     - Always include the issue closure reference at the BOTTOM of the PR description
+     - Use one of these exact formats: `Closes #XXX`, `Fixes #XXX`, or `Resolves #XXX`
+     - For multiple issues, use a separate line for each: 
+       ```
+       Closes #123
+       Closes #456
+       ```
+     - NEVER include this reference inside other text or a paragraph
+     - NEVER omit the hash symbol (#) before the issue number
+   - **Comprehensive Design Documentation:**
+     - Document architecture decisions and design patterns used
+     - List all files created or modified and explain the changes
+     - Highlight any significant algorithmic choices or optimizations
+     - Explain any deviations from the TypeScript implementation (if applicable)
+     - Document any performance considerations or tradeoffs
+   - **Testing Documentation:**
+     - Detail test coverage metrics and approach
+     - Explain the testing strategy for complex logic
+     - Document edge cases that were covered in tests
+     - List any areas that might need additional testing in the future
+   - **Mermaid Diagrams:**
+     - Include Mermaid diagrams when implementing complex features
+     - Use sequence diagrams to illustrate the flow of API calls and data
+     - Use class diagrams for new class structures or significant changes
+     - Use flowcharts to explain complex logic or decision trees
+     - Example Mermaid diagram syntax:
+       ```markdown
+       ```mermaid
+       sequenceDiagram
+           Client->>+Service: request_data()
+           Service->>+API: make_api_call()
+           API-->>-Service: response
+           Service-->>-Client: processed_data
+       ```
+       ```
+   - **Proper Markdown Formatting:**
      - Use Markdown formatting to make the PR description readable and professional
      - Use headings (##) for main sections
      - Use bullet points (- or *) for lists of items
      - Use backticks (\`) for inline code and triple backticks (\`\`\`) for code blocks
      - Specify the language after the opening triple backticks for syntax highlighting (e.g., \`\`\`python)
      - Use blank lines between sections for better readability
+     - Use tables when comparing or listing multiple items with properties
+     - Use blockquotes (>) for emphasizing important notes or warnings
+     - Use horizontal rules (---) to separate major sections
    - **Example of a well-formatted PR description:**
      ```markdown
+     # PR: Implement Quote Snapshots Feature
+
+     ## Overview
+     This PR implements the `get_quote_snapshots` method in the MarketDataService class, allowing users to fetch current quote data for specified symbols.
+
      ## What was implemented
-     - Feature X that does Y
-     - Improved Z functionality
-     
+     - `get_quote_snapshots` method in MarketDataService
+     - Quote response data models and type definitions
+     - Error handling for invalid symbols and API failures
+     - Comprehensive unit tests
+
      ## Implementation details
-     - Used A approach for better performance
-     - Integrated with B system
-     
+
+     ### Design Approach
+     The implementation follows the repository pattern with clean separation between:
+     - Public API methods
+     - Internal API request formatting
+     - Response parsing and validation
+     - Error handling
+
+     ### Files Changed
+     | File | Changes |
+     |------|---------|
+     | `src/services/MarketData/market_data_service.py` | Added `get_quote_snapshots` method |
+     | `src/models/quote.py` | Created new Quote and QuoteSnapshot models |
+     | `tests/services/MarketData/test_quote_snapshots.py` | Added unit tests |
+
+     ### Architecture Flow
+     ```mermaid
+     sequenceDiagram
+         Client->>+MarketDataService: get_quote_snapshots(symbols)
+         MarketDataService->>+ApiClient: make_request(endpoint, params)
+         ApiClient->>+TradeStationAPI: HTTP Request
+         TradeStationAPI-->>-ApiClient: JSON Response
+         ApiClient-->>-MarketDataService: Parsed Response
+         MarketDataService->>MarketDataService: Transform to Quote models
+         MarketDataService-->>-Client: QuoteSnapshot objects
+     ```
+
+     ## Testing
+     - Unit tests cover successful API responses
+     - Mock tests for error conditions (invalid symbols, API failure)
+     - Edge cases tested: empty symbol list, mixed valid/invalid symbols
+
      ## How to test the changes
      1. Run the following command:
      ```bash
-     poetry run pytest tests/path/to/tests.py
+     poetry run pytest tests/services/MarketData/test_quote_snapshots.py -v
+     ```
+
+     2. For manual testing:
+     ```python
+     from tradestation import TradeStation
+     
+     ts = TradeStation()
+     quotes = await ts.market_data.get_quote_snapshots(["MSFT", "AAPL"])
+     print(quotes)
      ```
      
-     2. Verify that all tests pass
-     
      ## Knowledge Base Updates
-     - Added new pattern for handling streaming data
-     - Documented API rate limiting behavior
+     - Added documentation about TradeStation API quote endpoints rate limiting
+     - Captured pattern for handling paginated responses
+     
+     > Note: Special attention was given to error handling to ensure graceful degradation when some symbols are invalid.
      
      Closes #123
      ```
