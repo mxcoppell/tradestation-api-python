@@ -337,6 +337,19 @@ This document provides clear guidelines for AI agents working on this project. F
    - Check the TradeStation API documentation for any changes
    - Look at existing implementations for patterns to follow
 
+4. **Avoiding Command Blocking**
+   - When running shell commands that might enter interactive mode or wait indefinitely for input, use the `timeout` command to prevent blocking:
+   ```bash
+   # Example: Limit command execution to 5 seconds
+   timeout 5 tail -f /path/to/file
+   
+   # Example: Limit a potentially blocking API call to 10 seconds
+   timeout 10 curl -X GET https://api.example.com/stream
+   ```
+   - This ensures the command will exit after the specified time period
+   - Adjust the timeout duration based on the expected command completion time
+   - For commands that should continue running but you need to monitor, consider redirecting output to a file instead
+
 ## Continuous Self-Learning
 
 1. **Knowledge Capture**
