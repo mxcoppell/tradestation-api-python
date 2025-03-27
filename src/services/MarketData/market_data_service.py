@@ -12,6 +12,7 @@ from ...ts_types.market_data import (
     Strikes,
     RiskRewardAnalysisInput,
     RiskRewardAnalysis,
+    OptionQuoteParams,
 )
 from ...utils.websocket_stream import WebSocketStream
 
@@ -941,5 +942,182 @@ class MarketDataService:
         return await self.stream_manager.create_stream(
             f"/v3/marketdata/stream/options/chains/{underlying}",
             params,
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        )
+
+    async def stream_option_quotes(self, params: OptionQuoteParams) -> WebSocketStream:
+        """
+        Stream quotes for option spreads (multi-leg strategies).
+        A maximum of 10 concurrent streams is allowed.
+
+        For options calculations, the WebAPI uses the following:
+        - 90 days for historical volatility of the underlying
+        - Bjerksund and Stensland option pricing model
+        - Ask price for price of the option
+
+        Args:
+            params: Parameters for the option quote stream:
+                legs: List of legs to include in the spread. Each leg requires:
+                    Symbol: Option symbol in format "UNDERLYING YYMMDDCSTRIKE" or "UNDERLYING YYMMDDPSTRIKE"
+                          (e.g., "MSFT 240119C400" for a MSFT call at $400 expiring Jan 19, 2024)
+                    Ratio: Optional. Position ratio (positive for long, negative for short). Default: 1
+                riskFreeRate: Optional. The theoretical rate of return of an investment with zero risk.
+                              The percentage rate should be specified as a decimal value between 0 and 1.
+                              For example, to use 4.25% for the rate, pass in 0.0425.
+                enableGreeks: Optional. Whether to include Greeks calculations in the response. Default: True
+
+        Returns:
+            A WebSocketStream that emits:
+            - Spread objects for option quote updates, containing:
+              - Greeks (Delta, Gamma, Theta, Vega, Rho)
+              - Implied Volatility and Standard Deviation
+              - Value Analysis (Intrinsic, Extrinsic, Theoretical)
+              - Probability Analysis (ITM, OTM, Breakeven)
+              - Market Data (Bid, Ask, Last, Volume, Open Interest)
+              - Spread Configuration (Strikes, Legs)
+            - Heartbeat objects every 5 seconds when idle
+            - StreamErrorResponse objects for any errors
+
+        Raises:
+            ValueError: If no legs are provided
+            ValueError: If more than 10 concurrent streams are active
+            ValueError: If the risk-free rate is not between 0 and 1
+            ValueError: If any leg symbol has an invalid format
+            Exception: If the request fails due to network issues
+            Exception: If the request fails due to invalid authentication
+
+        Example:
+            ```python
+            # Example 1: Stream quotes for a butterfly spread
+            butterfly_stream = await market_data.stream_option_quotes(
+                OptionQuoteParams(
+                    legs=[
+                        OptionQuoteLeg(Symbol="MSFT 240119C400", Ratio=1),  # Buy 1 contract
+                        OptionQuoteLeg(Symbol="MSFT 240119C405", Ratio=-2), # Sell 2 contracts
+                        OptionQuoteLeg(Symbol="MSFT 240119C410", Ratio=1)   # Buy 1 contract
+                    ],
+                    enableGreeks=True,
+                    riskFreeRate=0.0425  # 4.25%
+                )
+            )
+
+            # Example 2: Stream quotes for a vertical spread
+            vertical_stream = await market_data.stream_option_quotes(
+                OptionQuoteParams(
+                    legs=[
+                        OptionQuoteLeg(Symbol="SPY 240119C470", Ratio=1),  # Buy 1 contract
+                        OptionQuoteLeg(Symbol="SPY 240119C475", Ratio=-1)  # Sell 1 contract
+                    ],
+                    enableGreeks=True
+                )
+            )
+
+            # Example 3: Stream quotes for a straddle
+            straddle_stream = await market_data.stream_option_quotes(
+                OptionQuoteParams(
+                    legs=[
+                        OptionQuoteLeg(Symbol="AAPL 240119C190", Ratio=1),  # Buy 1 call
+                        OptionQuoteLeg(Symbol="AAPL 240119P190", Ratio=1)   # Buy 1 put
+                    ]
+                )
+            )
+
+            # Handle the stream data with detailed processing
+            async def handle_option_data(data):
+                if 'Delta' in data:
+                    # Process option analytics
+                    analytics = {
+                        'greeks': {
+                            'delta': data['Delta'],
+                            'gamma': data['Gamma'],
+                            'theta': data['Theta'],
+                            'vega': data['Vega'],
+                            'rho': data['Rho']
+                        },
+                        'volatility': {
+                            'implied': data['ImpliedVolatility'],
+                            'standardDev': data['StandardDeviation']
+                        },
+                        'probabilities': {
+                            'itm': {
+                                'current': data['ProbabilityITM'],
+                                'withIV': data['ProbabilityITM_IV']
+                            },
+                            'otm': {
+                                'current': data['ProbabilityOTM'],
+                                'withIV': data['ProbabilityOTM_IV']
+                            },
+                            'breakeven': {
+                                'current': data['ProbabilityBE'],
+                                'withIV': data['ProbabilityBE_IV']
+                            }
+                        },
+                        'value': {
+                            'intrinsic': data['IntrinsicValue'],
+                            'extrinsic': data['ExtrinsicValue'],
+                            'theoretical': {
+                                'current': data['TheoreticalValue'],
+                                'withIV': data['TheoreticalValue_IV']
+                            }
+                        },
+                        'market': {
+                            'last': data['Last'],
+                            'bid': data['Bid'],
+                            'ask': data['Ask'],
+                            'volume': data['Volume'],
+                            'openInterest': data['DailyOpenInterest']
+                        }
+                    }
+
+                    print('Option Analytics:', analytics)
+                    print('Spread Legs:', data['Legs'])
+                elif 'Heartbeat' in data:
+                    print('Heartbeat:', data['Timestamp'])
+                else:
+                    print('Error:', data.get('Message', 'Unknown error'))
+
+            butterfly_stream.set_callback(handle_option_data)
+
+            # Or use an async for loop
+            async for data in butterfly_stream:
+                # Process the data as needed
+                pass
+            ```
+        """
+        if not params.legs:
+            raise ValueError("At least one leg is required")
+
+        # Validate and transform legs to query parameters
+        query_params: Dict[str, Any] = {
+            "enableGreeks": params.enableGreeks if params.enableGreeks is not None else True
+        }
+
+        # Validate risk free rate format
+        if params.riskFreeRate is not None:
+            if params.riskFreeRate < 0 or params.riskFreeRate > 1:
+                raise ValueError("riskFreeRate must be a decimal value between 0 and 1")
+            query_params["riskFreeRate"] = params.riskFreeRate
+
+        # Validate option symbols format
+        symbol_regex = r"^[A-Z]+\s\d{6}[CP]\d+$"
+        import re
+
+        for leg in params.legs:
+            if not re.match(symbol_regex, leg.Symbol):
+                raise ValueError(
+                    f"Invalid option symbol format: {leg.Symbol}. "
+                    f"Expected format: UNDERLYING YYMMDDCSTRIKE or UNDERLYING YYMMDDPSTRIKE"
+                )
+
+        # Add legs with sequential indices
+        for index, leg in enumerate(params.legs):
+            query_params[f"legs[{index}].Symbol"] = leg.Symbol
+            if leg.Ratio is not None:
+                query_params[f"legs[{index}].Ratio"] = leg.Ratio
+
+        # Create the stream
+        return await self.stream_manager.create_stream(
+            "/v3/marketdata/stream/options/quotes",
+            query_params,
             {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
         )
