@@ -252,7 +252,7 @@ class MarketDataService:
         response = await self.http_client.get("/v3/marketdata/options/spreadtypes")
 
         # Parse the response into the SpreadTypes model
-        return SpreadTypes.model_validate(response.data)
+        return SpreadTypes.model_validate(response)
 
     async def get_bar_history(self, symbol: str, params: Dict[str, Any] = None) -> BarsResponse:
         """

@@ -752,9 +752,7 @@ class TestMarketDataService:
         }
 
         # Configure mock response
-        mock_response = AsyncMock()
-        mock_response.data = mock_response_data
-        http_client_mock.get.return_value = mock_response
+        http_client_mock.get.return_value = mock_response_data
 
         # Call the method
         result = await market_data_service.get_option_spread_types()
@@ -788,9 +786,7 @@ class TestMarketDataService:
         mock_response_data = {"SpreadTypes": []}
 
         # Configure mock
-        mock_response = AsyncMock()
-        mock_response.data = mock_response_data
-        http_client_mock.get.return_value = mock_response
+        http_client_mock.get.return_value = mock_response_data
 
         # Call the method
         result = await market_data_service.get_option_spread_types()
