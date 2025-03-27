@@ -10,6 +10,8 @@ from ...ts_types.market_data import (
     BarsResponse,
     SpreadTypes,
     Strikes,
+    RiskRewardAnalysisInput,
+    RiskRewardAnalysis,
 )
 from ...utils.websocket_stream import WebSocketStream
 
@@ -370,8 +372,8 @@ class MarketDataService:
         return BarsResponse.model_validate(response)
 
     async def get_option_risk_reward(
-        self, analysis: Union[Dict[str, Any], "RiskRewardAnalysisInput"]
-    ) -> "RiskRewardAnalysis":
+        self, analysis: Union[Dict[str, Any], RiskRewardAnalysisInput]
+    ) -> RiskRewardAnalysis:
         """
         Calculates risk and reward metrics for an option spread strategy.
 
@@ -440,8 +442,6 @@ class MarketDataService:
             raise Exception(response.get("Message", "Unknown API error"))
 
         # Parse the response into the RiskRewardAnalysis model
-        from ...ts_types.market_data import RiskRewardAnalysis
-
         return RiskRewardAnalysis.model_validate(response)
 
     async def get_option_strikes(
