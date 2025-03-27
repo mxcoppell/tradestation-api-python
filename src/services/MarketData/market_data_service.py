@@ -157,6 +157,87 @@ class MarketDataService:
         # Parse the response into the QuoteSnapshot model
         return QuoteSnapshot.model_validate(response)
 
+    async def stream_quotes(self, symbols: Union[str, List[str]]) -> WebSocketStream:
+        """
+        Streams Quote changes for one or more symbols.
+
+        This endpoint provides real-time updates for:
+        - Current prices (Last, Ask, Bid)
+        - Daily statistics (Open, High, Low, Close)
+        - Volume information
+        - 52-week high/low data
+        - Market flags (delayed, halted, etc.)
+
+        A heartbeat will be sent after 5 seconds on an idle stream to indicate that the stream is alive.
+
+        Args:
+            symbols: List of valid symbols or a string of comma-separated symbols.
+                    For example: ["MSFT", "BTCUSD"] or "MSFT,BTCUSD".
+                    No more than 100 symbols per request.
+
+        Returns:
+            A WebSocketStream that emits:
+            - QuoteStream objects for quote updates
+            - Heartbeat objects every 5 seconds when idle
+            - StreamErrorResponse objects for any errors
+
+        Raises:
+            ValueError: If more than 100 symbols are requested
+            Exception: If the request fails due to network issues or invalid authentication
+
+        Example:
+            ```python
+            # Get a stream for multiple symbols
+            stream = await market_data.stream_quotes(["MSFT", "BTCUSD"])
+
+            # Set up a callback to process quote updates
+            async def handle_quote_data(data):
+                if 'Ask' in data:
+                    # Handle quote update
+                    print(f"Quote update for {data['Symbol']}: Last: {data['Last']}, Bid: {data['Bid']}, Ask: {data['Ask']}")
+                elif 'Heartbeat' in data:
+                    # Handle heartbeat
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    # Handle error
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+
+            stream.set_callback(handle_quote_data)
+
+            # Or use an async for loop
+            async for data in stream:
+                if 'Ask' in data:
+                    # Handle quote update
+                    print(f"Quote update for {data['Symbol']}")
+                elif 'Heartbeat' in data:
+                    # Handle heartbeat
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    # Handle error
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+            ```
+        """
+        # Convert to list if string
+        if isinstance(symbols, str):
+            # If comma-separated, split it; otherwise, put the single symbol in a list
+            if "," in symbols:
+                symbols_list = symbols.split(",")
+            else:
+                symbols_list = [symbols]
+        else:
+            symbols_list = symbols
+
+        # Validate maximum symbols
+        if len(symbols_list) > 100:
+            raise ValueError("Maximum of 100 symbols allowed per request")
+
+        # Join symbols with commas and create the stream
+        return await self.stream_manager.create_stream(
+            f"/v3/marketdata/stream/quotes/{','.join(symbols_list)}",
+            {},
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        )
+
     async def get_option_expirations(
         self, underlying: str, strike_price: Optional[float] = None
     ) -> Expirations:
