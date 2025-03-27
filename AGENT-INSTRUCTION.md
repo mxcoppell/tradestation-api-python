@@ -160,12 +160,13 @@ This document provides clear guidelines for AI agents working on this project. F
    ```
 
    **CRITICAL: When creating the PR through GitHub CLI or web interface, you MUST include "Closes #XXX" or "Fixes #XXX" at the BOTTOM of the PR description.** GitHub specifically looks for these keywords followed by the issue number to create the automatic link for closing issues. The issue closing reference MUST be:
-   - On its own line
+   - **MUST BE ON ITS OWN SEPARATE LINE with nothing else on that line**
    - At the bottom of the PR description
    - Using one of these exact keywords: "Closes", "Fixes", "Resolves" (followed by #issue_number)
    - Example: `Closes #123` or `Fixes #123` or `Resolves #123`
 
 3. **PR Description Requirements**
+   - **MANDATORY: The ENTIRE PR description MUST be written in markdown format**
    - What was implemented
    - References to the issue number
    - Any important implementation details
@@ -174,6 +175,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - **Issue Closure Reference:**
      - Always include the issue closure reference at the BOTTOM of the PR description
      - Use one of these exact formats: `Closes #XXX`, `Fixes #XXX`, or `Resolves #XXX`
+     - **CRITICAL: Each closure reference MUST be on its own separate line with nothing else on that line**
      - For multiple issues, use a separate line for each: 
        ```
        Closes #123
@@ -192,11 +194,12 @@ This document provides clear guidelines for AI agents working on this project. F
      - Explain the testing strategy for complex logic
      - Document edge cases that were covered in tests
      - List any areas that might need additional testing in the future
-   - **Mermaid Diagrams:**
-     - Include Mermaid diagrams when implementing complex features
+   - **Mermaid Diagrams (MANDATORY):**
+     - You MUST include at least one Mermaid diagram for every PR
      - Use sequence diagrams to illustrate the flow of API calls and data
      - Use class diagrams for new class structures or significant changes
      - Use flowcharts to explain complex logic or decision trees
+     - The diagram MUST accurately represent the implemented functionality
      - Example Mermaid diagram syntax:
        ```markdown
        ```mermaid
@@ -207,8 +210,9 @@ This document provides clear guidelines for AI agents working on this project. F
            Service-->>-Client: processed_data
        ```
        ```
-   - **Proper Markdown Formatting:**
-     - Use Markdown formatting to make the PR description readable and professional
+   - **REQUIRED: Markdown Formatting**
+     - The ENTIRE PR description MUST be written in markdown format without exception
+     - Use markdown formatting to make the PR description readable and professional
      - Use headings (##) for main sections
      - Use bullet points (- or *) for lists of items
      - Use backticks (\`) for inline code and triple backticks (\`\`\`) for code blocks
@@ -295,6 +299,28 @@ This document provides clear guidelines for AI agents working on this project. F
    - Your task is considered complete only after creating the PR
    - You MUST wait for human developers to review and provide feedback
    - Be prepared to address review comments and make requested changes
+
+6. **Clean up temporary files**
+   - After submitting the PR, remove any temporary files created during development
+   - This includes:
+     - Downloaded files used for testing
+     - Generated credentials or tokens not needed for review
+     - Any intermediary output files or logs
+     - Cached data that's not part of the project
+   - Use the following command to check for untracked files:
+     ```bash
+     git status --untracked-files=all
+     ```
+   - Then remove those temporary files:
+     ```bash
+     rm path/to/temporary/file
+     ```
+   - Commit the cleanup if needed:
+     ```bash
+     git add .
+     git commit -m "Clean up temporary files"
+     git push origin feature/issue-XXX-brief-description
+     ```
 
 ## Troubleshooting Common Issues
 
