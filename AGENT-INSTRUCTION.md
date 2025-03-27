@@ -63,11 +63,13 @@ This document provides clear guidelines for AI agents working on this project. F
    - Carefully read the full issue description
    - Study referenced TypeScript files if applicable
    - Follow all implementation guidelines listed in the issue
+   - For each issue, plan both the implementation and its corresponding test files
 
 2. **Study the TypeScript Implementation**
    - Examine the referenced TypeScript files in the issue description
    - Understand the functionality, parameters, return types, and error handling
    - Note any TypeScript-specific patterns that need Python equivalents
+   - Pay attention to how features are separated in the TypeScript codebase
 
 3. **Implementation Guidelines**
    - Faithfully convert TypeScript to Python while using Pythonic patterns
@@ -96,6 +98,9 @@ This document provides clear guidelines for AI agents working on this project. F
 
 1. **Writing Tests**
    - **IMPORTANT: Create a separate test file for each new component or feature**
+     - Each issue should have its own dedicated test file(s)
+     - NEVER add tests for a new feature to an existing test file for a different feature
+     - If implementing a method in `MarketDataService`, create a new test file like `test_your_feature_name.py`
    - Tests for each service, class, or major feature should be in their own dedicated test file
    - Place tests in the appropriate test directory that mirrors the source structure
    - **Test File Organization:**
@@ -109,6 +114,10 @@ This document provides clear guidelines for AI agents working on this project. F
    - Write unit tests for both success and error cases
    - Mock external API calls when appropriate
    - Ensure test coverage for all code paths
+   - **Examples of correct test file organization:**
+     - For issue "Implement get_quote_snapshots": Create `tests/services/MarketData/test_quote_snapshots.py`
+     - For issue "Implement get_positions": Create `tests/services/Brokerage/test_positions.py`
+     - For issue "Implement place_order": Create `tests/services/OrderExecution/test_place_order.py`
 
 2. **Running Tests**
    ```bash
