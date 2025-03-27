@@ -11,6 +11,7 @@ from ...ts_types.market_data import (
     SpreadTypes,
     Strikes,
 )
+from ...utils.websocket_stream import WebSocketStream
 
 
 class MarketDataService:
@@ -507,3 +508,111 @@ class MarketDataService:
 
         # Parse the response into the Strikes model
         return Strikes.model_validate(response)
+
+    async def stream_bars(
+        self, symbol: str, params: Optional[Dict[str, Any]] = None
+    ) -> WebSocketStream:
+        """
+        Stream real-time and historical bars for a given symbol.
+        The stream will first send any historical bars requested via barsback parameter,
+        followed by real-time bars as trades occur.
+
+        The maximum amount of historical bars that can be requested is 57,600.
+        This endpoint uses Server-Sent Events (SSE) to stream data.
+
+        Args:
+            symbol: The valid symbol string to stream bars for.
+            params: Optional parameters for the bar stream
+                interval: Default: 1. Interval that each bar will consist of.
+                         For minute bars, the number of minutes aggregated in a single bar.
+                         For bar units other than minute, value must be 1.
+                         For unit Minute the max allowed Interval is 1440.
+                unit: Default: Daily. The unit of time for each bar interval.
+                      Valid values are: Minute, Daily, Weekly, Monthly.
+                barsback: Default: 1. Number of historical bars to fetch.
+                         Maximum of 57,600 bars allowed.
+                sessiontemplate: US stock market session templates for extended trading hours.
+                                Ignored for non-US equity symbols.
+                                Valid values: USEQPre, USEQPost, USEQPreAndPost, USEQ24Hour, Default.
+
+        Returns:
+            A WebSocketStream that emits Bar objects, Heartbeats, or StreamErrorResponses.
+
+        Raises:
+            ValueError: If more than 57,600 bars are requested
+            ValueError: If the interval is invalid for the specified unit
+            Exception: If the request fails due to network issues or invalid authentication
+
+        Example:
+            ```python
+            # Example 1: Stream 1-minute bars with 100 historical bars
+            minute_stream = await market_data.stream_bars('MSFT', {
+              'unit': 'Minute',
+              'interval': '1',
+              'barsback': 100
+            })
+
+            # Example 2: Stream daily bars with extended hours
+            daily_stream = await market_data.stream_bars('AAPL', {
+              'unit': 'Daily',
+              'sessiontemplate': 'USEQPreAndPost'
+            })
+
+            # Example 3: Stream 5-minute bars for crypto
+            crypto_stream = await market_data.stream_bars('BTCUSD', {
+              'unit': 'Minute',
+              'interval': '5'
+            })
+
+            # Handle the stream data using a callback
+            async def handle_bar_data(data):
+                if 'Close' in data:
+                    # Handle bar data
+                    print(f"Bar: {data['TimeStamp']} - Open: {data['Open']}, High: {data['High']}, Low: {data['Low']}, Close: {data['Close']}")
+                elif 'Heartbeat' in data:
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+
+            stream.set_callback(handle_bar_data)
+
+            # Or use an async for loop
+            async for data in stream:
+                if 'Close' in data:
+                    # Handle bar data
+                    print(f"Bar: {data['TimeStamp']} - Close: {data['Close']}")
+                elif 'Heartbeat' in data:
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+            ```
+        """
+        # Initialize params if not provided
+        if params is None:
+            params = {}
+
+        # Validate interval for non-minute bars
+        if (
+            params.get("unit")
+            and params["unit"] != "Minute"
+            and params.get("interval")
+            and params["interval"] != "1"
+        ):
+            raise ValueError("Interval must be 1 for non-minute bars")
+
+        # Validate interval for minute bars
+        if params.get("unit") == "Minute" and params.get("interval"):
+            interval_num = int(params["interval"])
+            if interval_num > 1440:
+                raise ValueError("Maximum interval for minute bars is 1440")
+
+        # Validate barsback
+        if params.get("barsback") and int(params["barsback"]) > 57600:
+            raise ValueError("Maximum of 57,600 bars allowed per request")
+
+        # Create the stream
+        return await self.stream_manager.create_stream(
+            f"/v3/marketdata/stream/barcharts/{symbol}",
+            params,
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        )
