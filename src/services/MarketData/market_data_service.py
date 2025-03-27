@@ -9,6 +9,7 @@ from ...ts_types.market_data import (
     Expirations,
     BarsResponse,
     SpreadTypes,
+    Strikes,
 )
 
 
@@ -441,3 +442,68 @@ class MarketDataService:
         from ...ts_types.market_data import RiskRewardAnalysis
 
         return RiskRewardAnalysis.model_validate(response)
+
+    async def get_option_strikes(
+        self,
+        underlying: str,
+        expiration: Optional[str] = None,
+        spread_type: Optional[str] = None,
+        options: Optional[Dict[str, str]] = None,
+    ) -> Strikes:
+        """
+        Get the available strike prices for option contracts on the specified underlying symbol.
+        This endpoint returns a list of strike prices available for option trading, which can be
+        filtered by expiration date and spread type.
+
+        Args:
+            underlying: The symbol for the underlying security (stock or index).
+                       Must be a valid equity or index symbol. For example: 'AAPL', 'MSFT', 'SPX', etc.
+            expiration: Optional. The expiration date to filter strikes.
+                       Format: YYYY-MM-DD or ISO8601 (e.g., "2024-01-19" or "2024-01-19T00:00:00Z")
+            spread_type: Optional. The type of spread to get strikes for.
+                        Common values: "Single", "Vertical", "Calendar", "Butterfly", "Condor", etc.
+            options: Optional. Additional options for specific spread types.
+                    Currently supports:
+                    - expiration2: Required for Calendar spreads, specifies the second expiration date.
+
+        Returns:
+            A Strikes object containing:
+            - SpreadType: The name of the spread type
+            - Strikes: Array of strike price arrays. Each inner array represents a valid spread combination.
+                      For example, for a Butterfly spread: [["145", "150", "155"], ["150", "155", "160"]]
+
+        Raises:
+            ValueError: If the underlying symbol is not provided
+            Exception: If the request fails due to network issues
+            Exception: If the request fails due to invalid authentication
+
+        Example:
+            ```python
+            # Get all strikes for AAPL
+            strikes = await market_data.get_option_strikes('AAPL')
+
+            # Get strikes for MSFT options expiring on Jan 19, 2024
+            msft_strikes = await market_data.get_option_strikes('MSFT', '2024-01-19')
+
+            # Get strikes for SPY butterfly spreads expiring on Jan 19, 2024
+            butterfly_strikes = await market_data.get_option_strikes('SPY', '2024-01-19', 'Butterfly')
+            ```
+        """
+        if not underlying:
+            raise ValueError("Underlying symbol is required")
+
+        params: Dict[str, str] = {}
+        if expiration:
+            params["expiration"] = expiration
+        if spread_type:
+            params["spreadType"] = spread_type
+        if spread_type == "Calendar" and options and "expiration2" in options:
+            params["expiration2"] = options["expiration2"]
+
+        # Make the API request
+        response = await self.http_client.get(
+            f"/v3/marketdata/options/strikes/{underlying}", params=params
+        )
+
+        # Parse the response into the Strikes model
+        return Strikes.model_validate(response)

@@ -6,7 +6,6 @@ This document provides clear guidelines for AI agents working on this project. F
 
 1. **Always pick the oldest open issue first**
    - Use GitHub CLI command: `gh issue list --state open --search "sort:created-asc" --limit 50`
-   - If using GitHub MCP tool, search for issues sorted by creation date (ascending)
 
 2. **Check dependencies before proceeding**
    - Examine the "Dependencies" section in the issue description
