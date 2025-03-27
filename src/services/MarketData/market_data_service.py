@@ -772,3 +772,174 @@ class MarketDataService:
             params,
             {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
         )
+
+    async def stream_option_chain(
+        self, underlying: str, params: Optional[Dict[str, Any]] = None
+    ) -> WebSocketStream:
+        """
+        Stream a chain of option spreads for a given underlying symbol, spread type, and expiration.
+        A maximum of 10 concurrent streams is allowed.
+
+        For options calculations, the WebAPI uses the following:
+        - 90 days for historical volatility of the underlying
+        - Bjerksund and Stensland option pricing model
+        - Ask price for price of the option
+
+        The stream provides real-time updates for:
+        - Greeks (Delta, Gamma, Theta, Vega, Rho)
+        - Implied Volatility
+        - Intrinsic and Extrinsic Values
+        - Theoretical Values (current and IV-based)
+        - Probability Analysis (ITM, OTM, Breakeven)
+        - Market Data (Bid, Ask, Last, Volume, Open Interest)
+        - Spread Configuration (Strikes, Legs)
+
+        A heartbeat will be sent after 5 seconds on an idle stream to indicate that the stream is alive.
+
+        Args:
+            underlying: The symbol for the underlying security on which the option contracts are based.
+                       Must be a valid equity or index symbol. For example: 'AAPL', 'MSFT', 'SPX', etc.
+            params: Optional parameters for filtering the option chain
+                expiration: Date on which the option contract expires; must be a valid expiration date.
+                           Defaults to the next contract expiration date.
+                           Format: YYYY-MM-DD or ISO8601 (e.g., "2024-01-19" or "2024-01-19T00:00:00Z")
+                expiration2: Second contract expiration date required for Calendar and Diagonal spreads.
+                            Format: YYYY-MM-DD or ISO8601 (e.g., "2024-01-19" or "2024-01-19T00:00:00Z")
+                strikeProximity: Specifies the number of spreads to display above and below the priceCenter.
+                                Default: 5
+                spreadType: Specifies the name of the spread type to use.
+                           Common values: "Single", "Vertical", "Calendar", "Butterfly", "Condor", "Straddle", "Strangle"
+                           Default: "Single"
+                riskFreeRate: The theoretical rate of return of an investment with zero risk.
+                              Defaults to the current quote for $IRX.X.
+                              The percentage rate should be specified as a decimal value between 0 and 1.
+                              For example, to use 4.25% for the rate, pass in 0.0425.
+                priceCenter: Specifies the strike price center.
+                            Defaults to the last quoted price for the underlying security.
+                strikeInterval: Specifies the desired interval between the strike prices in a spread.
+                               Must be greater than or equal to 1.
+                               A value of 1 uses consecutive strikes; a value of 2 skips one between strikes; and so on.
+                               Default: 1
+                enableGreeks: Specifies whether or not greeks properties are returned.
+                             Default: true
+                strikeRange: Filters the chain by intrinsic value:
+                            - "ITM" (in-the-money): includes only spreads that have an intrinsic value greater than zero
+                            - "OTM" (out-of-the-money): includes only spreads that have an intrinsic value equal to zero
+                            - "All": includes all spreads regardless of intrinsic value
+                            Default: "All"
+                optionType: Filters the spreads by a specific option type.
+                           Valid values are "All", "Call", and "Put".
+                           Default: "All"
+
+        Returns:
+            A WebSocketStream that emits:
+            - Spread objects for option chain updates, containing:
+              - Greeks (Delta, Gamma, Theta, Vega, Rho)
+              - Implied Volatility and Standard Deviation
+              - Value Analysis (Intrinsic, Extrinsic, Theoretical)
+              - Probability Analysis (ITM, OTM, Breakeven)
+              - Market Data (Bid, Ask, Last, Volume, Open Interest)
+              - Spread Configuration (Strikes, Legs)
+            - Heartbeat objects every 5 seconds when idle
+            - StreamErrorResponse objects for any errors
+
+        Raises:
+            ValueError: If more than 10 concurrent streams are active
+            ValueError: If the strike interval is less than 1
+            ValueError: If expiration2 is required but not provided for Calendar/Diagonal spreads
+            ValueError: If the risk-free rate is not between 0 and 1
+            Exception: If the request fails due to network issues
+            Exception: If the request fails due to invalid authentication
+
+        Example:
+            ```python
+            # Example 1: Stream butterfly spreads for AAPL
+            butterfly_stream = await market_data.stream_option_chain('AAPL', {
+              'spreadType': 'Butterfly',
+              'strikeInterval': 5,
+              'expiration': '2024-01-19',
+              'strikeProximity': 3
+            })
+
+            # Example 2: Stream calendar spreads for MSFT
+            calendar_stream = await market_data.stream_option_chain('MSFT', {
+              'spreadType': 'Calendar',
+              'expiration': '2024-01-19',
+              'expiration2': '2024-02-16',
+              'optionType': 'Call',
+              'strikeRange': 'ITM'
+            })
+
+            # Example 3: Stream vertical spreads with custom risk-free rate
+            vertical_stream = await market_data.stream_option_chain('SPY', {
+              'spreadType': 'Vertical',
+              'strikeInterval': 1,
+              'riskFreeRate': 0.0425,  # 4.25%
+              'priceCenter': 475.50,
+              'strikeProximity': 10
+            })
+
+            # Handle the stream data using a callback
+            async def handle_chain_data(data):
+                if 'Delta' in data:
+                    # Handle spread data
+                    print(f"Spread: {data['Strikes']} - Delta: {data['Delta']}, Gamma: {data['Gamma']}")
+                elif 'Heartbeat' in data:
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+
+            chain_stream.set_callback(handle_chain_data)
+
+            # Or use an async for loop
+            async for data in chain_stream:
+                if 'Delta' in data:
+                    # Handle spread data
+                    print(f"Spread: {data['Strikes']}")
+                    print(f"Greeks: Delta={data['Delta']}, Gamma={data['Gamma']}, Theta={data['Theta']}")
+                    print(f"Market: Bid={data['Bid']}, Ask={data['Ask']}, Last={data['Last']}")
+                elif 'Heartbeat' in data:
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+            ```
+        """
+        # Initialize params if not provided
+        if params is None:
+            params = {}
+
+        # Set defaults
+        default_params = {
+            "strikeProximity": 5,
+            "spreadType": "Single",
+            "strikeInterval": 1,
+            "enableGreeks": True,
+            "strikeRange": "All",
+            "optionType": "All",
+        }
+
+        # Use defaults for any missing parameters
+        for key, value in default_params.items():
+            if key not in params:
+                params[key] = value
+
+        # Validate Calendar/Diagonal spread requirements
+        if params.get("spreadType") in ["Calendar", "Diagonal"] and "expiration2" not in params:
+            raise ValueError("expiration2 is required for Calendar and Diagonal spreads")
+
+        # Validate strike interval
+        if params.get("strikeInterval") is not None and int(params["strikeInterval"]) < 1:
+            raise ValueError("strikeInterval must be greater than or equal to 1")
+
+        # Validate risk free rate format
+        if params.get("riskFreeRate") is not None:
+            risk_free_rate = float(params["riskFreeRate"])
+            if risk_free_rate < 0 or risk_free_rate > 1:
+                raise ValueError("riskFreeRate must be a decimal value between 0 and 1")
+
+        # Create the stream
+        return await self.stream_manager.create_stream(
+            f"/v3/marketdata/stream/options/chains/{underlying}",
+            params,
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        )
