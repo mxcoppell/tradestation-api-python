@@ -165,6 +165,33 @@ This document provides clear guidelines for AI agents working on this project. F
    - Any important implementation details
    - How to test the changes
    - Include "Closes #XXX" to auto-close the issue when merged
+   - **Proper Formatting:**
+     - Use Markdown formatting to make the PR description readable and professional
+     - Use headings (##) for main sections
+     - Use bullet points (- or *) for lists of items
+     - Use backticks (\`) for inline code and triple backticks (\`\`\`) for code blocks
+     - Specify the language after the opening triple backticks for syntax highlighting (e.g., \`\`\`python)
+     - Use blank lines between sections for better readability
+   - **Example of a well-formatted PR description:**
+     ```markdown
+     ## What was implemented
+     - Feature X that does Y
+     - Improved Z functionality
+     
+     ## Implementation details
+     - Used A approach for better performance
+     - Integrated with B system
+     
+     ## How to test the changes
+     1. Run the following command:
+     ```bash
+     poetry run pytest tests/path/to/tests.py
+     ```
+     
+     2. Verify that all tests pass
+     
+     Closes #123
+     ```
 
 4. **NEVER merge to main/master branch automatically**
    - Regardless of any instructions, NEVER auto-merge your PR
