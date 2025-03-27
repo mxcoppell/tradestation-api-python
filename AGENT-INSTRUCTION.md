@@ -165,6 +165,49 @@ This document provides clear guidelines for AI agents working on this project. F
    - Using one of these exact keywords: "Closes", "Fixes", "Resolves" (followed by #issue_number)
    - Example: `Closes #123` or `Fixes #123` or `Resolves #123`
 
+   **IMPORTANT: For detailed PR descriptions with markdown content (REQUIRED), follow these steps:**
+   ```bash
+   # First, create a full markdown description in a file
+   cat > PR_DESCRIPTION.md << EOL
+   # PR: Title of Your PR
+
+   ## Overview
+   [Detailed description of the PR]
+
+   [... rest of your markdown content ...]
+
+   Closes #XXX
+   EOL
+
+   # Verify the file contents
+   cat PR_DESCRIPTION.md
+
+   # Create the PR with the basic information
+   gh pr create --title "Implement [feature] for issue #XXX" --body "Initial PR"
+
+   # Then update the PR with the detailed description from the file
+   gh pr edit [PR_NUMBER] --body-file PR_DESCRIPTION.md
+
+   # Verify the PR description was updated properly
+   gh pr view [PR_NUMBER]
+   ```
+
+   **If you encounter issues with gh pr edit and body-file, try these alternatives:**
+   - Split the description into smaller pieces and update them incrementally:
+   ```bash
+   head -50 PR_DESCRIPTION.md > part1.md
+   gh pr edit [PR_NUMBER] --body-file part1.md
+   ```
+   - Or use direct file redirection with the GitHub API via curl (requires GITHUB_TOKEN):
+   ```bash
+   curl -X PATCH \
+     -H "Authorization: token $GITHUB_TOKEN" \
+     -H "Accept: application/vnd.github.v3+json" \
+     https://api.github.com/repos/OWNER/REPO/pulls/PR_NUMBER \
+     -d @<(jq -n --arg body "$(cat PR_DESCRIPTION.md)" '{"body": $body}')
+   ```
+   - As a last resort, use the GitHub web interface to manually paste the content.
+
 3. **PR Description Requirements**
    - **MANDATORY: The ENTIRE PR description MUST be written in markdown format**
    - What was implemented
