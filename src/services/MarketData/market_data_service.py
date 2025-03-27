@@ -616,3 +616,82 @@ class MarketDataService:
             params,
             {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
         )
+
+    async def stream_market_depth_aggregates(
+        self, symbol: str, params: Optional[Dict[str, Any]] = None
+    ) -> WebSocketStream:
+        """
+        Stream real-time aggregated market depth data for a symbol.
+
+        This endpoint provides aggregated market depth data (Level 2) showing all bids and offers
+        at various price points. The data is aggregated by price level, showing total size and
+        participant statistics.
+
+        The stream will continuously send updated market depth data as changes occur in the order book.
+
+        Args:
+            symbol: The valid symbol to stream market depth data for.
+            params: Optional parameters for the market depth stream
+                maxlevels: Default: 20. Maximum number of price levels to return for bids and asks.
+                           Must be between 1 and 100 (inclusive).
+
+        Returns:
+            A WebSocketStream that emits MarketDepthAggregate objects, Heartbeats, or StreamErrorResponses.
+
+        Raises:
+            ValueError: If maxlevels is outside the valid range (1-100)
+            Exception: If the request fails due to network issues or invalid authentication
+
+        Example:
+            ```python
+            # Example 1: Stream market depth with default parameters
+            depth_stream = await market_data.stream_market_depth_aggregates('MSFT')
+
+            # Example 2: Stream market depth with 50 levels
+            depth_stream = await market_data.stream_market_depth_aggregates('AAPL', {
+                'maxlevels': 50
+            })
+
+            # Handle the stream data using a callback
+            async def handle_depth_data(data):
+                if 'Bids' in data and 'Asks' in data:
+                    # Handle market depth data
+                    print(f"Bids: {len(data['Bids'])} levels, Asks: {len(data['Asks'])} levels")
+                    # Print best bid and ask
+                    if data['Bids'] and data['Asks']:
+                        print(f"Best Bid: {data['Bids'][0]['Price']} x {data['Bids'][0]['TotalSize']}")
+                        print(f"Best Ask: {data['Asks'][0]['Price']} x {data['Asks'][0]['TotalSize']}")
+                elif 'Heartbeat' in data:
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+
+            depth_stream.set_callback(handle_depth_data)
+
+            # Or use an async for loop
+            async for data in depth_stream:
+                if 'Bids' in data and 'Asks' in data:
+                    # Handle market depth data
+                    print(f"Bids: {len(data['Bids'])} levels, Asks: {len(data['Asks'])} levels")
+                elif 'Heartbeat' in data:
+                    print(f"Heartbeat: {data['Timestamp']}")
+                else:
+                    print(f"Error: {data.get('Message', 'Unknown error')}")
+            ```
+        """
+        # Initialize params if not provided
+        if params is None:
+            params = {}
+
+        # Validate maxlevels
+        if params.get("maxlevels") is not None:
+            max_levels = int(params["maxlevels"])
+            if max_levels < 1 or max_levels > 100:
+                raise ValueError("maxlevels must be between 1 and 100")
+
+        # Create the stream
+        return await self.stream_manager.create_stream(
+            f"/v3/marketdata/stream/marketdepth/aggregates/{symbol}",
+            params,
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        )
