@@ -2,7 +2,14 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.services.MarketData.market_data_service import MarketDataService
-from src.ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames, Expirations, BarsResponse
+from src.ts_types.market_data import (
+    SymbolDetailsResponse,
+    QuoteSnapshot,
+    SymbolNames,
+    Expirations,
+    BarsResponse,
+    SpreadTypes,
+)
 
 
 @pytest.fixture
@@ -732,15 +739,91 @@ class TestMarketDataService:
             await market_data_service.get_option_expirations("MSFT")
 
     @pytest.mark.asyncio
+    async def test_get_option_spread_types_success(self, market_data_service, http_client_mock):
+        """Test successful retrieval of option spread types."""
+        # Mock response data
+        mock_response_data = {
+            "SpreadTypes": [
+                {"Name": "Single", "StrikeInterval": False, "ExpirationInterval": False},
+                {"Name": "Vertical", "StrikeInterval": True, "ExpirationInterval": False},
+                {"Name": "Calendar", "StrikeInterval": False, "ExpirationInterval": True},
+                {"Name": "Butterfly", "StrikeInterval": True, "ExpirationInterval": False},
+            ]
+        }
+
+        # Configure mock response
+        mock_response = AsyncMock()
+        mock_response.data = mock_response_data
+        http_client_mock.get.return_value = mock_response
+
+        # Call the method
+        result = await market_data_service.get_option_spread_types()
+
+        # Verify the result
+        assert isinstance(result, SpreadTypes)
+        assert len(result.SpreadTypes) == 4
+
+        # Verify specific spread types
+        assert result.SpreadTypes[0].Name == "Single"
+        assert result.SpreadTypes[0].StrikeInterval == False
+        assert result.SpreadTypes[0].ExpirationInterval == False
+
+        assert result.SpreadTypes[1].Name == "Vertical"
+        assert result.SpreadTypes[1].StrikeInterval == True
+        assert result.SpreadTypes[1].ExpirationInterval == False
+
+        assert result.SpreadTypes[2].Name == "Calendar"
+        assert result.SpreadTypes[2].StrikeInterval == False
+        assert result.SpreadTypes[2].ExpirationInterval == True
+
+        # Verify the API call
+        http_client_mock.get.assert_called_once_with("/v3/marketdata/options/spreadtypes")
+
+    @pytest.mark.asyncio
+    async def test_get_option_spread_types_empty_response(
+        self, market_data_service, http_client_mock
+    ):
+        """Test handling of empty spread types response."""
+        # Mock an empty response
+        mock_response_data = {"SpreadTypes": []}
+
+        # Configure mock
+        mock_response = AsyncMock()
+        mock_response.data = mock_response_data
+        http_client_mock.get.return_value = mock_response
+
+        # Call the method
+        result = await market_data_service.get_option_spread_types()
+
+        # Verify the result
+        assert isinstance(result, SpreadTypes)
+        assert len(result.SpreadTypes) == 0
+
+        # Verify the API call
+        http_client_mock.get.assert_called_once_with("/v3/marketdata/options/spreadtypes")
+
+    @pytest.mark.asyncio
+    async def test_get_option_spread_types_network_error(
+        self, market_data_service, http_client_mock
+    ):
+        """Test handling network errors for get_option_spread_types."""
+        # Configure mock to raise an exception
+        http_client_mock.get.side_effect = Exception("Network error")
+
+        # Call the method and expect an exception
+        with pytest.raises(Exception, match="Network error"):
+            await market_data_service.get_option_spread_types()
+
+        # Verify the API call attempt
+        http_client_mock.get.assert_called_once_with("/v3/marketdata/options/spreadtypes")
+
+    @pytest.mark.asyncio
     async def test_get_bar_history_daily(self, market_data_service, http_client_mock):
         """Test getting daily bars."""
         # Arrange
         symbol = "MSFT"
-        params = {
-            "unit": "Daily",
-            "barsback": 5
-        }
-        
+        params = {"unit": "Daily", "barsback": 5}
+
         mock_response = {
             "Bars": [
                 {
@@ -759,7 +842,7 @@ class TestMarketDataService:
                     "UpTicks": 229531,
                     "UpVolume": 22736321,
                     "Epoch": 1705694400000,
-                    "BarStatus": "Closed"
+                    "BarStatus": "Closed",
                 },
                 {
                     "High": "219.52",
@@ -777,11 +860,11 @@ class TestMarketDataService:
                     "UpTicks": 210531,
                     "UpVolume": 19446122,
                     "Epoch": 1705953600000,
-                    "BarStatus": "Closed"
-                }
+                    "BarStatus": "Closed",
+                },
             ]
         }
-        
+
         http_client_mock.get.return_value = mock_response
 
         # Act
@@ -805,12 +888,8 @@ class TestMarketDataService:
         """Test getting minute bars."""
         # Arrange
         symbol = "MSFT"
-        params = {
-            "unit": "Minute",
-            "interval": "5",
-            "barsback": 2
-        }
-        
+        params = {"unit": "Minute", "interval": "5", "barsback": 2}
+
         mock_response = {
             "Bars": [
                 {
@@ -829,7 +908,7 @@ class TestMarketDataService:
                     "UpTicks": 32,
                     "UpVolume": 6345,
                     "Epoch": 1705932000000,
-                    "BarStatus": "Closed"
+                    "BarStatus": "Closed",
                 },
                 {
                     "High": "388.65",
@@ -847,11 +926,11 @@ class TestMarketDataService:
                     "UpTicks": 44,
                     "UpVolume": 8289,
                     "Epoch": 1705932300000,
-                    "BarStatus": "Closed"
-                }
+                    "BarStatus": "Closed",
+                },
             ]
         }
-        
+
         http_client_mock.get.return_value = mock_response
 
         # Act
@@ -879,9 +958,9 @@ class TestMarketDataService:
             "interval": "1",
             "firstdate": "2024-01-22T14:30:00Z",
             "lastdate": "2024-01-22T15:00:00Z",
-            "sessiontemplate": "USEQPreAndPost"
+            "sessiontemplate": "USEQPreAndPost",
         }
-        
+
         mock_response = {
             "Bars": [
                 {
@@ -900,7 +979,7 @@ class TestMarketDataService:
                     "UpTicks": 32,
                     "UpVolume": 6345,
                     "Epoch": 1705931400000,
-                    "BarStatus": "Closed"
+                    "BarStatus": "Closed",
                 },
                 {
                     "High": "388.65",
@@ -918,11 +997,11 @@ class TestMarketDataService:
                     "UpTicks": 44,
                     "UpVolume": 8289,
                     "Epoch": 1705933200000,
-                    "BarStatus": "Closed"
-                }
+                    "BarStatus": "Closed",
+                },
             ]
         }
-        
+
         http_client_mock.get.return_value = mock_response
 
         # Act
@@ -949,11 +1028,8 @@ class TestMarketDataService:
     async def test_get_bar_history_invalid_interval_non_minute(self, market_data_service):
         """Test that an invalid interval for non-minute bars raises a ValueError."""
         # Arrange
-        params = {
-            "unit": "Daily",
-            "interval": "5"
-        }
-        
+        params = {"unit": "Daily", "interval": "5"}
+
         # Act & Assert
         with pytest.raises(ValueError, match="Interval must be 1 for non-minute bars"):
             await market_data_service.get_bar_history("MSFT", params)
@@ -962,11 +1038,8 @@ class TestMarketDataService:
     async def test_get_bar_history_invalid_minute_interval(self, market_data_service):
         """Test that an invalid minute interval raises a ValueError."""
         # Arrange
-        params = {
-            "unit": "Minute",
-            "interval": "1500"  # Exceeds max of 1440
-        }
-        
+        params = {"unit": "Minute", "interval": "1500"}  # Exceeds max of 1440
+
         # Act & Assert
         with pytest.raises(ValueError, match="Maximum interval for minute bars is 1440"):
             await market_data_service.get_bar_history("MSFT", params)
@@ -975,11 +1048,8 @@ class TestMarketDataService:
     async def test_get_bar_history_too_many_bars(self, market_data_service):
         """Test that too many requested intraday bars raises a ValueError."""
         # Arrange
-        params = {
-            "unit": "Minute",
-            "barsback": 60000  # Exceeds max of 57600
-        }
-        
+        params = {"unit": "Minute", "barsback": 60000}  # Exceeds max of 57600
+
         # Act & Assert
         with pytest.raises(ValueError, match="Maximum of 57,600 intraday bars allowed per request"):
             await market_data_service.get_bar_history("MSFT", params)
@@ -988,26 +1058,24 @@ class TestMarketDataService:
     async def test_get_bar_history_mutually_exclusive_params(self, market_data_service):
         """Test that mutually exclusive parameters raise a ValueError."""
         # Arrange
-        params = {
-            "barsback": 10,
-            "firstdate": "2024-01-22T14:30:00Z"
-        }
-        
+        params = {"barsback": 10, "firstdate": "2024-01-22T14:30:00Z"}
+
         # Act & Assert
-        with pytest.raises(ValueError, match="barsback and firstdate parameters are mutually exclusive"):
+        with pytest.raises(
+            ValueError, match="barsback and firstdate parameters are mutually exclusive"
+        ):
             await market_data_service.get_bar_history("MSFT", params)
 
     @pytest.mark.asyncio
     async def test_get_bar_history_deprecated_param(self, market_data_service):
         """Test that deprecated 'startdate' parameter raises a ValueError when used with 'lastdate'."""
         # Arrange
-        params = {
-            "lastdate": "2024-01-22T15:00:00Z",
-            "startdate": "2024-01-22T14:30:00Z"
-        }
-        
+        params = {"lastdate": "2024-01-22T15:00:00Z", "startdate": "2024-01-22T14:30:00Z"}
+
         # Act & Assert
-        with pytest.raises(ValueError, match="lastdate and startdate parameters are mutually exclusive"):
+        with pytest.raises(
+            ValueError, match="lastdate and startdate parameters are mutually exclusive"
+        ):
             await market_data_service.get_bar_history("MSFT", params)
 
     @pytest.mark.asyncio
@@ -1033,11 +1101,11 @@ class TestMarketDataService:
                     "UpTicks": 32,
                     "UpVolume": 6345,
                     "Epoch": 1705932000000,
-                    "BarStatus": "Closed"
+                    "BarStatus": "Closed",
                 }
             ]
         }
-        
+
         http_client_mock.get.return_value = mock_response
 
         # Act

@@ -2,7 +2,14 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...ts_types.market_data import SymbolDetailsResponse, QuoteSnapshot, SymbolNames, Expirations, BarsResponse
+from ...ts_types.market_data import (
+    SymbolDetailsResponse,
+    QuoteSnapshot,
+    SymbolNames,
+    Expirations,
+    BarsResponse,
+    SpreadTypes,
+)
 
 
 class MarketDataService:
@@ -204,6 +211,49 @@ class MarketDataService:
         # Parse the response into the Expirations model
         return Expirations.model_validate(response)
 
+    async def get_option_spread_types(self) -> SpreadTypes:
+        """
+        Get the available spread types for option chains.
+
+        This endpoint returns a list of all available option spread types and their configurations.
+        Each spread type defines whether it uses strike intervals and/or multiple expirations.
+        This information can be used with the GetOptionStrikes and other option chain endpoints.
+
+        Common spread types include:
+        - Single (standard option contract)
+        - Vertical (call/put spread with same expiration, different strikes)
+        - Calendar (same strike, different expirations)
+        - Straddle (call and put with same strike and expiration)
+        - Strangle (call and put with different strikes, same expiration)
+        - Butterfly and Condor (complex spreads with multiple legs)
+
+        Returns:
+            A SpreadTypes object containing:
+            - SpreadTypes: Array of spread type objects, each with:
+              - Name: The name of the spread type (e.g., "Vertical", "Calendar")
+              - StrikeInterval: Whether the spread uses multiple strike prices
+              - ExpirationInterval: Whether the spread uses multiple expiration dates
+
+        Raises:
+            Exception: If the request fails due to network issues
+            Exception: If the request fails due to invalid authentication
+
+        Example:
+            ```python
+            # Get all available option spread types
+            spread_types = await market_data.get_option_spread_types()
+
+            # Print the available spread types and their configurations
+            for st in spread_types.SpreadTypes:
+                print(f"{st.Name}: Uses strike intervals: {st.StrikeInterval}, Uses expiration intervals: {st.ExpirationInterval}")
+            ```
+        """
+        # Make the API request
+        response = await self.http_client.get("/v3/marketdata/options/spreadtypes")
+
+        # Parse the response into the SpreadTypes model
+        return SpreadTypes.model_validate(response.data)
+
     async def get_bar_history(self, symbol: str, params: Dict[str, Any] = None) -> BarsResponse:
         """
         Fetches marketdata bars for the given symbol, interval, and timeframe.
@@ -283,8 +333,12 @@ class MarketDataService:
             params = {}
 
         # Validate interval for non-minute bars
-        if (params.get("unit") and params["unit"] != "Minute" and 
-                params.get("interval") and params["interval"] != "1"):
+        if (
+            params.get("unit")
+            and params["unit"] != "Minute"
+            and params.get("interval")
+            and params["interval"] != "1"
+        ):
             raise ValueError("Interval must be 1 for non-minute bars")
 
         # Validate interval for minute bars
@@ -294,8 +348,7 @@ class MarketDataService:
                 raise ValueError("Maximum interval for minute bars is 1440")
 
         # Validate barsback for intraday
-        if (params.get("unit") == "Minute" and params.get("barsback") and 
-                params["barsback"] > 57600):
+        if params.get("unit") == "Minute" and params.get("barsback") and params["barsback"] > 57600:
             raise ValueError("Maximum of 57,600 intraday bars allowed per request")
 
         # Validate mutually exclusive parameters
@@ -303,27 +356,29 @@ class MarketDataService:
             raise ValueError("barsback and firstdate parameters are mutually exclusive")
 
         if params.get("lastdate") and "startdate" in params:
-            raise ValueError("lastdate and startdate parameters are mutually exclusive. "
-                            "startdate is deprecated, use lastdate instead")
+            raise ValueError(
+                "lastdate and startdate parameters are mutually exclusive. "
+                "startdate is deprecated, use lastdate instead"
+            )
 
         # Make the API request
-        response = await self.http_client.get(
-            f"/v3/marketdata/barcharts/{symbol}", params=params
-        )
+        response = await self.http_client.get(f"/v3/marketdata/barcharts/{symbol}", params=params)
 
         # Parse the response into the BarsResponse model
         return BarsResponse.model_validate(response)
 
-    async def get_option_risk_reward(self, analysis: Union[Dict[str, Any], "RiskRewardAnalysisInput"]) -> "RiskRewardAnalysis":
+    async def get_option_risk_reward(
+        self, analysis: Union[Dict[str, Any], "RiskRewardAnalysisInput"]
+    ) -> "RiskRewardAnalysis":
         """
         Calculates risk and reward metrics for an option spread strategy.
-        
+
         This endpoint calculates key risk/reward metrics for one or more option legs, including:
         - Maximum profit potential
         - Maximum loss potential
         - Risk/Reward ratio
         - Commission costs
-        
+
         Args:
             analysis: A RiskRewardAnalysisInput object or dict containing:
                      - SpreadPrice: The current price of the spread
@@ -333,15 +388,15 @@ class MarketDataService:
                        - OpenPrice: Option's opening price
                        - TargetPrice: Target price for profit taking
                        - StopPrice: Stop price for loss protection
-        
+
         Returns:
             A RiskRewardAnalysis object containing the risk/reward metrics
-        
+
         Raises:
             ValueError: If no legs are provided
             Exception: If the request fails due to network issues or invalid authentication
             Exception: If the API returns an error (e.g., invalid symbols, expiration date mismatch)
-        
+
         Example:
             ```python
             # Analyze a vertical call spread
@@ -364,7 +419,7 @@ class MarketDataService:
                     }
                 ]
             })
-            
+
             # Access the risk/reward metrics
             print(f"Max Gain: {analysis.MaxGain}")
             print(f"Max Loss: {analysis.MaxLoss}")
@@ -374,17 +429,15 @@ class MarketDataService:
         # Validate legs
         if not analysis.get("Legs") or (hasattr(analysis, "Legs") and not analysis.Legs):
             raise ValueError("At least one leg is required")
-        
+
         # Make the API request
-        response = await self.http_client.post(
-            "/v3/marketdata/options/riskreward",
-            data=analysis
-        )
-        
+        response = await self.http_client.post("/v3/marketdata/options/riskreward", data=analysis)
+
         # Check for errors in the response
         if "Error" in response:
             raise Exception(response.get("Message", "Unknown API error"))
-        
+
         # Parse the response into the RiskRewardAnalysis model
         from ...ts_types.market_data import RiskRewardAnalysis
+
         return RiskRewardAnalysis.model_validate(response)
