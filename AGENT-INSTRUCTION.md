@@ -165,48 +165,84 @@ This document provides clear guidelines for AI agents working on this project. F
    - Using one of these exact keywords: "Closes", "Fixes", "Resolves" (followed by #issue_number)
    - Example: `Closes #123` or `Fixes #123` or `Resolves #123`
 
-   **IMPORTANT: For detailed PR descriptions with markdown content (REQUIRED), follow these steps:**
+   **RECOMMENDED WORKFLOW FOR PR DESCRIPTIONS:**
+   
+   Follow these exact steps to create a comprehensive PR description:
+   
+   1. First, create the PR with a minimal description:
    ```bash
-   # First, create a full markdown description in a file
+   # Create the PR with minimal information
+   gh pr create --title "Implement [feature] for issue #XXX" --body "Implementation of issue #XXX"
+   # Note the PR number from the response (e.g., #311)
+   ```
+   
+   2. Generate a complete PR description in a temporary markdown file:
+   ```bash
+   # Create a comprehensive PR description file following the requirements below
    cat > PR_DESCRIPTION.md << EOL
    # PR: Title of Your PR
 
    ## Overview
-   [Detailed description of the PR]
+   [Description of the PR]
 
-   [... rest of your markdown content ...]
-
+   ## What was implemented
+   - [Feature 1]
+   - [Feature 2]
+   
+   ## Implementation details
+   
+   ### Design Approach
+   [Explain design patterns and architecture]
+   
+   ### Files Changed
+   | File | Changes |
+   |------|---------|
+   | \`file1.py\` | [Description of changes] |
+   
+   ### Architecture Flow
+   \`\`\`mermaid
+   sequenceDiagram
+       Client->>+Service: request_data()
+       Service->>+API: make_api_call()
+       API-->>-Service: response
+       Service-->>-Client: processed_data
+   \`\`\`
+   
+   ## Testing
+   [Explain testing approach]
+   
+   ## How to test the changes
+   \`\`\`bash
+   [Test commands]
+   \`\`\`
+   
    Closes #XXX
    EOL
-
-   # Verify the file contents
-   cat PR_DESCRIPTION.md
-
-   # Create the PR with the basic information
-   gh pr create --title "Implement [feature] for issue #XXX" --body "Initial PR"
-
-   # Then update the PR with the detailed description from the file
+   ```
+   
+   3. Update the PR with the comprehensive description:
+   ```bash
+   # Update the PR with the full description
    gh pr edit [PR_NUMBER] --body-file PR_DESCRIPTION.md
-
-   # Verify the PR description was updated properly
+   
+   # Verify the PR description was updated
    gh pr view [PR_NUMBER]
+   
+   # Clean up the temporary file
+   rm PR_DESCRIPTION.md
    ```
 
-   **If you encounter issues with gh pr edit and body-file, try these alternatives:**
-   - Split the description into smaller pieces and update them incrementally:
+   If the above method fails (some GitHub CLI versions have issues with large markdown files), try:
    ```bash
-   head -50 PR_DESCRIPTION.md > part1.md
-   gh pr edit [PR_NUMBER] --body-file part1.md
+   # Direct approach with the exact PR number
+   cat PR_DESCRIPTION.md | gh pr edit [PR_NUMBER] -F -
+   
+   # Verify the update worked
+   gh pr view [PR_NUMBER] --json body | head -20
+   
+   # Clean up
+   rm PR_DESCRIPTION.md
    ```
-   - Or use direct file redirection with the GitHub API via curl (requires GITHUB_TOKEN):
-   ```bash
-   curl -X PATCH \
-     -H "Authorization: token $GITHUB_TOKEN" \
-     -H "Accept: application/vnd.github.v3+json" \
-     https://api.github.com/repos/OWNER/REPO/pulls/PR_NUMBER \
-     -d @<(jq -n --arg body "$(cat PR_DESCRIPTION.md)" '{"body": $body}')
-   ```
-   - As a last resort, use the GitHub web interface to manually paste the content.
 
 3. **PR Description Requirements**
    - **MANDATORY: The ENTIRE PR description MUST be written in markdown format**
