@@ -141,6 +141,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - Include descriptive title and description
    - Reference the issue number in the description
    - Use "Closes #XXX" or "Fixes #XXX" in the PR description to ensure automatic issue closure when merged
+   - **ALWAYS include any updates to `CONTINUOUS-SELF-LEARNING.md` as part of your PR if you've added new knowledge**
 
 2. **PR Submission Steps**
    ```bash
@@ -164,6 +165,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - Any important implementation details
    - How to test the changes
    - Include "Closes #XXX" to auto-close the issue when merged
+   - **Knowledge Base Updates:** Mention if you added new entries to `CONTINUOUS-SELF-LEARNING.md` and summarize what knowledge was captured
    - **Proper Formatting:**
      - Use Markdown formatting to make the PR description readable and professional
      - Use headings (##) for main sections
@@ -188,6 +190,10 @@ This document provides clear guidelines for AI agents working on this project. F
      ```
      
      2. Verify that all tests pass
+     
+     ## Knowledge Base Updates
+     - Added new pattern for handling streaming data
+     - Documented API rate limiting behavior
      
      Closes #123
      ```
@@ -215,6 +221,35 @@ This document provides clear guidelines for AI agents working on this project. F
 3. **API Inconsistencies**
    - Check the TradeStation API documentation for any changes
    - Look at existing implementations for patterns to follow
+
+## Continuous Self-Learning
+
+1. **Knowledge Capture**
+   - Document any new lessons learned during implementation in `CONTINUOUS-SELF-LEARNING.md`
+   - Include code patterns, best practices, and solutions to challenging problems
+   - Document any API quirks or undocumented behavior
+
+2. **Technology Stack Updates**
+   - When discovering new libraries or tools relevant to the project, add them to `CONTINUOUS-SELF-LEARNING.md`
+   - Include version information, use cases, and integration examples
+   - Document any compatibility issues or dependencies
+
+3. **Project Management Knowledge**
+   - Document workflow improvements or process optimizations
+   - Record common pitfalls and their solutions
+   - Track recurring patterns in issue resolution
+
+4. **When to Update the Knowledge Base**
+   - After completing each issue, reflect on what was learned
+   - When discovering a solution that wasn't obvious from documentation
+   - When finding a better way to implement functionality
+   - After resolving complex errors or debugging challenges
+
+5. **When to Reference the Knowledge Base**
+   - **ALWAYS check `CONTINUOUS-SELF-LEARNING.md` before starting work on a new issue**
+   - When implementing similar functionality to previously completed issues
+   - When encountering errors or challenges that might have been solved before
+   - Before proposing new architectural approaches
 
 ## Important Restrictions
 
