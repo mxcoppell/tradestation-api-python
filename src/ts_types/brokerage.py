@@ -136,6 +136,59 @@ class Balances(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
 
+class BODBalanceDetail(BaseModel):
+    """
+    Contains beginning of day balance information that varies according to account type.
+    """
+
+    AccountBalance: Optional[str] = None
+    CashAvailableToWithdraw: Optional[str] = None
+    DayTrades: Optional[str] = None
+    DayTradingMarginableBuyingPower: Optional[str] = None
+    Equity: Optional[str] = None
+    NetCash: Optional[str] = None
+    OptionBuyingPower: Optional[str] = None
+    OptionValue: Optional[str] = None
+    OvernightBuyingPower: Optional[str] = None
+
+
+class BODCurrencyDetail(BaseModel):
+    """
+    Contains currency-specific beginning of day balance information (only applies to futures).
+    """
+
+    Currency: str
+    AccountMarginRequirement: Optional[str] = None
+    AccountOpenTradeEquity: Optional[str] = None
+    AccountSecurities: Optional[str] = None
+    CashBalance: Optional[str] = None
+    MarginRequirement: Optional[str] = None
+
+
+class BODBalance(BaseModel):
+    """
+    Contains beginning of day balance information for a single account.
+    """
+
+    AccountID: str
+    AccountType: Optional[str] = None
+    BalanceDetail: Optional["BODBalanceDetail"] = None
+    CurrencyDetails: Optional[List["BODCurrencyDetail"]] = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class BalancesBOD(BaseModel):
+    """
+    Contains a collection of beginning of day balance information.
+    """
+
+    BODBalances: List[BODBalance]
+    Errors: Optional[List["BalanceError"]] = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
 class PositionError(BaseModel):
     """
     Error information for position requests.
@@ -267,78 +320,6 @@ class ErrorResponse(BaseModel):
     Error: str
     # The description of the error
     Message: str
-
-
-class BODBalanceDetail(BaseModel):
-    """
-    Contains detailed beginning of day balance information which varies according to account type.
-    """
-
-    # Only applies to equities. The amount of cash in the account at the beginning of the day.
-    AccountBalance: Optional[str] = None
-    # Beginning of day value for cash available to withdraw.
-    CashAvailableToWithdraw: Optional[str] = None
-    # Only applies to equities. The number of day trades placed in the account within the previous 4 trading days.
-    DayTrades: Optional[str] = None
-    # Only applies to equities. The Intraday Buying Power with which the account started the trading day.
-    DayTradingMarginableBuyingPower: Optional[str] = None
-    # The total amount of equity with which you started the current trading day.
-    Equity: Optional[str] = None
-    # The amount of cash in the account at the beginning of the day.
-    NetCash: Optional[str] = None
-    # Only applies to futures. Unrealized profit and loss at the beginning of the day.
-    OpenTradeEquity: Optional[str] = None
-    # Only applies to equities. Option buying power at the start of the trading day.
-    OptionBuyingPower: Optional[str] = None
-    # Only applies to equities. Intraday liquidation value of option positions.
-    OptionValue: Optional[str] = None
-    # (Equities) Overnight Buying Power (Regulation T) at the start of the trading day.
-    OvernightBuyingPower: Optional[str] = None
-    # (Futures) The value of special securities that are deposited by the customer with the clearing firm.
-    SecurityOnDeposit: Optional[str] = None
-
-
-class BODCurrencyDetail(BaseModel):
-    """
-    Contains beginning of day currency detail information (only applies to futures).
-    """
-
-    # The dollar amount of Beginning Day Margin for the given forex account.
-    AccountMarginRequirement: Optional[str] = None
-    # The dollar amount of Beginning Day Trade Equity for the given account.
-    AccountOpenTradeEquity: Optional[str] = None
-    # The value of special securities that are deposited by the customer.
-    AccountSecurities: Optional[str] = None
-    # The dollar amount of the Beginning Day Cash Balance for the given account.
-    CashBalance: Optional[str] = None
-    # The currency of the entity.
-    Currency: str
-    # The dollar amount of Beginning Day Margin for the given forex account.
-    MarginRequirement: Optional[str] = None
-
-
-class BODBalance(BaseModel):
-    """
-    Contains beginning of day balance information for a single account.
-    """
-
-    AccountID: str
-    AccountType: Optional[str] = None
-    BalanceDetail: Optional["BODBalanceDetail"] = None
-    CurrencyDetails: Optional[List["BODCurrencyDetail"]] = None
-
-    model_config = {"arbitrary_types_allowed": True}
-
-
-class BalancesBOD(BaseModel):
-    """
-    Contains a collection of beginning of day balance information.
-    """
-
-    BODBalances: List[BODBalance]
-    Errors: Optional[List["BalanceError"]] = None
-
-    model_config = {"arbitrary_types_allowed": True}
 
 
 class MarketActivationRule(BaseModel):
