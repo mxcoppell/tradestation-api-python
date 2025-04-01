@@ -16,6 +16,23 @@
   - Maximum interval for minute bars is 1440
   - Maximum of 57,600 historical bars allowed per request
 
+### Pull Request Creation Strategy
+- Create comprehensive PR descriptions with these steps:
+  1. Create a local markdown file for the PR description (e.g., `touch PR_DESCRIPTION.md`)
+  2. Edit the file with all required sections:
+     - Overview
+     - Features implemented
+     - Implementation details (design approach, files changed)
+     - Mermaid diagram for architecture flow
+     - Testing strategy
+     - Instructions for manual testing
+     - Issue closure reference at the bottom (e.g., `Closes #XXX`)
+  3. Create the initial PR with a minimal description: `gh pr create --title "PR title" --body "Implementation of issue #XXX"`
+  4. Update the PR with the full description: `gh pr edit <PR_NUMBER> --body-file PR_DESCRIPTION.md`
+  5. Verify the PR content: `gh pr view <PR_NUMBER>`
+  6. Clean up temporary files: `rm PR_DESCRIPTION.md`
+- This workflow prevents issues with the GitHub CLI command length limitations and ensures a properly formatted PR description.
+
 ## Technology Stack Insights
 
 ### Core Libraries
