@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
+from ...utils.stream_manager import WebSocketStream
 from ...ts_types.brokerage import (
     HistoricalOrdersById,
     Account,
@@ -766,3 +767,61 @@ class BrokerageService:
     #         return EventEmitter.model_validate(response.data)
     #     else:
     #         return EventEmitter.model_validate(response)
+
+    async def stream_orders(self, account_ids: str) -> WebSocketStream:
+        """
+        Stream orders for the given accounts. Request valid for Cash, Margin, Futures, and DVP account types.
+
+        This method provides real-time streaming updates for orders in the specified accounts, allowing
+        applications to track and respond to order status changes as they occur. The stream will emit
+        events when orders are placed, modified, filled, or canceled.
+
+        Args:
+            account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+                        1 to 25 Account IDs can be specified. Recommended batch size is 10.
+
+        Returns:
+            A WebSocketStream that emits:
+            - Order objects for order updates
+            - StreamStatus objects for stream status updates
+            - Heartbeat objects every 5 seconds when idle
+            - StreamOrderErrorResponse objects for any errors
+
+        Raises:
+            ValueError: If more than 25 account IDs are specified
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            # Stream orders for a single account
+            stream = await brokerage_service.stream_orders("123456789")
+
+            # Stream orders for multiple accounts
+            stream = await brokerage_service.stream_orders("123456789,987654321")
+
+            # Process order updates
+            async for message in stream:
+                if hasattr(message, "OrderID"):
+                    # Handle order update
+                    print(f"Order update: {message.OrderID} - {message.Status}")
+                elif hasattr(message, "StreamStatus"):
+                    # Handle stream status update
+                    print(f"Stream status: {message.StreamStatus}")
+                elif hasattr(message, "Heartbeat"):
+                    # Handle heartbeat
+                    print(f"Heartbeat: {message.Heartbeat}")
+                elif hasattr(message, "Error"):
+                    # Handle error
+                    print(f"Error: {message.Error} - {message.Message}")
+            ```
+        """
+        # Validate maximum accounts
+        if len(account_ids.split(",")) > 25:
+            raise ValueError("Maximum of 25 accounts allowed per request")
+
+        # Create the stream
+        return await self.stream_manager.create_stream(
+            f"/v3/brokerage/stream/accounts/{account_ids}/orders",
+            {},
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+        )
