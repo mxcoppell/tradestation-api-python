@@ -38,9 +38,15 @@
 ### Common Pitfalls
 - Forgetting to handle different message types in streaming callbacks (data vs heartbeat vs error)
 - Not validating parameters before making streaming API calls can lead to cryptic server errors
+- Not cleaning up temporary files and directories created during development
 
 ### Issue Resolution Patterns
 - For streaming implementations, follow the existing pattern of internal validation followed by stream_manager.create_stream call
+
+### Development Cleanliness
+- Always remove temporary files and directories created during development (e.g., `temp/`, files for PR descriptions) before committing changes
+- Use `git status --untracked-files=all` to check for untracked files that might need cleanup
+- Keep the repository clean to prevent confusion for other developers and avoid accidental commits of temporary files
 
 ## API Behavior & Quirks
 
