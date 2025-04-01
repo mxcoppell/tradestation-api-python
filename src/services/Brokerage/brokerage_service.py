@@ -11,6 +11,7 @@ from ...ts_types.brokerage import (
     HistoricalOrders,
     Orders,
     OrdersById,
+    Positions,
 )
 
 
@@ -619,9 +620,8 @@ class BrokerageService:
 
     async def get_orders_by_order_id(self, account_ids: str, order_ids: str) -> "OrdersById":
         """
-        Fetches today's orders and open orders for the given Accounts, filtered by given Order IDs,
-        sorted in descending order of time placed for open and time executed for closed.
-        Request valid for all account types.
+        Fetches orders for one or more accounts, filtered by order ID.
+        Request valid for Cash, Margin, Futures, and DVP account types.
 
         Args:
             account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
@@ -632,24 +632,12 @@ class BrokerageService:
         Returns:
             An OrdersById object containing:
             - Orders: Array of order information, each containing:
-                - AccountID: Account that placed the order
                 - OrderID: Unique identifier for the order
+                - AccountID: Account that placed the order
                 - Status: Current status of the order
-                - StatusDescription: Detailed status description
                 - OrderType: Type of order (Market, Limit, etc.)
-                - Legs: Array of order legs, each containing:
-                  - AssetType: Type of asset (STOCK, OPTION, etc.)
-                  - BuyOrSell: Buy or Sell action
-                  - ExecQuantity: Quantity that was executed
-                  - ExecutionPrice: Price at which the order was executed
-                  - OpenOrClose: Whether opening or closing a position
-                  - QuantityOrdered: Original quantity ordered
-                  - QuantityRemaining: Quantity still to be filled
-                  - Symbol: Symbol being traded
-                  - ExpirationDate: Option expiration date (for options)
-                  - OptionType: Call or Put (for options)
-                  - StrikePrice: Strike price (for options)
-                  - Underlying: Underlying symbol (for options)
+                - Legs: Array of order legs (for multi-leg orders)
+                - And other order details
             - Errors: Optional array of errors that occurred, each containing:
                 - AccountID: ID of the account that had an error
                 - OrderID: ID of the order that had an error
@@ -660,24 +648,6 @@ class BrokerageService:
             ValueError: If more than 25 account IDs are specified
             ValueError: If more than 50 order IDs are specified
             Exception: If the request fails due to network issues or API errors
-
-        Example:
-            ```python
-            # Get orders for specific order IDs
-            orders = await brokerage_service.get_orders_by_order_id(
-                "123456789",
-                "286234131,286179863"
-            )
-
-            # Process orders
-            for order in orders.Orders:
-                print(f"Order {order.OrderID}: {order.Status} - {order.StatusDescription}")
-
-            # Handle any errors
-            if orders.Errors:
-                for error in orders.Errors:
-                    print(f"Error for Account {error.AccountID}, Order {error.OrderID}: {error.Message}")
-            ```
         """
         # Validate maximum accounts
         if len(account_ids.split(",")) > 25:
@@ -696,3 +666,103 @@ class BrokerageService:
             return OrdersById.model_validate(response.data)
         else:
             return OrdersById.model_validate(response)
+
+    async def get_positions(self, account_ids: str, symbol: Optional[str] = None) -> Positions:
+        """
+        Fetches the brokerage account Positions for one or more given accounts.
+        Request valid for Cash, Margin, Futures, and DVP account types.
+
+        Args:
+            account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+                        1 to 25 Account IDs can be specified. Recommended batch size is 10.
+            symbol: Optional. Filter the response to only include positions for the specified symbol.
+                   Wildcards can also be specified (e.g. "MSFT *" to get all Microsoft options).
+
+        Returns:
+            A Positions object containing:
+            - Positions: Array of position information for each account, including:
+                - AccountID: Unique identifier for the account
+                - AssetType: Type of asset (STOCK, STOCKOPTION, FUTURE, INDEXOPTION)
+                - AveragePrice: Average price of the position
+                - LongShort: Whether position is Long or Short
+                - MarketValue: Market value of position
+                - Quantity: Number of shares/contracts
+                - Symbol: Symbol of the position
+                - UnrealizedProfitLoss: Unrealized P/L
+                - And other position details
+            - Errors: Optional array of errors that occurred, each containing:
+                - AccountID: ID of the account that had an error
+                - Error: Error code
+                - Message: Detailed error message
+
+        Raises:
+            ValueError: If more than 25 account IDs are specified
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            # Get positions for a single account
+            positions = await brokerage_service.get_positions("123456789")
+
+            # Get positions for multiple accounts
+            positions = await brokerage_service.get_positions("123456789,987654321")
+
+            # Get positions for a specific symbol
+            positions = await brokerage_service.get_positions("123456789", "MSFT")
+
+            # Get positions for Microsoft options using wildcard
+            positions = await brokerage_service.get_positions("123456789", "MSFT *")
+
+            # Process position information
+            for position in positions.Positions:
+                print(f"Position: {position.Symbol}")
+                print(f"- Quantity: {position.Quantity}")
+                print(f"- Market Value: {position.MarketValue}")
+                print(f"- Unrealized P/L: {position.UnrealizedProfitLoss}")
+            ```
+        """
+        # Validate maximum accounts
+        if len(account_ids.split(",")) > 25:
+            raise ValueError("Maximum of 25 accounts allowed per request")
+
+        params: Dict[str, str] = {}
+        if symbol is not None:
+            params["symbol"] = symbol
+
+        response = await self.http_client.get(
+            f"/v3/brokerage/accounts/{account_ids}/positions", params=params
+        )
+
+        # Handle both direct response and response with data attribute (for tests)
+        if hasattr(response, "data"):
+            return Positions.model_validate(response.data)
+        else:
+            return Positions.model_validate(response)
+
+    # NOTE: This method is a placeholder for future implementation
+    # async def stream_orders(self, account_ids: str) -> Any:
+    #     """
+    #     Streams orders for the given Accounts.
+    #
+    #     Args:
+    #         account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+    #                     1 to 25 Account IDs can be specified. Recommended batch size is 10.
+    #
+    #     Returns:
+    #         An EventEmitter object that emits order events.
+    #
+    #     Raises:
+    #         ValueError: If more than 25 account IDs are specified
+    #         Exception: If the request fails due to network issues or API errors
+    #     """
+    #     # Validate maximum accounts
+    #     if len(account_ids.split(",")) > 25:
+    #         raise ValueError("Maximum of 25 accounts allowed per request")
+    #
+    #     response = await self.http_client.get(f"/v3/brokerage/accounts/{account_ids}/streamorders")
+    #
+    #     # Handle both direct response and response with data attribute (for tests)
+    #     if hasattr(response, "data"):
+    #         return EventEmitter.model_validate(response.data)
+    #     else:
+    #         return EventEmitter.model_validate(response)
