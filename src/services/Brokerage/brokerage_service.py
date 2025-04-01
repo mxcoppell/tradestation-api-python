@@ -10,6 +10,7 @@ from ...ts_types.brokerage import (
     BalancesBOD,
     HistoricalOrders,
     Orders,
+    OrdersById,
 )
 
 
@@ -547,10 +548,9 @@ class BrokerageService:
             - Orders: Array of order information, each containing:
                 - AccountID: Account that placed the order
                 - OrderID: Unique identifier for the order
-                - Status: Current status of the order (e.g., "OPN", "FLL", "FPR")
-                - StatusDescription: Detailed status description (e.g., "Sent", "Filled", "Partial Fill (Alive)")
+                - Status: Current status of the order
+                - StatusDescription: Detailed status description
                 - OrderType: Type of order (Market, Limit, etc.)
-                - Duration: Order duration (DAY, GTC, etc.)
                 - Legs: Array of order legs, each containing:
                   - AssetType: Type of asset (STOCK, OPTION, etc.)
                   - BuyOrSell: Buy or Sell action
@@ -560,13 +560,6 @@ class BrokerageService:
                   - QuantityOrdered: Original quantity ordered
                   - QuantityRemaining: Quantity still to be filled
                   - Symbol: Symbol being traded
-                  - ExpirationDate: Option expiration date (for options)
-                  - OptionType: Call or Put (for options)
-                  - StrikePrice: Strike price (for options)
-                  - Underlying: Underlying symbol (for options)
-                - OpenedDateTime: When the order was placed
-                - LimitPrice: Limit price for limit orders
-                - StopPrice: Stop price for stop orders
             - NextToken: Optional token for retrieving the next page of results
             - Errors: Optional array of errors that occurred, each containing:
                 - AccountID: ID of the account that had an error
@@ -582,6 +575,7 @@ class BrokerageService:
             ```python
             # Get orders for a single account
             orders = await brokerage_service.get_orders("123456789")
+            print(orders.Orders[0].OrderID)
 
             # Get orders for multiple accounts with pagination
             paginated_orders = await brokerage_service.get_orders(
@@ -602,26 +596,103 @@ class BrokerageService:
         if len(account_ids.split(",")) > 25:
             raise ValueError("Maximum of 25 accounts allowed per request")
 
-        # Validate pageSize
+        # Validate pageSize if provided
         if page_size is not None and (page_size < 1 or page_size > 600):
             raise ValueError("Page size must be between 1 and 600")
 
-        params = {}
+        params: Dict[str, Union[str, int]] = {}
         if page_size is not None:
             params["pageSize"] = page_size
         if next_token is not None:
             params["nextToken"] = next_token
 
         response = await self.http_client.get(
-            f"/v3/brokerage/accounts/{account_ids}/orders", params=params
+            f"/v3/brokerage/accounts/{account_ids}/orders",
+            params=params,
         )
 
         # Handle both direct response and response with data attribute (for tests)
         if hasattr(response, "data"):
-            from ...ts_types.brokerage import Orders
-
             return Orders.model_validate(response.data)
         else:
-            from ...ts_types.brokerage import Orders
-
             return Orders.model_validate(response)
+
+    async def get_orders_by_order_id(self, account_ids: str, order_ids: str) -> "OrdersById":
+        """
+        Fetches today's orders and open orders for the given Accounts, filtered by given Order IDs,
+        sorted in descending order of time placed for open and time executed for closed.
+        Request valid for all account types.
+
+        Args:
+            account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+                        1 to 25 Account IDs can be specified. Recommended batch size is 10.
+            order_ids: List of valid Order IDs in comma separated format (e.g. "123456789,286179863").
+                      1 to 50 Order IDs can be specified.
+
+        Returns:
+            An OrdersById object containing:
+            - Orders: Array of order information, each containing:
+                - AccountID: Account that placed the order
+                - OrderID: Unique identifier for the order
+                - Status: Current status of the order
+                - StatusDescription: Detailed status description
+                - OrderType: Type of order (Market, Limit, etc.)
+                - Legs: Array of order legs, each containing:
+                  - AssetType: Type of asset (STOCK, OPTION, etc.)
+                  - BuyOrSell: Buy or Sell action
+                  - ExecQuantity: Quantity that was executed
+                  - ExecutionPrice: Price at which the order was executed
+                  - OpenOrClose: Whether opening or closing a position
+                  - QuantityOrdered: Original quantity ordered
+                  - QuantityRemaining: Quantity still to be filled
+                  - Symbol: Symbol being traded
+                  - ExpirationDate: Option expiration date (for options)
+                  - OptionType: Call or Put (for options)
+                  - StrikePrice: Strike price (for options)
+                  - Underlying: Underlying symbol (for options)
+            - Errors: Optional array of errors that occurred, each containing:
+                - AccountID: ID of the account that had an error
+                - OrderID: ID of the order that had an error
+                - Error: Error code
+                - Message: Detailed error message
+
+        Raises:
+            ValueError: If more than 25 account IDs are specified
+            ValueError: If more than 50 order IDs are specified
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            # Get orders for specific order IDs
+            orders = await brokerage_service.get_orders_by_order_id(
+                "123456789",
+                "286234131,286179863"
+            )
+
+            # Process orders
+            for order in orders.Orders:
+                print(f"Order {order.OrderID}: {order.Status} - {order.StatusDescription}")
+
+            # Handle any errors
+            if orders.Errors:
+                for error in orders.Errors:
+                    print(f"Error for Account {error.AccountID}, Order {error.OrderID}: {error.Message}")
+            ```
+        """
+        # Validate maximum accounts
+        if len(account_ids.split(",")) > 25:
+            raise ValueError("Maximum of 25 accounts allowed per request")
+
+        # Validate maximum order IDs
+        if len(order_ids.split(",")) > 50:
+            raise ValueError("Maximum of 50 order IDs allowed per request")
+
+        response = await self.http_client.get(
+            f"/v3/brokerage/accounts/{account_ids}/orders/{order_ids}"
+        )
+
+        # Handle both direct response and response with data attribute (for tests)
+        if hasattr(response, "data"):
+            return OrdersById.model_validate(response.data)
+        else:
+            return OrdersById.model_validate(response)
