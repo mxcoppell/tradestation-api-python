@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...ts_types.brokerage import HistoricalOrdersById, Account, AccountDetail
+from ...ts_types.brokerage import HistoricalOrdersById, Account, AccountDetail, Balances
 
 
 class BrokerageService:
@@ -184,3 +184,119 @@ class BrokerageService:
             return HistoricalOrdersById.model_validate(response.data)
         else:
             return HistoricalOrdersById.model_validate(response)
+
+    async def get_balances(self, account_ids: str) -> Balances:
+        """
+        Fetches the brokerage account Balances for one or more given accounts.
+        Request valid for Cash, Margin, Futures, and DVP account types.
+
+        Args:
+            account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+                        1 to 25 Account IDs can be specified. Recommended batch size is 10.
+
+        Returns:
+            A Balances object containing:
+            - Balances: Array of balance information for each account, including:
+                - AccountID: Unique identifier for the account
+                - AccountType: Type of account (Cash, Margin, Futures, DVP)
+                - BuyingPower: Available buying power
+                - CashBalance: Current cash balance
+                - Commission: Total commissions
+                - Equity: Total account equity
+                - MarketValue: Total market value of positions
+                - TodaysProfitLoss: Profit/loss for the current day
+                - UnclearedDeposit: Amount of uncleared deposits
+                - BalanceDetail: Additional balance details including:
+                  - CostOfPositions: Total cost basis of positions
+                  - DayTradeExcess: Excess day trading buying power
+                  - DayTradeMargin: Day trading margin requirement
+                  - DayTradeOpenOrderMargin: Open order margin for day trades
+                  - DayTrades: Number of day trades
+                  - InitialMargin: Initial margin requirement
+                  - MaintenanceMargin: Maintenance margin requirement
+                  - MaintenanceRate: Maintenance margin rate
+                  - MarginRequirement: Total margin requirement
+                  - UnrealizedProfitLoss: Unrealized P/L
+                  - UnsettledFunds: Amount of unsettled funds
+                - CurrencyDetails: Array of currency-specific details (for Futures accounts):
+                  - Currency: Currency code (e.g., USD)
+                  - BODOpenTradeEquity: Beginning of day open trade equity
+                  - CashBalance: Cash balance in this currency
+                  - Commission: Commissions in this currency
+                  - MarginRequirement: Margin requirement in this currency
+                  - NonTradeDebit: Non-trade related debits
+                  - NonTradeNetBalance: Net balance of non-trade activity
+                  - OptionValue: Value of options
+                  - RealTimeUnrealizedGains: Real-time unrealized gains/losses
+                  - TodayRealTimeTradeEquity: Today's real-time trade equity
+                  - TradeEquity: Total trade equity
+            - Errors: Optional array of errors that occurred, each containing:
+                - AccountID: ID of the account that had an error
+                - Error: Error code
+                - Message: Detailed error message
+
+        Raises:
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            # Get balances for a single account
+            single_balance = await brokerage_service.get_balances("123456789")
+            print(single_balance.Balances[0].CashBalance)
+
+            # Get balances for multiple accounts
+            multi_balances = await brokerage_service.get_balances("123456789,987654321")
+            for balance in multi_balances.Balances:
+                print(f"Account {balance.AccountID}: Cash Balance = {balance.CashBalance}")
+            ```
+        """
+        response = await self.http_client.get(f"/v3/brokerage/accounts/{account_ids}/balances")
+
+        # Handle response.data vs direct response for tests
+        data = response.data if hasattr(response, "data") else response
+
+        # Process response data to model
+        balances_list = []
+        for balance_data in data["Balances"]:
+            # Process BalanceDetail separately
+            balance_detail = None
+            if "BalanceDetail" in balance_data and balance_data["BalanceDetail"]:
+                from ...ts_types.brokerage import BalanceDetail
+
+                balance_detail = BalanceDetail.model_validate(balance_data["BalanceDetail"])
+                del balance_data["BalanceDetail"]
+
+            # Process CurrencyDetails separately if needed
+            currency_details = None
+            if "CurrencyDetails" in balance_data and balance_data["CurrencyDetails"]:
+                from ...ts_types.brokerage import CurrencyDetail
+
+                currency_details = [
+                    CurrencyDetail.model_validate(currency_detail)
+                    for currency_detail in balance_data["CurrencyDetails"]
+                ]
+                del balance_data["CurrencyDetails"]
+
+            # Create the Balance object
+            from ...ts_types.brokerage import Balance
+
+            balance = Balance.model_validate(balance_data)
+
+            # Add back the processed fields
+            balance.BalanceDetail = balance_detail
+            balance.CurrencyDetails = currency_details
+
+            balances_list.append(balance)
+
+        # Create the Balances object
+        from ...ts_types.brokerage import Balances
+
+        result = Balances(Balances=balances_list)
+
+        # Add errors if present
+        if "Errors" in data and data["Errors"]:
+            from ...ts_types.brokerage import BalanceError
+
+            result.Errors = [BalanceError.model_validate(error) for error in data["Errors"]]
+
+        return result
