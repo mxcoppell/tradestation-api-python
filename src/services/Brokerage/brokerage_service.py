@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...ts_types.brokerage import HistoricalOrdersById
+from ...ts_types.brokerage import HistoricalOrdersById, Account, AccountDetail
 
 
 class BrokerageService:
@@ -23,11 +23,76 @@ class BrokerageService:
         self.http_client = http_client
         self.stream_manager = stream_manager
 
+    async def get_accounts(self) -> List[Account]:
+        """
+        Fetches brokerage account information for the authenticated user.
+
+        This endpoint provides detailed account information including:
+        - Account identifiers and types
+        - Trading permissions and capabilities
+        - Account status and details
+
+        Request valid for Cash, Margin, Futures, and DVP account types.
+
+        Returns:
+            A list of Account objects containing:
+            - AccountID: Unique identifier for the account
+            - AccountType: Type of account (Cash, Margin, Futures, DVP)
+            - Alias: User-specified nickname for the account (if set)
+            - AltID: TradeStation account ID for accounts based in Japan (if applicable)
+            - Currency: Account base currency
+            - Status: Current account status (Active, Closed, etc.)
+            - AccountDetail: Additional account details including:
+              - IsStockLocateEligible: Whether account can use stock locate service
+              - EnrolledInRegTProgram: Whether account is enrolled in RegT program
+              - RequiresBuyingPowerWarning: Whether buying power warnings are required
+              - DayTradingQualified: Whether account is qualified for day trading
+              - OptionApprovalLevel: Level of option trading permissions (1-5)
+              - PatternDayTrader: Whether account is flagged as a pattern day trader
+
+        Raises:
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            accounts = await brokerage_service.get_accounts()
+
+            # Process account information
+            for account in accounts:
+                print(f"Account {account.AccountID}:")
+                print(f"- Type: {account.AccountType}")
+                print(f"- Status: {account.Status}")
+                print("- Details:")
+                if account.AccountDetail:
+                    print(f"  - Option Level: {account.AccountDetail.OptionApprovalLevel}")
+                    print(f"  - Day Trading: {'Yes' if account.AccountDetail.DayTradingQualified else 'No'}")
+            ```
+        """
+        response = await self.http_client.get("/v3/brokerage/accounts")
+
+        accounts = []
+        for account_data in response["Accounts"]:
+            # Process AccountDetail separately to handle validation correctly
+            account_detail = None
+            if "AccountDetail" in account_data and account_data["AccountDetail"]:
+                account_detail = AccountDetail.model_validate(account_data["AccountDetail"])
+
+            # Remove AccountDetail from the data to avoid validation error
+            if "AccountDetail" in account_data:
+                del account_data["AccountDetail"]
+
+            # Create the Account object
+            account = Account.model_validate(account_data)
+
+            # Set the AccountDetail after validation
+            account.AccountDetail = account_detail
+
+            accounts.append(account)
+
+        return accounts
+
     async def get_historical_orders_by_order_id(
-        self,
-        account_ids: str,
-        order_ids: str,
-        since: str
+        self, account_ids: str, order_ids: str, since: str
     ) -> HistoricalOrdersById:
         """
         Fetches Historical Orders for the given Accounts except open orders, filtered by given Order IDs prior to current date,
@@ -87,7 +152,7 @@ class BrokerageService:
         """
         # Validate date range
         from datetime import datetime, timedelta
-        
+
         # Parse the since date, supporting multiple formats
         try:
             since_date = datetime.strptime(since, "%Y-%m-%d")
@@ -101,15 +166,21 @@ class BrokerageService:
                     try:
                         since_date = datetime.strptime(since, "%m/%d/%Y")
                     except ValueError:
-                        raise ValueError(f"Invalid date format: {since}. Expected formats: YYYY-MM-DD, MM-DD-YYYY, YYYY/MM/DD, MM/DD/YYYY")
-        
+                        raise ValueError(
+                            f"Invalid date format: {since}. Expected formats: YYYY-MM-DD, MM-DD-YYYY, YYYY/MM/DD, MM/DD/YYYY"
+                        )
+
         ninety_days_ago = datetime.now() - timedelta(days=90)
         if since_date < ninety_days_ago:
-            raise ValueError('Date range cannot exceed 90 days')
+            raise ValueError("Date range cannot exceed 90 days")
 
         response = await self.http_client.get(
             f"/v3/brokerage/accounts/{account_ids}/historicalorders/{order_ids}",
-            params={"since": since}
+            params={"since": since},
         )
-        
-        return HistoricalOrdersById.model_validate(response.data)
+
+        # Handle both direct response and response with data attribute (for tests)
+        if hasattr(response, "data"):
+            return HistoricalOrdersById.model_validate(response.data)
+        else:
+            return HistoricalOrdersById.model_validate(response)
