@@ -26,7 +26,16 @@ This document provides clear guidelines for AI agents working on this project. F
 
 ## Development Environment Setup
 
-1. **Branch Creation** (MANDATORY)
+1. **Update Main Branch** (MANDATORY)
+   ```bash
+   # Ensure you're on the main branch
+   git checkout main
+
+   # Pull the latest changes
+   git pull
+   ```
+
+2. **Branch Creation** (MANDATORY)
    ```bash
    # Create a new branch for the issue
    git checkout -b feature/issue-XXX-brief-description
@@ -35,7 +44,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - Example: `feature/issue-204-create-stream-manager`
    - NEVER work directly on the main/master branch
 
-2. **Poetry Setup**
+3. **Poetry Setup**
    ```bash
    # Install Poetry if you don't have it
    curl -sSL https://install.python-poetry.org | python3 -
@@ -47,7 +56,7 @@ This document provides clear guidelines for AI agents working on this project. F
    poetry shell
    ```
 
-3. **Authentication Setup** (for testing functions requiring authentication)
+4. **Authentication Setup** (for testing functions requiring authentication)
    ```bash
    # Get a refresh token
    ./get_refresh_token.sh
