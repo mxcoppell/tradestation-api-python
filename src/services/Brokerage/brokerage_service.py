@@ -9,6 +9,7 @@ from ...ts_types.brokerage import (
     Balances,
     BalancesBOD,
     HistoricalOrders,
+    Orders,
 )
 
 
@@ -520,3 +521,107 @@ class BrokerageService:
             return HistoricalOrders.model_validate(response.data)
         else:
             return HistoricalOrders.model_validate(response)
+
+    async def get_orders(
+        self,
+        account_ids: str,
+        page_size: Optional[int] = None,
+        next_token: Optional[str] = None,
+    ) -> "Orders":
+        """
+        Fetches today's orders and open orders for the given Accounts, sorted in descending order of time placed for open and time executed for closed.
+        Request valid for all account types.
+
+        Args:
+            account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+                        1 to 25 Account IDs can be specified. Recommended batch size is 10.
+            page_size: Optional. The number of requests returned per page when paginating responses.
+                      If not provided, results will not be paginated and a maximum of 600 orders is returned.
+                      Must be between 1 and 600.
+            next_token: Optional. An encrypted token with a lifetime of 1 hour for use with paginated order responses.
+                       This is returned with paginated results and used in only the subsequent request which will return
+                       a new nextToken until there are fewer returned orders than the requested pageSize.
+
+        Returns:
+            An Orders object containing:
+            - Orders: Array of order information, each containing:
+                - AccountID: Account that placed the order
+                - OrderID: Unique identifier for the order
+                - Status: Current status of the order (e.g., "OPN", "FLL", "FPR")
+                - StatusDescription: Detailed status description (e.g., "Sent", "Filled", "Partial Fill (Alive)")
+                - OrderType: Type of order (Market, Limit, etc.)
+                - Duration: Order duration (DAY, GTC, etc.)
+                - Legs: Array of order legs, each containing:
+                  - AssetType: Type of asset (STOCK, OPTION, etc.)
+                  - BuyOrSell: Buy or Sell action
+                  - ExecQuantity: Quantity that was executed
+                  - ExecutionPrice: Price at which the order was executed
+                  - OpenOrClose: Whether opening or closing a position
+                  - QuantityOrdered: Original quantity ordered
+                  - QuantityRemaining: Quantity still to be filled
+                  - Symbol: Symbol being traded
+                  - ExpirationDate: Option expiration date (for options)
+                  - OptionType: Call or Put (for options)
+                  - StrikePrice: Strike price (for options)
+                  - Underlying: Underlying symbol (for options)
+                - OpenedDateTime: When the order was placed
+                - LimitPrice: Limit price for limit orders
+                - StopPrice: Stop price for stop orders
+            - NextToken: Optional token for retrieving the next page of results
+            - Errors: Optional array of errors that occurred, each containing:
+                - AccountID: ID of the account that had an error
+                - Error: Error code
+                - Message: Detailed error message
+
+        Raises:
+            ValueError: If more than 25 account IDs are specified
+            ValueError: If pageSize is outside the valid range (1-600)
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            # Get orders for a single account
+            orders = await brokerage_service.get_orders("123456789")
+
+            # Get orders for multiple accounts with pagination
+            paginated_orders = await brokerage_service.get_orders(
+                "123456789,987654321",
+                100
+            )
+
+            # Get next page using the nextToken
+            if paginated_orders.NextToken:
+                next_page = await brokerage_service.get_orders(
+                    "123456789,987654321",
+                    100,
+                    paginated_orders.NextToken
+                )
+            ```
+        """
+        # Validate maximum accounts
+        if len(account_ids.split(",")) > 25:
+            raise ValueError("Maximum of 25 accounts allowed per request")
+
+        # Validate pageSize
+        if page_size is not None and (page_size < 1 or page_size > 600):
+            raise ValueError("Page size must be between 1 and 600")
+
+        params = {}
+        if page_size is not None:
+            params["pageSize"] = page_size
+        if next_token is not None:
+            params["nextToken"] = next_token
+
+        response = await self.http_client.get(
+            f"/v3/brokerage/accounts/{account_ids}/orders", params=params
+        )
+
+        # Handle both direct response and response with data attribute (for tests)
+        if hasattr(response, "data"):
+            from ...ts_types.brokerage import Orders
+
+            return Orders.model_validate(response.data)
+        else:
+            from ...ts_types.brokerage import Orders
+
+            return Orders.model_validate(response)
