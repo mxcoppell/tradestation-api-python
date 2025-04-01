@@ -2,7 +2,13 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...ts_types.brokerage import HistoricalOrdersById, Account, AccountDetail, Balances
+from ...ts_types.brokerage import (
+    HistoricalOrdersById,
+    Account,
+    AccountDetail,
+    Balances,
+    BalancesBOD,
+)
 
 
 class BrokerageService:
@@ -300,3 +306,71 @@ class BrokerageService:
             result.Errors = [BalanceError.model_validate(error) for error in data["Errors"]]
 
         return result
+
+    async def get_balances_bod(self, account_ids: str) -> BalancesBOD:
+        """
+        Fetches the Beginning of Day Balances for the given Accounts.
+        Request valid for Cash, Margin, Futures, and DVP account types.
+
+        Beginning of Day (BOD) balances represent the account balances at market open,
+        providing a baseline for tracking intraday changes. This is particularly useful for:
+        - Calculating intraday P/L
+        - Monitoring trading activity impact
+        - Determining day trading buying power
+        - Analyzing overnight position impact
+
+        Args:
+            account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+                        1 to 25 Account IDs can be specified. Recommended batch size is 10.
+
+        Returns:
+            A BalancesBOD object containing:
+            - BODBalances: Array of beginning of day balance information for each account, including:
+                - AccountID: Unique identifier for the account
+                - AccountType: Type of account (Cash, Margin, Futures, DVP)
+                - BalanceDetail: Additional balance details including:
+                  - AccountBalance: Total account balance at market open
+                  - CashAvailableToWithdraw: Amount available for withdrawal
+                  - DayTrades: Number of day trades at market open
+                  - DayTradingMarginableBuyingPower: Available day trading buying power
+                  - Equity: Total account equity at market open
+                  - NetCash: Net cash balance
+                  - OptionBuyingPower: Available buying power for options
+                  - OptionValue: Total value of option positions
+                  - OvernightBuyingPower: Available buying power for overnight positions
+                - CurrencyDetails: Array of currency-specific details (for Futures accounts):
+                  - Currency: Currency code (e.g., USD)
+                  - AccountMarginRequirement: Margin requirement for the account
+                  - AccountOpenTradeEquity: Open trade equity at market open
+                  - AccountSecurities: Value of securities in the account
+                  - CashBalance: Cash balance in this currency
+                  - MarginRequirement: Margin requirement in this currency
+            - Errors: Optional array of errors that occurred, each containing:
+                - AccountID: ID of the account that had an error
+                - Error: Error code
+                - Message: Detailed error message
+
+        Raises:
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            # Get BOD balances for a single account
+            single_bod = await brokerage_service.get_balances_bod("123456789")
+            print(single_bod.BODBalances[0].BalanceDetail.AccountBalance)
+
+            # Get BOD balances for multiple accounts
+            multi_bod = await brokerage_service.get_balances_bod("123456789,987654321")
+            for balance in multi_bod.BODBalances:
+                print(f"Account {balance.AccountID}:")
+                print(f"  Equity: {balance.BalanceDetail.Equity}")
+                print(f"  Net Cash: {balance.BalanceDetail.NetCash}")
+            ```
+        """
+        response = await self.http_client.get(f"/v3/brokerage/accounts/{account_ids}/bodbalances")
+
+        # Handle both direct response and response with data attribute (for tests)
+        if hasattr(response, "data"):
+            return BalancesBOD.model_validate(response.data)
+        else:
+            return BalancesBOD.model_validate(response)
