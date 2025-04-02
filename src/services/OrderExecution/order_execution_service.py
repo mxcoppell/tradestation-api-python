@@ -8,6 +8,8 @@ from ...ts_types.order_execution import (
     Routes,
     GroupOrderRequest,
     GroupOrderConfirmationResponse,
+    OrderRequest,
+    OrderConfirmationResponse,
 )
 
 
@@ -28,6 +30,31 @@ class OrderExecutionService:
         """
         self.http_client = http_client
         self.stream_manager = stream_manager
+
+    async def confirm_order(self, request: OrderRequest) -> OrderConfirmationResponse:
+        """
+        Creates an Order Confirmation without actually placing it.
+        Returns estimated cost and commission information.
+
+        Args:
+            request: The order request to confirm
+
+        Returns:
+            Estimated cost and commission information for the order
+
+        Raises:
+            Exception: Will raise an error if:
+                - The request is invalid (400)
+                - The request is unauthorized (401)
+                - The request is forbidden (403)
+                - Rate limit is exceeded (429)
+                - Service is unavailable (503)
+                - Gateway timeout (504)
+        """
+        response = await self.http_client.post(
+            "/v3/orderexecution/orderconfirm", request.model_dump(exclude_none=True)
+        )
+        return OrderConfirmationResponse(**response)
 
     async def cancel_order(self, order_id: str) -> CancelOrderResponse:
         """
