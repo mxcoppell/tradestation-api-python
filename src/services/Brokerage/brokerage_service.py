@@ -785,16 +785,83 @@ class BrokerageService:
         if len(order_id_list) > 50:
             raise ValueError("Maximum number of order IDs (50) exceeded.")
 
-        request_payload = {
-            "Orders": {
-                "AccountIDs": account_id_list,
-                "OrderIDs": order_id_list,
-            }
-        }
-        # Assuming the stream manager handles the underlying WebSocket connection
-        # and message parsing based on the payload structure.
-        # Return the awaitable stream object
-        return await self.stream_manager.create_stream(request_payload)
+        # Create the stream
+        return await self.stream_manager.create_stream(
+            f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}",
+            {},
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+        )
+
+    async def stream_positions(self, account_ids: str, changes: bool = False) -> WebSocketStream:
+        """
+        Stream positions for the given accounts. Request valid for Cash, Margin, Futures, and DVP account types.
+
+        This method provides real-time streaming updates for positions in the specified accounts, allowing
+        applications to track and respond to position changes as they occur. When a stream is first opened
+        with changes=true, streaming positions will return the full snapshot first for all positions, and
+        then any changes after that.
+
+        Args:
+            account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
+                        1 to 25 Account IDs can be specified. Recommended batch size is 10.
+            changes: Optional. A boolean value that specifies whether or not position updates are streamed as changes.
+                    When a stream is first opened with changes=true, streaming positions will return the full snapshot
+                    first for all positions, and then any changes after that. When changes=true, the PositionID field
+                    is returned with each change, along with the fields that changed.
+
+        Returns:
+            A WebSocketStream that emits:
+            - Position objects for position updates
+            - StreamStatus objects for stream status updates
+            - Heartbeat objects every 5 seconds when idle
+            - StreamPositionsErrorResponse objects for any errors
+
+        Raises:
+            ValueError: If more than 25 account IDs are specified
+            Exception: If the request fails due to network issues or API errors
+
+        Example:
+            ```python
+            # Stream positions for a single account
+            stream = await brokerage_service.stream_positions("123456789")
+
+            # Stream positions for multiple accounts
+            stream = await brokerage_service.stream_positions("123456789,987654321")
+
+            # Stream position changes only
+            stream = await brokerage_service.stream_positions("123456789", True)
+
+            # Process position updates
+            async for message in stream:
+                if hasattr(message, "PositionID"):
+                    # Handle position update
+                    print(f"Position update: {message.Symbol} - {message.Quantity}")
+                elif hasattr(message, "StreamStatus"):
+                    # Handle stream status update
+                    print(f"Stream status: {message.StreamStatus}")
+                elif hasattr(message, "Heartbeat"):
+                    # Handle heartbeat
+                    print(f"Heartbeat: {message.Heartbeat}")
+                elif hasattr(message, "Error"):
+                    # Handle error
+                    print(f"Error: {message.Error} - {message.Message}")
+            ```
+        """
+        # Validate maximum accounts
+        if len(account_ids.split(",")) > 25:
+            raise ValueError("Maximum of 25 accounts allowed per request")
+
+        # Set up parameters
+        params = {}
+        if changes:
+            params["changes"] = changes
+
+        # Create the stream
+        return await self.stream_manager.create_stream(
+            f"/v3/brokerage/stream/accounts/{account_ids}/positions",
+            params,
+            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+        )
 
     async def stream_orders(self, account_ids: str) -> WebSocketStream:
         """

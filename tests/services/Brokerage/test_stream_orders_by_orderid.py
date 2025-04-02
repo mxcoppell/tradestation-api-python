@@ -25,18 +25,16 @@ async def test_stream_orders_by_order_id_success(mock_brokerage_service):
     brokerage_service, mock_stream_manager = mock_brokerage_service
     account_ids = "123456,789012"
     order_ids = "ORDER1,ORDER2"
-    expected_payload = {
-        "Orders": {
-            "AccountIDs": ["123456", "789012"],
-            "OrderIDs": ["ORDER1", "ORDER2"],
-        }
-    }
 
     # Act
     stream = await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
 
     # Assert
-    mock_stream_manager.create_stream.assert_called_once_with(expected_payload)
+    mock_stream_manager.create_stream.assert_called_once_with(
+        f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}",
+        {},
+        {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+    )
     assert isinstance(stream, AsyncMock)  # Check if it returned the mocked stream object
 
 
@@ -73,16 +71,14 @@ async def test_stream_orders_by_order_id_single_ids(mock_brokerage_service):
     brokerage_service, mock_stream_manager = mock_brokerage_service
     account_ids = "987654"
     order_ids = "SINGLEORDER"
-    expected_payload = {
-        "Orders": {
-            "AccountIDs": ["987654"],
-            "OrderIDs": ["SINGLEORDER"],
-        }
-    }
 
     # Act
     stream = await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
 
     # Assert
-    mock_stream_manager.create_stream.assert_called_once_with(expected_payload)
+    mock_stream_manager.create_stream.assert_called_once_with(
+        f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}",
+        {},
+        {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+    )
     assert isinstance(stream, AsyncMock)
