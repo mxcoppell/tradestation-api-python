@@ -12,6 +12,7 @@ from ...ts_types.order_execution import (
     OrderRequest,
     OrderConfirmationResponse,
     OrderResponse,
+    OrderReplaceRequest,
 )
 
 
@@ -55,6 +56,33 @@ class OrderExecutionService:
         """
         response = await self.http_client.post(
             "/v3/orderexecution/orders", request.model_dump(exclude_none=True)
+        )
+        return OrderResponse(**response)
+
+    async def replace_order(self, order_id: str, request: OrderReplaceRequest) -> OrderResponse:
+        """
+        Replaces an existing order with new parameters.
+        Valid for all account types.
+
+        Args:
+            order_id: The ID of the order to replace
+            request: The new order parameters
+
+        Returns:
+            A promise that resolves to the order response containing order ID and status
+
+        Raises:
+            Exception: Will raise an error if:
+                - The request is invalid (400)
+                - The request is unauthorized (401)
+                - The request is forbidden (403)
+                - The order cannot be replaced (e.g., if it's already filled) (400)
+                - Rate limit is exceeded (429)
+                - Service is unavailable (503)
+                - Gateway timeout (504)
+        """
+        response = await self.http_client.put(
+            f"/v3/orderexecution/orders/{order_id}", request.model_dump(exclude_none=True)
         )
         return OrderResponse(**response)
 
