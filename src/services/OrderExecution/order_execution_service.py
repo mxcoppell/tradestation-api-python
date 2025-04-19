@@ -115,3 +115,41 @@ class OrderExecutionService:
             "/v3/orderexecution/ordergroupconfirm", request.model_dump(exclude_none=True)
         )
         return GroupOrderConfirmationResponse(**response)
+
+    async def get_routes(self) -> Routes:
+        """
+        Returns a list of valid routes that a client can specify when posting an order.
+        Routes are used to specify where an order should be sent for execution.
+
+        For Stocks and Options, if no route is specified in the order request,
+        the route will default to 'Intelligent'.
+
+        Returns:
+            A promise that resolves to an object containing an array of available routes
+
+        Raises:
+            Exception: Will raise an error if:
+                - The request is unauthorized (401)
+                - The request is forbidden (403)
+                - Bad request (400)
+
+        Example:
+            # Get available routes
+            routes = await service.get_routes()
+            print(routes.Routes)
+            # Example output:
+            # [
+            #   {
+            #     "Id": "AMEX",
+            #     "AssetTypes": ["STOCK"],
+            #     "Name": "AMEX"
+            #   },
+            #   {
+            #     "Id": "ARCA",
+            #     "AssetTypes": ["STOCK"],
+            #     "Name": "ARCX"
+            #   }
+            # ]
+        """
+        response = await self.http_client.get("/v3/orderexecution/routes")
+        return Routes(**response)
