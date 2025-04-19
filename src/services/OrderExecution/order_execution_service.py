@@ -11,6 +11,7 @@ from ...ts_types.order_execution import (
     GroupOrderResponse,
     OrderRequest,
     OrderConfirmationResponse,
+    OrderResponse,
 )
 
 
@@ -31,6 +32,31 @@ class OrderExecutionService:
         """
         self.http_client = http_client
         self.stream_manager = stream_manager
+
+    async def place_order(self, request: OrderRequest) -> OrderResponse:
+        """
+        Places an order with the specified parameters.
+        Valid for Market, Limit, Stop Market, Stop Limit, and Options order types.
+
+        Args:
+            request: The order request containing all necessary parameters
+
+        Returns:
+            A promise that resolves to the order response containing order ID and status
+
+        Raises:
+            Exception: Will raise an error if:
+                - The request is invalid (400)
+                - The request is unauthorized (401)
+                - The request is forbidden (403)
+                - Rate limit is exceeded (429)
+                - Service is unavailable (503)
+                - Gateway timeout (504)
+        """
+        response = await self.http_client.post(
+            "/v3/orderexecution/orders", request.model_dump(exclude_none=True)
+        )
+        return OrderResponse(**response)
 
     async def confirm_order(self, request: OrderRequest) -> OrderConfirmationResponse:
         """
