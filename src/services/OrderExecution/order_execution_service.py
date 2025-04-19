@@ -8,6 +8,7 @@ from ...ts_types.order_execution import (
     Routes,
     GroupOrderRequest,
     GroupOrderConfirmationResponse,
+    GroupOrderResponse,
     OrderRequest,
     OrderConfirmationResponse,
 )
@@ -115,6 +116,37 @@ class OrderExecutionService:
             "/v3/orderexecution/ordergroupconfirm", request.model_dump(exclude_none=True)
         )
         return GroupOrderConfirmationResponse(**response)
+
+    async def place_group_order(self, request: GroupOrderRequest) -> GroupOrderResponse:
+        """
+        Places a group order with the specified parameters.
+        Valid for all account types and the following group types:
+        - OCO (Order Cancels Order): If one order is filled/partially-filled, all others are cancelled
+        - BRK (Bracket): Used to exit positions, combining stop and limit orders
+
+        Note: When a group order is submitted, each sibling order is treated as individual.
+        The system does not validate that each order has the same Quantity, and
+        bracket orders cannot be updated as one transaction (must update each order separately).
+
+        Args:
+            request: The group order request containing type and array of orders
+
+        Returns:
+            Array of order responses for each order in the group
+
+        Raises:
+            Exception: Will raise an error if:
+                - The request is invalid (400)
+                - The request is unauthorized (401)
+                - The request is forbidden (403)
+                - Rate limit is exceeded (429)
+                - Service is unavailable (503)
+                - Gateway timeout (504)
+        """
+        response = await self.http_client.post(
+            "/v3/orderexecution/ordergroups", request.model_dump(exclude_none=True)
+        )
+        return GroupOrderResponse(**response)
 
     async def get_routes(self) -> Routes:
         """
