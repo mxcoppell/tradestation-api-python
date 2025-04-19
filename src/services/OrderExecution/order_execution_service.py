@@ -211,3 +211,22 @@ class OrderExecutionService:
         """
         response = await self.http_client.get("/v3/orderexecution/routes")
         return Routes(**response)
+
+    async def get_activation_triggers(self) -> ActivationTriggers:
+        """
+        Gets a list of activation triggers that can be used when placing orders.
+
+        Returns:
+            A promise that resolves to an object containing an array of activation triggers
+
+        Raises:
+            Exception: Will raise an error if:
+                - The request is unauthorized (401)
+                - The request is forbidden (403)
+                - Bad request (400)
+                - Rate limit is exceeded (429)
+                - Service is unavailable (503)
+                - Gateway timeout (504)
+        """
+        response = await self.http_client.get("/v3/orderexecution/activationtriggers")
+        return ActivationTriggers(**response)
