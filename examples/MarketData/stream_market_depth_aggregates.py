@@ -25,34 +25,32 @@ async def handle_market_depth_aggregate(data: MarketDepthAggregate):
         data: A MarketDepthAggregate object containing the market depth data.
     """
     logger.info(f"Received market depth aggregate: {data}")
-    # Example: Accessing specific fields
-    # logger.info(f"Symbol: {data.symbol}, Bid Price: {data.bids[0].price if data.bids else 'N/A'}, Ask Price: {data.asks[0].price if data.asks else 'N/A'}")
 
 
 async def stream_market_depth_aggregates(
-    ts_client: TradeStationClient, symbols: list[str], max_levels: int = 5
+    ts_client: TradeStationClient, symbol: str, max_levels: int = 5
 ):
     """
-    Starts streaming aggregated market depth data for a list of symbols.
+    Starts streaming aggregated market depth data for a single symbol.
 
     Args:
         ts_client: An authenticated TradeStation client instance.
-        symbols: A list of symbols to stream market depth data for.
+        symbol: The symbol to stream market depth data for.
         max_levels: The maximum number of price levels to receive (default is 5).
 
     Returns:
         The stream object which can be used to manage the stream (e.g., unsubscribe).
     """
     logger.info(
-        f"Starting aggregated market depth stream for symbols: {symbols} with max levels: {max_levels}"
+        f"Starting aggregated market depth stream for symbol: {symbol} with max levels: {max_levels}"
     )
+    params = {"maxlevels": max_levels}
     try:
-        # Subscribe to the market depth aggregate stream
         stream = await ts_client.market_data.stream_market_depth_aggregates(
-            symbols=symbols, max_levels=max_levels, callback=handle_market_depth_aggregate
+            symbol=symbol, params=params
         )
         logger.info(
-            f"Successfully subscribed to aggregated market depth stream. Stream ID: {stream.stream_id}"
+            f"Successfully obtained stream reader for aggregated market depth for {symbol}."
         )
         return stream
     except AttributeError:
@@ -69,49 +67,32 @@ async def main():
     """
     Main asynchronous function to set up the TradeStation client and start the stream.
     """
-    # --- Authentication Setup ---
-    # Retrieve credentials from environment variables
-    client_id = os.getenv("CLIENT_ID")
-    client_secret = os.getenv("CLIENT_SECRET")
-    paper_trade = (
-        os.getenv("PAPER_TRADE", "true").lower() == "true"
-    )  # Default to paper trading if not set
 
-    if not client_id or not client_secret:
-        logger.error("CLIENT_ID and CLIENT_SECRET must be set in the .env file.")
-        return
-
-    # --- Initialize TradeStation Client ---
-    # Create an instance of the TradeStation client
-    # The client handles authentication and token management automatically.
-    logger.info("Initializing TradeStation client...")
-    ts_client = TradeStationClient(
-        client_id=client_id,
-        client_secret=client_secret,
-        paper_trade=paper_trade,
-    )
+    # Initialize the TradeStation client
+    client = TradeStationClient()
 
     # --- Symbol and Stream Configuration ---
-    # Define the symbols to stream
-    # Replace with the symbols you are interested in
-    symbols_to_stream = ["MSFT", "AAPL"]
+    # Define the symbol to stream
+    # Replace with the symbol you are interested in
+    symbol_to_stream = "MSFT"
     # Define the maximum number of price levels (optional, defaults to 5)
     max_depth_levels = 5
 
     # --- Start Streaming ---
     # Start the market depth aggregate stream
-    stream = None
+    stream_reader = None
     try:
-        stream = await stream_market_depth_aggregates(
-            ts_client, symbols_to_stream, max_depth_levels
+        stream_reader = await stream_market_depth_aggregates(
+            client, symbol_to_stream, max_depth_levels
         )
 
-        # --- Keep the Stream Alive ---
-        # Keep the script running to receive stream updates.
-        # You can implement more sophisticated logic here to stop the stream based on conditions.
-        logger.info("Stream started. Press Ctrl+C to stop.")
+        # --- Process the Stream ---
+        logger.info(f"Processing stream for {symbol_to_stream}. Press Ctrl+C to stop.")
         while True:
-            await asyncio.sleep(1)  # Keep the event loop running
+            logger.info(
+                "Stream processing loop not fully implemented yet. Running placeholder sleep."
+            )
+            await asyncio.sleep(5)
 
     except asyncio.CancelledError:
         logger.info("Stream cancelled by user (Ctrl+C).")
@@ -119,15 +100,13 @@ async def main():
         logger.error(f"An error occurred during streaming: {e}")
     finally:
         # --- Clean Up ---
-        # Unsubscribe from the stream when done or if an error occurs
-        if stream:
-            logger.info(f"Unsubscribing from stream ID: {stream.stream_id}...")
-            logger.info("Unsubscribe mechanism needs verification based on stream object type.")
+        if stream_reader:
+            logger.info(f"Closing stream connection for {symbol_to_stream}...")
         else:
-            logger.warning("No active stream to unsubscribe from.")
+            logger.warning("No active stream reader to clean up.")
 
         # Close the TradeStation client session properly
-        await ts_client.http_client.close()
+        await client.http_client.close()
         logger.info("TradeStation client session closed.")
 
 
