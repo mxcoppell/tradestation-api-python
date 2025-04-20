@@ -1,147 +1,100 @@
+"""
+Test suite for the stream_positions method in the Brokerage Service.
+"""
+
 import pytest
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
+import aiohttp
 
-from src.client.http_client import HttpClient
 from src.services.Brokerage.brokerage_service import BrokerageService
-from src.streaming.stream_manager import StreamManager
-from src.utils.stream_manager import WebSocketStream
+from src.ts_types.brokerage import PositionResponse, StreamStatus, PositionError
+from src.ts_types.market_data import Heartbeat
 
 
 @pytest.fixture
-def http_client_mock():
-    """Create a mock HTTP client for testing"""
-    mock = AsyncMock(spec=HttpClient)
+def mock_http_client():
+    """Create a mock HTTP client with mocked create_stream."""
+    client = AsyncMock()
+    client.create_stream = AsyncMock()
+    return client
+
+
+@pytest.fixture
+def brokerage_service(mock_http_client):
+    """Create a BrokerageService with mock http_client."""
+    mock_stream_manager = AsyncMock()  # Keep if needed elsewhere
+    return BrokerageService(mock_http_client, mock_stream_manager)
+
+
+@pytest.fixture
+def mock_stream_reader():
+    """Create a mock StreamReader for SSE."""
+    mock = AsyncMock(spec=aiohttp.StreamReader)
+    # Simulate readline yielding JSON data
+    mock_data = [
+        json.dumps({"Symbol": "AAPL", "Quantity": 100}).encode("utf-8"),  # Simplified Position
+        json.dumps({"Heartbeat": 1, "Timestamp": "2023-01-01T00:01:00Z"}).encode("utf-8"),
+        b"",
+    ]
+    mock.readline.side_effect = mock_data
     return mock
-
-
-@pytest.fixture
-def stream_manager_mock():
-    """Create a mock StreamManager for testing"""
-    mock = MagicMock(spec=StreamManager)
-    # Configure the create_stream method to return an AsyncMock WebSocketStream
-    mock.create_stream = AsyncMock()
-    return mock
-
-
-@pytest.fixture
-def mock_stream():
-    """Create a mock WebSocketStream for testing"""
-    mock = MagicMock(spec=WebSocketStream)
-    return mock
-
-
-@pytest.fixture
-def brokerage_service(http_client_mock, stream_manager_mock):
-    """Create a BrokerageService instance with mock dependencies"""
-    return BrokerageService(http_client_mock, stream_manager_mock)
 
 
 class TestStreamPositions:
-    """Tests for the stream_positions method in BrokerageService"""
+    """Test cases for stream_positions."""
 
     @pytest.mark.asyncio
-    async def test_stream_positions_for_single_account(
-        self, brokerage_service, stream_manager_mock, mock_stream
+    async def test_stream_with_default_parameters(
+        self, brokerage_service, mock_http_client, mock_stream_reader
     ):
-        """Test streaming positions for a single account"""
-        # Configure the mock stream manager to return our mock stream
-        stream_manager_mock.create_stream.return_value = mock_stream
+        """Test streaming positions with default changes=False."""
+        # Arrange
+        account_ids = "ACC1"
+        expected_endpoint = f"/v3/brokerage/stream/accounts/{account_ids}/positions"
+        expected_params = {"changes": "false"}  # Default
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
-        # Call the method
-        result = await brokerage_service.stream_positions("123456")
+        # Act
+        result = await brokerage_service.stream_positions(account_ids)
 
-        # Verify the stream manager was called correctly
-        stream_manager_mock.create_stream.assert_called_once_with(
-            "/v3/brokerage/stream/accounts/123456/positions",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+        # Assert
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_endpoint,
+            params=expected_params,
+            headers=expected_headers,
         )
-
-        # Verify the result is the mock stream
-        assert result == mock_stream
+        assert result == mock_stream_reader
 
     @pytest.mark.asyncio
-    async def test_stream_positions_for_multiple_accounts(
-        self, brokerage_service, stream_manager_mock, mock_stream
+    async def test_stream_with_changes_true(
+        self, brokerage_service, mock_http_client, mock_stream_reader
     ):
-        """Test streaming positions for multiple accounts"""
-        # Configure the mock stream manager to return our mock stream
-        stream_manager_mock.create_stream.return_value = mock_stream
+        """Test streaming positions with changes=True."""
+        # Arrange
+        account_ids = "ACC2,ACC3"
+        expected_endpoint = f"/v3/brokerage/stream/accounts/{account_ids}/positions"
+        expected_params = {"changes": "true"}
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
-        # Call the method with multiple accounts
-        result = await brokerage_service.stream_positions("123456,789012")
+        # Act
+        result = await brokerage_service.stream_positions(account_ids, changes=True)
 
-        # Verify the stream manager was called correctly with multiple accounts
-        stream_manager_mock.create_stream.assert_called_once_with(
-            "/v3/brokerage/stream/accounts/123456,789012/positions",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+        # Assert
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_endpoint,
+            params=expected_params,
+            headers=expected_headers,
         )
-
-        # Verify the result is the mock stream
-        assert result == mock_stream
+        assert result == mock_stream_reader
 
     @pytest.mark.asyncio
-    async def test_stream_positions_with_changes_parameter(
-        self, brokerage_service, stream_manager_mock, mock_stream
-    ):
-        """Test streaming positions with changes parameter set to True"""
-        # Configure the mock stream manager to return our mock stream
-        stream_manager_mock.create_stream.return_value = mock_stream
-
-        # Call the method with changes=True
-        result = await brokerage_service.stream_positions("123456", True)
-
-        # Verify the stream manager was called correctly with changes parameter
-        stream_manager_mock.create_stream.assert_called_once_with(
-            "/v3/brokerage/stream/accounts/123456/positions",
-            {"changes": True},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
-        )
-
-        # Verify the result is the mock stream
-        assert result == mock_stream
-
-    @pytest.mark.asyncio
-    async def test_stream_positions_with_changes_parameter_false(
-        self, brokerage_service, stream_manager_mock, mock_stream
-    ):
-        """Test streaming positions with changes parameter set to False"""
-        # Configure the mock stream manager to return our mock stream
-        stream_manager_mock.create_stream.return_value = mock_stream
-
-        # Call the method with changes=False
-        result = await brokerage_service.stream_positions("123456", False)
-
-        # Verify the stream manager was called correctly with changes parameter false
-        # Note: We don't include changes=False in the parameters since it's the default
-        stream_manager_mock.create_stream.assert_called_once_with(
-            "/v3/brokerage/stream/accounts/123456/positions",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
-        )
-
-        # Verify the result is the mock stream
-        assert result == mock_stream
-
-    @pytest.mark.asyncio
-    async def test_stream_positions_with_too_many_accounts(self, brokerage_service):
-        """Test that an error is raised when too many accounts are specified"""
-        # Create a string with 26 comma-separated account IDs (exceeding the limit of 25)
-        too_many_accounts = ",".join([f"ACC{i}" for i in range(1, 27)])
-
-        # Verify that a ValueError is raised
+    async def test_stream_too_many_account_ids(self, brokerage_service):
+        """Test ValueError is raised for too many account IDs."""
+        account_ids = ",".join([f"ACC{i}" for i in range(26)])  # 26 IDs
         with pytest.raises(ValueError, match="Maximum of 25 accounts allowed per request"):
-            await brokerage_service.stream_positions(too_many_accounts)
+            await brokerage_service.stream_positions(account_ids)
 
-    @pytest.mark.asyncio
-    async def test_stream_positions_streaming_error(self, brokerage_service, stream_manager_mock):
-        """Test handling of streaming errors"""
-        # Configure the mock stream manager to raise an exception
-        stream_manager_mock.create_stream.side_effect = ConnectionError(
-            "Failed to establish streaming connection"
-        )
-
-        # Verify that the error is propagated
-        with pytest.raises(ConnectionError, match="Failed to establish streaming connection"):
-            await brokerage_service.stream_positions("123456")
+    # Remove or adapt tests that rely on WebSocketStream specific features

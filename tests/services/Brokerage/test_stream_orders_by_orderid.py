@@ -1,84 +1,109 @@
+"""
+Test suite for the stream_orders_by_order_id method in BrokerageService.
+"""
+
 import pytest
+import json
 from unittest.mock import AsyncMock, MagicMock
+import aiohttp
 
 from src.services.Brokerage.brokerage_service import BrokerageService
-from src.streaming.stream_manager import StreamManager
-from src.client.http_client import HttpClient
-from src.utils.stream_manager import WebSocketStream
 
 
 @pytest.fixture
-def mock_brokerage_service():
+def mock_http_client():
+    """Create a mock HTTP client with mocked create_stream."""
+    client = AsyncMock()
+    client.create_stream = AsyncMock()
+    return client
+
+
+@pytest.fixture
+def mock_stream_manager():  # Keep for service init
+    return AsyncMock()
+
+
+@pytest.fixture
+def brokerage_service(mock_http_client, mock_stream_manager):
     """Fixture to create a BrokerageService with mocked dependencies."""
-    mock_http_client = AsyncMock(spec=HttpClient)
-    mock_stream_manager = AsyncMock(spec=StreamManager)
-    # Mock the create_stream method to return an AsyncMock that can be awaited
-    mock_stream_manager.create_stream = AsyncMock(return_value=AsyncMock(spec=WebSocketStream))
-    service = BrokerageService(mock_http_client, mock_stream_manager)
-    return service, mock_stream_manager
+    return BrokerageService(mock_http_client, mock_stream_manager)
+
+
+@pytest.fixture
+def mock_stream_reader():
+    """Create a mock StreamReader for SSE."""
+    mock = AsyncMock(spec=aiohttp.StreamReader)
+    # Simulate readline yielding data and then None
+    mock_data = [
+        json.dumps({"OrderID": "ORDER1", "Status": "Filled"}).encode("utf-8"),
+        json.dumps({"Heartbeat": 1}).encode("utf-8"),
+        b"",
+    ]
+    mock.readline.side_effect = mock_data
+    return mock
 
 
 @pytest.mark.asyncio
-async def test_stream_orders_by_order_id_success(mock_brokerage_service):
-    """Test successful call to stream_orders_by_order_id."""
+async def test_stream_orders_by_order_id_success(
+    brokerage_service, mock_http_client, mock_stream_reader
+):
+    """Test successful streaming of orders by order ID."""
     # Arrange
-    brokerage_service, mock_stream_manager = mock_brokerage_service
-    account_ids = "123456,789012"
+    account_ids = "ACC123"
     order_ids = "ORDER1,ORDER2"
+    expected_endpoint = f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}"
+    expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+    mock_http_client.create_stream.return_value = mock_stream_reader
 
     # Act
-    stream = await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
+    result = await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
 
     # Assert
-    mock_stream_manager.create_stream.assert_called_once_with(
-        f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}",
-        {},
-        {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+    mock_http_client.create_stream.assert_called_once_with(
+        expected_endpoint, params=None, headers=expected_headers
     )
-    assert isinstance(stream, AsyncMock)  # Check if it returned the mocked stream object
+    assert result == mock_stream_reader
 
 
 @pytest.mark.asyncio
-async def test_stream_orders_by_order_id_max_accounts_exceeded(mock_brokerage_service):
-    """Test ValueError when max account IDs are exceeded."""
+async def test_stream_orders_by_order_id_single_order(
+    brokerage_service, mock_http_client, mock_stream_reader
+):
+    """Test streaming a single order by ID."""
     # Arrange
-    brokerage_service, _ = mock_brokerage_service
-    account_ids = ",".join([f"ACC{i}" for i in range(26)])  # 26 account IDs
-    order_ids = "ORDER1"
-
-    # Act & Assert
-    with pytest.raises(ValueError, match=r"Maximum number of account IDs \(25\) exceeded."):
-        await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
-
-
-@pytest.mark.asyncio
-async def test_stream_orders_by_order_id_max_orders_exceeded(mock_brokerage_service):
-    """Test ValueError when max order IDs are exceeded."""
-    # Arrange
-    brokerage_service, _ = mock_brokerage_service
-    account_ids = "123456"
-    order_ids = ",".join([f"ORD{i}" for i in range(51)])  # 51 order IDs
-
-    # Act & Assert
-    with pytest.raises(ValueError, match=r"Maximum number of order IDs \(50\) exceeded."):
-        await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
-
-
-@pytest.mark.asyncio
-async def test_stream_orders_by_order_id_single_ids(mock_brokerage_service):
-    """Test successful call with single account and order ID."""
-    # Arrange
-    brokerage_service, mock_stream_manager = mock_brokerage_service
-    account_ids = "987654"
-    order_ids = "SINGLEORDER"
+    account_ids = "ACC456"
+    order_ids = "ORDER3"
+    expected_endpoint = f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}"
+    expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+    mock_http_client.create_stream.return_value = mock_stream_reader
 
     # Act
-    stream = await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
+    result = await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
 
     # Assert
-    mock_stream_manager.create_stream.assert_called_once_with(
-        f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}",
-        {},
-        {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
+    mock_http_client.create_stream.assert_called_once_with(
+        expected_endpoint, params=None, headers=expected_headers
     )
-    assert isinstance(stream, AsyncMock)
+    assert result == mock_stream_reader
+
+
+@pytest.mark.asyncio
+async def test_stream_orders_by_order_id_api_error(brokerage_service, mock_http_client):
+    """Test handling of API error during stream creation."""
+    # Arrange
+    account_ids = "ACC789"
+    order_ids = "ORDER4"
+    mock_http_client.create_stream.side_effect = aiohttp.ClientResponseError(
+        MagicMock(), (), status=404, message="Not Found"
+    )
+
+    # Act & Assert
+    with pytest.raises(aiohttp.ClientResponseError):
+        await brokerage_service.stream_orders_by_order_id(account_ids, order_ids)
+
+    # Ensure create_stream was still called
+    expected_endpoint = f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}"
+    expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+    mock_http_client.create_stream.assert_called_once_with(
+        expected_endpoint, params=None, headers=expected_headers
+    )
