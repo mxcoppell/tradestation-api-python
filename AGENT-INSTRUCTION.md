@@ -457,6 +457,7 @@ This document provides clear guidelines for AI agents working on this project. F
 2. **NO scope expansion:** Work exclusively on the tasks specified in the selected issue
 3. **NO skipping dependencies:** Only work on issues with resolved dependencies
 4. **NO proceeding without branch:** Always create a feature branch before starting work
+5. **NO GitHub MCP Tools:** Do not use any `mcp_GitHub_*` tools. Rely on the GitHub CLI (`gh`) via the `run_terminal_cmd` tool instead.
 
 ## Workflow Summary
 
