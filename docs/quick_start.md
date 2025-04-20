@@ -29,10 +29,10 @@ This guide will help you get up and running with the TradeStation API Python Wra
 
 2. Edit the `.env` file with your TradeStation API credentials:
    ```
+   # Mandatory
    CLIENT_ID=your_client_id
-   CLIENT_SECRET=your_client_secret
    REFRESH_TOKEN=your_refresh_token
-   ENVIRONMENT=Live  # or Simulation
+   ENVIRONMENT=Simulation # Or Live
    ```
 
 ## Basic Usage
@@ -270,7 +270,7 @@ After mastering the basics, explore these topics:
 ### Authentication Issues
 
 If you encounter authentication errors:
-- Verify your Client ID and Client Secret are correct
+- Verify your Client ID is correct
 - Ensure your Refresh Token is valid and not expired
 - Check that you have the required permissions for your API application
 

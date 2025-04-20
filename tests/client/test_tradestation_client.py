@@ -16,7 +16,6 @@ class TestTradeStationClient:
     def config(self):
         return {
             "client_id": "test-client-id",
-            "client_secret": "test-client-secret",
             "refresh_token": "test-refresh-token",
             "environment": "Simulation",
         }

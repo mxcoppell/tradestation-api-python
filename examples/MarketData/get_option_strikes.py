@@ -18,8 +18,7 @@ from src.ts_types.config import ApiError
 
 
 # Load environment variables from .env file
-# Ensure your .env file has TRADESTATION_CLIENT_ID, TRADESTATION_CLIENT_SECRET,
-# TRADESTATION_USERNAME, and TRADESTATION_PASSWORD
+# Ensure your .env file has CLIENT_ID, REFRESH_TOKEN, ENVIRONMENT defined.
 load_dotenv()
 
 
@@ -65,13 +64,11 @@ async def main():
 if __name__ == "__main__":
     # Run the main asynchronous function
     # Ensure you have credentials set in your .env file or environment variables
-    # Required: TRADESTATION_CLIENT_ID, TRADESTATION_CLIENT_SECRET, TRADESTATION_USERNAME, TRADESTATION_PASSWORD
-    # Updated variable names to match quick_start.py convention if needed
+    # Required: CLIENT_ID, REFRESH_TOKEN, ENVIRONMENT
     required_vars = [
-        "CLIENT_ID",  # Changed from TRADESTATION_CLIENT_ID
-        "CLIENT_SECRET",  # Changed from TRADESTATION_CLIENT_SECRET
-        "REFRESH_TOKEN",  # Changed from TRADESTATION_USERNAME/PASSWORD (assuming refresh token is used)
-        # "ENVIRONMENT" # Optional, defaults to Simulation in client
+        "CLIENT_ID",
+        "REFRESH_TOKEN",
+        "ENVIRONMENT",
     ]
     if not all(os.getenv(k) for k in required_vars):
         print("Error: Required environment variables for TradeStation authentication are not set.")

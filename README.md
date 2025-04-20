@@ -15,7 +15,7 @@ A Python client library for the TradeStation API. This library provides a Python
 
 - Python 3.11+
 - TradeStation account
-- TradeStation API credentials (Client ID and Secret)
+- TradeStation API credentials (Client ID and Refresh Token)
 
 ## Installation
 
@@ -39,7 +39,7 @@ async def main():
     load_dotenv()
     
     # Create a client using environment variables
-    # Requires CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN in .env
+    # Requires CLIENT_ID, REFRESH_TOKEN, ENVIRONMENT in .env
     client = TradeStationClient()
     
     try:
@@ -86,16 +86,14 @@ See the `examples` directory for more comprehensive examples.
 The library supports OAuth authentication using refresh tokens. You can provide credentials in several ways:
 
 1. Environment variables:
-   - `CLIENT_ID`: Your TradeStation API client ID
-   - `CLIENT_SECRET`: Your TradeStation API client secret
-   - `REFRESH_TOKEN`: Your refresh token
-   - `ENVIRONMENT`: Either "Live" or "Simulation"
+   - `CLIENT_ID`: Your TradeStation API client ID (Mandatory)
+   - `REFRESH_TOKEN`: Your refresh token (Mandatory)
+   - `ENVIRONMENT`: Either "Live" or "Simulation" (Mandatory)
 
 2. Configuration dictionary:
    ```python
    client = TradeStationClient({
        "client_id": "your_client_id",
-       "client_secret": "your_client_secret",
        "refresh_token": "your_refresh_token",
        "environment": "Live"  # or "Simulation"
    })

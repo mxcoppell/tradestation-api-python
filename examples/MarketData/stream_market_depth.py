@@ -64,14 +64,17 @@ async def main():
         # Initialize the TradeStation client
         client = TradeStationClient()
 
-        # Define the symbol for the market depth stream
+        # Define the symbol and parameters for the market depth stream
         symbol = "MSFT"
+        params = {"maxlevels": 30}
 
-        print(f"\nStreaming Market Depth (Level II) for {symbol} using SSE:")
+        print(
+            f"\nStreaming Market Depth (Level II) for {symbol} (Max Levels: {params['maxlevels']}) using SSE:"
+        )
         print("Press Ctrl+C to stop streaming\n")
 
         # Get the StreamReader for the market depth stream
-        stream_reader = await client.market_data.stream_market_depth_quotes(symbol)
+        stream_reader = await client.market_data.stream_market_depth_quotes(symbol, params=params)
 
         # Process the stream line by line
         while running:
