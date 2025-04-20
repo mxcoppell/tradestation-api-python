@@ -40,27 +40,50 @@ signal.signal(signal.SIGTERM, handle_signal)
 
 
 async def handle_quote_data(data: Dict[str, Any]):
-    """Processes and prints individual option quote data or heartbeats."""
-    # Check if it's a quote update based on presence of common quote fields
-    if "Symbol" in data and "Bid" in data and "Ask" in data:
-        print("\nOption Quote Update:")
-        print(f"Symbol: {data.get('Symbol', 'N/A')}")
-        print(f"Timestamp: {data.get('Timestamp', 'N/A')}")
-        print(f"Last: {data.get('Last', 'N/A')}")
-        print(f"Bid: {data.get('Bid', 'N/A')}")
-        print(f"Ask: {data.get('Ask', 'N/A')}")
-        print(f"Volume: {data.get('Volume', 'N/A')}")
+    """Processes and prints individual option quote data or heartbeats with improved formatting."""
+    # Check if it's a spread quote update (contains Greeks/Legs)
+    if "Delta" in data and "Legs" in data:
+        print("\nOption Spread Quote Update:")
+
+        # Extract symbols from legs for clarity
+        leg_symbols = [leg.get("Symbol", "N/A") for leg in data.get("Legs", [])]
+        print(f"Spread Legs: {', '.join(leg_symbols)}")
+        print(f"Timestamp: {data.get('Timestamp', 'N/A')}")  # Add timestamp if available
+
+        print("\n  Market Data:")
+        print(f"    Last: {data.get('Last', 'N/A')}")
+        print(f"    Bid: {data.get('Bid', 'N/A')} (Size: {data.get('BidSize', 'N/A')})")
+        print(f"    Ask: {data.get('Ask', 'N/A')} (Size: {data.get('AskSize', 'N/A')})")
+        print(f"    Volume: {data.get('Volume', 'N/A')}")
+        print(f"    Open Interest: {data.get('DailyOpenInterest', 'N/A')}")
         print(
-            f"Open Interest: {data.get('OpenInterest', 'N/A')}"
-        )  # OpenInterest field name might vary
-        print(f"Exchange: {data.get('Exchange', 'N/A')}")
+            f"    Net Change: {data.get('NetChange', 'N/A')} ({data.get('NetChangePct', 'N/A')}%)"
+        )
+
+        print("\n  Greeks:")
+        print(f"    Delta: {data.get('Delta', 'N/A')}")
+        print(f"    Gamma: {data.get('Gamma', 'N/A')}")
+        print(f"    Theta: {data.get('Theta', 'N/A')}")
+        print(f"    Vega: {data.get('Vega', 'N/A')}")
+        print(f"    Rho: {data.get('Rho', 'N/A')}")
+
+        print("\n  Volatility & Value:")
+        print(f"    Implied Volatility: {data.get('ImpliedVolatility', 'N/A')}")
+        print(f"    Intrinsic Value: {data.get('IntrinsicValue', 'N/A')}")
+        print(f"    Extrinsic Value: {data.get('ExtrinsicValue', 'N/A')}")
+        print(f"    Theoretical Value: {data.get('TheoreticalValue', 'N/A')}")
+
+        # Add other fields if needed (e.g., Probabilities)
+
         print("-" * 60)
+
     elif "Heartbeat" in data:
         print(f"Heartbeat: {data.get('Timestamp', 'N/A')}")
     elif "Error" in data:
-        print(f"Received error: {data.get('Error', 'Unknown error')}")
+        print(f"Received Error: {data.get('Error', 'Unknown error')} - {data.get('Message', '')}")
     else:
-        print(f"Received unknown data: {data}")
+        # Keep this for genuinely unexpected formats
+        print(f"Received Unrecognized Data Format: {data}")
 
 
 async def main():
