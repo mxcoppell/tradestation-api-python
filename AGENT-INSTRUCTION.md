@@ -83,7 +83,12 @@ This document provides clear guidelines for AI agents working on this project. F
    - Note any TypeScript-specific patterns that need Python equivalents
    - Pay attention to how features are separated in the TypeScript codebase
 
-3. **Implementation Guidelines**
+3. **Review Existing Python Code (If Applicable)**
+   - Before writing new code, search the existing Python codebase (`src/` and `examples/`) for related functionality or patterns.
+   - Look for similar service methods, data models, utility functions, or example usage that can be reused or adapted.
+   - Understanding existing patterns helps maintain consistency.
+
+4. **Implementation Guidelines**
    - Faithfully convert TypeScript to Python while using Pythonic patterns
    - Preserve all comments from TypeScript, translating them to Python docstrings
    - Use proper Python typing for all functions and methods
@@ -91,7 +96,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - Use AsyncIO for streaming operations
    - Add appropriate error handling and parameter validation
 
-4. **Code Structure and Style**
+5. **Code Structure and Style**
    - Follow PEP 8 style guidelines
    - Use snake_case for functions and variables
    - Use PascalCase for classes
