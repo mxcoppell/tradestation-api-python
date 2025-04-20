@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from tradestation import TradeStation
+from src.client.tradestation_client import TradeStationClient
 
 # Load environment variables from .env file
 load_dotenv()
@@ -16,10 +16,10 @@ async def main():
     Example demonstrating how to fetch available option spread types
     using the TradeStation API.
     """
-    # Create a TradeStation client instance
+    # Create a TradeStation client instance using the correct class name
     # Authentication details are typically handled internally by the client
     # using environment variables or a provided configuration.
-    ts = TradeStation()
+    ts = TradeStationClient()
 
     print("Attempting to fetch option spread types...")
 
@@ -41,6 +41,9 @@ async def main():
         # Catch any exceptions that occur during the API call
         # This could include network issues, authentication errors, or API errors
         print(f"An error occurred: {e}")
+    finally:
+        # Ensure the client session is closed properly
+        await ts.close()
 
 
 # Run the asynchronous main function
