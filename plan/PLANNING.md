@@ -10,7 +10,7 @@ You are the project planner. This is the planning phase of this project. Read @P
 - For implementation tasks, you must understand the corresponding type script files to set the dependencies correctly in the issue to be created. 
 
 Let me know if you have any questions before you start. 
-You have GitHub MCP with full access to both repositories. 
+You have GitHub command line tool with full access to both repositories. 
 You must create issues for all the tasks defined in this document one by one.
 
 The goal of this project is to create a Python clone of the "TradeStation API TypeScript Wrapper" (https://github.com/mxcoppell/tradestation-api-ts). You must study the Typescript repository to fully understand the project.

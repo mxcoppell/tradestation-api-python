@@ -10,7 +10,7 @@
 ### API Integration Techniques
 - TradeStation API uses Server-Sent Events (SSE) for **some** streaming data endpoints (e.g., quotes). **Correction:** Removed incorrect reference to `WebSocketStream` wrapping SSE.
 - Streaming endpoints require the 'Accept: application/vnd.tradestation.streams.v2+json' header for proper data formatting. This header should be passed to `HttpClient.create_stream`.
-- **New:** If the `mcp_GitHub_get_file_contents` tool fails to fetch content from a public GitHub repository, use `curl` with the raw file URL (e.g., `https://raw.githubusercontent.com/owner/repo/branch/path/to/file`) via the `run_terminal_cmd` tool as a fallback.
+- **New:** Use GitHub command line tool or `curl` with the raw file URL (e.g., `https://raw.githubusercontent.com/owner/repo/branch/path/to/file`) via the `run_terminal_cmd` tool to access GitHub repositories.
 
 ### Error Handling Strategies
 - For streaming bar data, validate parameters before making API calls to prevent runtime errors.
