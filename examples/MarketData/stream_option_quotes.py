@@ -40,21 +40,78 @@ signal.signal(signal.SIGTERM, handle_signal)
 
 
 async def handle_quote_data(data: Dict[str, Any]):
-    """Processes and prints individual option quote data or heartbeats with improved formatting."""
+    """Processes and prints option quote data with structure and includes all other fields."""
     # Check if it's a spread quote update (contains Greeks/Legs)
     if "Delta" in data and "Legs" in data:
         print("\nOption Spread Quote Update:")
 
+        # Keep track of keys printed in the structured section
+        printed_keys = set()
+
         # Extract symbols from legs for clarity
         leg_symbols = [leg.get("Symbol", "N/A") for leg in data.get("Legs", [])]
         print(f"Spread Legs: {', '.join(leg_symbols)}")
+        printed_keys.add("Legs")
 
-        # --- Print All Received Fields ---
-        print("\n  All Received Fields:")
+        # Check and print Timestamp if available
+        if "Timestamp" in data:
+            print(f"Timestamp: {data['Timestamp']}")
+            printed_keys.add("Timestamp")
+
+        print("\n  Market Data:")
+        market_keys = [
+            "Last",
+            "Bid",
+            "BidSize",
+            "Ask",
+            "AskSize",
+            "Volume",
+            "DailyOpenInterest",
+            "NetChange",
+            "NetChangePct",
+        ]
+        for key in market_keys:
+            if key in data:
+                if key == "Bid":
+                    print(f"    Bid: {data[key]} (Size: {data.get('BidSize', 'N/A')})")
+                elif key == "Ask":
+                    print(f"    Ask: {data[key]} (Size: {data.get('AskSize', 'N/A')})")
+                elif key == "NetChange":
+                    print(f"    Net Change: {data[key]} ({data.get('NetChangePct', 'N/A')}%)")
+                # Avoid double printing Size/Pct
+                elif key not in ["BidSize", "AskSize", "NetChangePct"]:
+                    print(f"    {key}: {data[key]}")
+                printed_keys.add(key)
+
+        print("\n  Greeks:")
+        greek_keys = ["Delta", "Gamma", "Theta", "Vega", "Rho"]
+        for key in greek_keys:
+            if key in data:
+                print(f"    {key}: {data[key]}")
+                printed_keys.add(key)
+
+        print("\n  Volatility & Value:")
+        vol_value_keys = [
+            "ImpliedVolatility",
+            "IntrinsicValue",
+            "ExtrinsicValue",
+            "TheoreticalValue",
+        ]
+        for key in vol_value_keys:
+            if key in data:
+                print(f"    {key}: {data[key]}")
+                printed_keys.add(key)
+
+        # --- Print Any Remaining Fields ---
+        print("\n  Other Received Fields:")
+        other_fields_found = False
         for key, value in data.items():
-            # Exclude Legs as it's already printed and can be large
-            if key != "Legs":
+            if key not in printed_keys:
                 print(f"    {key}: {value}")
+                other_fields_found = True
+        if not other_fields_found:
+            print("    (No other fields)")
+
         print("-" * 60)
 
     elif "Heartbeat" in data:
