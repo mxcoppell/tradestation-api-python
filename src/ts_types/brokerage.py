@@ -210,7 +210,7 @@ class PositionResponse(BaseModel):
     # The unique identifier for the account
     AccountID: str
     # Indicates the asset type of the position
-    AssetType: Literal["STOCK", "STOCKOPTION", "FUTURE", "INDEXOPTION"]
+    AssetType: Literal["STOCK", "STOCKOPTION", "FUTURE", "INDEXOPTION", "UNKNOWN"]
     # The average price of the position currently held
     AveragePrice: str
     # The highest price a prospective buyer is prepared to pay at a particular time for a trading unit of a given symbol

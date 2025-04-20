@@ -6,6 +6,7 @@
 - When implementing streaming functionality for market data, use `WebSocketStream` with callback pattern to handle asynchronous events. This allows easy processing of incoming data without blocking. **Correction:** This is no longer accurate for SSE streams.
 - **New:** For HTTP-based Server-Sent Events (SSE) streams (like `/v3/marketdata/stream/quotes`), use the `HttpClient.create_stream` method which returns an `aiohttp.StreamReader`. Process the stream line-by-line, decoding bytes, and parsing JSON data.
 - **New:** When creating scripts in the `examples/` directory that need to import project modules, use direct imports relative to the `src` directory (e.g., `from src.client import TradeStationClient`, `from src.ts_types.config import ApiError`). Avoid package-level imports (e.g., `from tradestation import ...`) or `sys.path` manipulation, as these may fail when running the script directly with `poetry run python examples/...`.
+- **New:** Before implementing new example scripts (`examples/`), always review existing examples in the same service directory (e.g., `examples/Brokerage/`) to understand established patterns for imports (`from src...`), client initialization (`TradeStationClient()`), asynchronous execution (`asyncio.run(main())`), error handling, and overall structure.
 
 ### API Integration Techniques
 - TradeStation API uses Server-Sent Events (SSE) for **some** streaming data endpoints (e.g., quotes). **Correction:** Removed incorrect reference to `WebSocketStream` wrapping SSE.

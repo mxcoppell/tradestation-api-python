@@ -59,12 +59,14 @@ This document provides clear guidelines for AI agents working on this project. F
 4. **Authentication Setup & Verification** (MANDATORY before running examples/tests requiring auth)
    
    a. **Check `.env` File:**
-      - **BEFORE** attempting to run any example script or test that requires authentication, you MUST verify that the `.env` file in the project root contains valid values for:
-        - `CLIENT_ID`
-        - `REFRESH_TOKEN`
-        - `ENVIRONMENT` (e.g., `simulation` or `live`)
-      - If any of these variables are missing or empty, **STOP** and inform the user they need to update the `.env` file with their credentials and environment settings.
-      - **DO NOT PROCEED** with running the authenticated script/test until the user confirms the `.env` file is updated.
+      - **BEFORE** attempting to run any example script or test that requires authentication, you MUST check the `.env` file in the project root.
+      - **AUTOMATICALLY VERIFY** that the following variables are present and have non-empty values:
+         - `CLIENT_ID`
+         - `REFRESH_TOKEN`
+         - `ENVIRONMENT` (e.g., `simulation` or `live`)
+      - **If all required variables are present and non-empty, PROCEED** with running the authenticated script/test.
+      - **If any required variable is missing or empty, STOP** and inform the user they need to update the `.env` file with their credentials and environment settings. **DO NOT PROCEED** until the user confirms the `.env` file is updated or the variables are found to be set.
+      - *Example check command (adapt as needed):* `grep -qE '^CLIENT_ID=.+' .env && grep -qE '^REFRESH_TOKEN=.+' .env && grep -qE '^ENVIRONMENT=.+' .env'` (This checks if lines starting with VAR= followed by at least one character exist. Exit code 0 means all found).
 
    b. **Security Reminder:**
       - Always ensure the actual `.env` file is listed in `.gitignore` and never commit your actual credentials to the repository.
