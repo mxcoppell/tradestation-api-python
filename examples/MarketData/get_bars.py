@@ -18,8 +18,15 @@ load_dotenv()
 
 
 async def main():
-    # Initialize the TradeStation client with refresh token from environment variables
-    client = TradeStationClient()
+    # Initialize the TradeStation client; override Simulation env to Live for bar history examples
+    env = os.getenv("ENVIRONMENT", "Simulation")
+    if env.lower() == "simulation":
+        print(
+            "Warning: Simulation environment may not support bar history; using Live environment for this example."
+        )
+        client = TradeStationClient(environment="Live")
+    else:
+        client = TradeStationClient()
 
     try:
         # Example 1: Get daily bars for the last 5 days
@@ -36,26 +43,20 @@ async def main():
             print(f"Volume: {bar.TotalVolume}")
             print("---")
 
-        # Example 2: Get 1-minute bars for a specific date range with extended hours
-        try:
-            minute_bars = await client.market_data.get_bar_history(
-                "MSFT",
-                {
-                    "unit": "Minute",
-                    "interval": "1",
-                    "firstdate": "2024-01-01T14:30:00Z",
-                    "lastdate": "2024-01-01T21:00:00Z",
-                    "sessiontemplate": "USEQPreAndPost",
-                },
-            )
-            print("\n1-Minute Bars for MSFT with Extended Hours:")
-            for bar in minute_bars.Bars:
-                print(f"Time: {bar.TimeStamp}")
-                print(f"Close: {bar.Close}")
-                print(f"Volume: {bar.TotalVolume}")
-                print("---")
-        except Exception as e:
-            print(f"Error fetching 1-minute bars with extended hours: {e}")
+        # Example 2: Get 5-minute bars for MSFT (last trading day)
+        print("\nExample 2: 5-Minute Bars for MSFT (last trading day)")
+        five_minute_bars = await client.market_data.get_bar_history(
+            "MSFT",
+            {"unit": "Minute", "interval": "5", "barsback": 78},  # ~6.5 hours of 5-minute bars
+        )
+        for bar in five_minute_bars.Bars:
+            print(f"Time: {bar.TimeStamp}")
+            print(f"Open: {bar.Open}")
+            print(f"High: {bar.High}")
+            print(f"Low: {bar.Low}")
+            print(f"Close: {bar.Close}")
+            print(f"Volume: {bar.TotalVolume}")
+            print("---")
 
         # Example 3: Get weekly bars for the last month
         weekly_bars = await client.market_data.get_bar_history(
