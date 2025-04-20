@@ -37,22 +37,25 @@ async def main():
             print("---")
 
         # Example 2: Get 1-minute bars for a specific date range with extended hours
-        minute_bars = await client.market_data.get_bar_history(
-            "MSFT",
-            {
-                "unit": "Minute",
-                "interval": "1",
-                "firstdate": "2024-01-01T14:30:00Z",
-                "lastdate": "2024-01-01T21:00:00Z",
-                "sessiontemplate": "USEQPreAndPost",
-            },
-        )
-        print("\n1-Minute Bars for MSFT with Extended Hours:")
-        for bar in minute_bars.Bars:
-            print(f"Time: {bar.TimeStamp}")
-            print(f"Close: {bar.Close}")
-            print(f"Volume: {bar.TotalVolume}")
-            print("---")
+        try:
+            minute_bars = await client.market_data.get_bar_history(
+                "MSFT",
+                {
+                    "unit": "Minute",
+                    "interval": "1",
+                    "firstdate": "2024-01-01T14:30:00Z",
+                    "lastdate": "2024-01-01T21:00:00Z",
+                    "sessiontemplate": "USEQPreAndPost",
+                },
+            )
+            print("\n1-Minute Bars for MSFT with Extended Hours:")
+            for bar in minute_bars.Bars:
+                print(f"Time: {bar.TimeStamp}")
+                print(f"Close: {bar.Close}")
+                print(f"Volume: {bar.TotalVolume}")
+                print("---")
+        except Exception as e:
+            print(f"Error fetching 1-minute bars with extended hours: {e}")
 
         # Example 3: Get weekly bars for the last month
         weekly_bars = await client.market_data.get_bar_history(
