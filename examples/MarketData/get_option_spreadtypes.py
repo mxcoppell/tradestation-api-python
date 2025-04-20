@@ -30,9 +30,27 @@ async def main():
         # Check if the response contains spread types
         if spread_types:
             print("Successfully retrieved option spread types:")
-            # Iterate through the list of spread types and print each one
-            for spread_type in spread_types:
-                print(f"- {spread_type}")
+            # Iterate through the list of SpreadType objects and print each name
+            # Assuming spread_types is the list returned by the API client
+            try:
+                # Access the list directly via the attribute name if it's an object
+                # (Based on the last successful run output: SpreadTypes=[...])
+                actual_list = spread_types.SpreadTypes
+                if isinstance(actual_list, list):
+                    for spread_type in actual_list:
+                        if hasattr(spread_type, "Name"):
+                            print(f"- {spread_type.Name}")
+                        else:
+                            print(f"- {spread_type}")  # Fallback
+                else:
+                    print(f"Expected a list for SpreadTypes, but got: {type(actual_list)}")
+            except AttributeError:
+                # Fallback if spread_types doesn't have a SpreadTypes attribute
+                print(
+                    f"Unexpected response structure. Expected attribute 'SpreadTypes': {spread_types}"
+                )
+            except Exception as inner_e:
+                print(f"An error occurred while processing spread types: {inner_e}")
         else:
             # Handle cases where the API returns an empty list or null response
             print("No option spread types were returned.")
