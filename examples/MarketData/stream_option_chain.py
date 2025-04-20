@@ -84,7 +84,7 @@ async def main():
         params = {
             "expiration": expiration_date,
             "strikeProximity": 5,
-            "enableGreeks": True,
+            "enableGreeks": "true",
         }
         print(f"Starting option chain stream for {symbol} with params: {params}")
         print("Press Ctrl+C to stop streaming\n")
