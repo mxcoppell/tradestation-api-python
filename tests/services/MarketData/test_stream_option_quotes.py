@@ -63,7 +63,7 @@ class TestStreamOptionQuotes:
         expected_endpoint = "/v3/marketdata/stream/options/quotes"
         expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
         expected_query_params = {
-            "enableGreeks": True,
+            "enableGreeks": "true",
             "riskFreeRate": 0.03,
             "legs[0].Symbol": "MSFT 240119C400",
             "legs[1].Symbol": "MSFT 240119C405",
@@ -94,7 +94,7 @@ class TestStreamOptionQuotes:
         expected_endpoint = "/v3/marketdata/stream/options/quotes"
         expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
         expected_query_params = {
-            "enableGreeks": True,  # Default
+            "enableGreeks": "true",
             "legs[0].Symbol": "AAPL 241220P180",
         }
         mock_http_client.create_stream.return_value = mock_stream_reader
@@ -244,7 +244,7 @@ class TestStreamOptionQuotes:
 
         # Expected query parameters (match the service logic)
         expected_query_params = {
-            "enableGreeks": True,
+            "enableGreeks": "true",
             "legs[0].Symbol": "AAPL 240119C190",
         }
         if hasattr(params.legs[0], "Ratio") and params.legs[0].Ratio is not None:
