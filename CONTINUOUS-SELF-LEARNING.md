@@ -28,8 +28,9 @@
      gh pr create --title "PR title" --body "Implementation of issue #XXX"
      # Note the PR number from the response (e.g., #326)
      ```
-  2. Generate a local markdown file `PR_DESCRIPTION.md` for the PR description with all required sections (Overview, Features, Implementation, Mermaid diagram, Testing, Issue Closure, etc.) following the format in `AGENT-INSTRUCTION.md`.
-  4. Update the PR with the full description from the file:
+  2. **MANDATORY**: Use the Language Model (LLM) to generate the full markdown content for the PR description adhering to all requirements in `AGENT-INSTRUCTION.md`.
+  3. **MANDATORY**: Use the `edit_file` tool to write the LLM-generated markdown directly into a new file named `PR_DESCRIPTION.md`. Do not use `cat` or other shell commands.
+  4. Update the PR with the full description using the file:
      ```bash
      gh pr edit <PR_NUMBER> --body-file PR_DESCRIPTION.md
      ```

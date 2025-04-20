@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
 import aiohttp
+from pydantic import ValidationError
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
@@ -83,22 +84,37 @@ class BrokerageService:
 
         accounts = []
         for account_data in response["Accounts"]:
-            # Process AccountDetail separately to handle validation correctly
-            account_detail = None
-            if "AccountDetail" in account_data and account_data["AccountDetail"]:
-                account_detail = AccountDetail.model_validate(account_data["AccountDetail"])
+            try:
+                # Process AccountDetail separately if present
+                account_detail = None
+                detail_data = account_data.pop("AccountDetail", None)
+                if detail_data:
+                    account_detail = AccountDetail.model_validate(detail_data)
 
-            # Remove AccountDetail from the data to avoid validation error
-            if "AccountDetail" in account_data:
-                del account_data["AccountDetail"]
+                # Validate the main Account data
+                account = Account.model_validate(account_data)
 
-            # Create the Account object
-            account = Account.model_validate(account_data)
+                # Re-attach the validated AccountDetail
+                account.AccountDetail = account_detail
 
-            # Set the AccountDetail after validation
-            account.AccountDetail = account_detail
+                # Add the successfully validated account to the list
+                accounts.append(account)
 
-            accounts.append(account)
+            except ValidationError as e:
+                # Check if the validation error is specifically for AccountType
+                is_account_type_error = any(err["loc"] == ("AccountType",) for err in e.errors())
+                if is_account_type_error:
+                    # Silently ignore accounts with unsupported AccountType (e.g., Forex)
+                    # Optionally, log this at a debug level if needed
+                    # print(f"Skipping account {account_data.get('AccountID')} due to unsupported type: {account_data.get('AccountType')}")
+                    continue
+                else:
+                    # Re-raise other validation errors
+                    raise e
+            except Exception as e:
+                # Handle unexpected errors during validation
+                print(f"Error processing account {account_data.get('AccountID')}: {e}")
+                continue  # Optionally skip problematic accounts
 
         return accounts
 

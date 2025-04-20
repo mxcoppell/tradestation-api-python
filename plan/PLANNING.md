@@ -57,7 +57,6 @@ Each issue to be created in GitHub repository must clearly state the following:
 - You must faithfully and completely clone the Typescript tests for the task to Python version
 - You must not create tests for example codes or documents
 - You must preserve all the comments for both the implementation and tests
-- You must use command "get_refresh_token.sh" to get the refresh token and update the .env
 - You must make sure the tests created for this task pass
 - For the example you created, you must make sure example runs
 - You must make sure the implementation of this task won't break any other tests in this project
