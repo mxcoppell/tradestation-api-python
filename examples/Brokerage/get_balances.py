@@ -1,13 +1,6 @@
 import asyncio
-import os
-
-# Removed sys and Path imports as sys.path modification is removed
 from dotenv import load_dotenv
-
-# Corrected import path based on get_accounts.py example
 from src.client.tradestation_client import TradeStationClient
-
-# Removed Environment import as it's not used/defined
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,17 +11,6 @@ async def main():
     Main function to demonstrate getting account balances.
     Initializes the client, fetches accounts, and then retrieves and prints balances for each account.
     """
-    # Retrieve credentials and environment from environment variables
-    client_id = os.getenv("CLIENT_ID")
-    refresh_token = os.getenv("REFRESH_TOKEN")
-    environment_str = os.getenv("ENVIRONMENT", "simulation")  # Default to simulation
-
-    if not client_id or not refresh_token:
-        print("Error: CLIENT_ID and REFRESH_TOKEN must be set in the .env file.")
-        return
-
-    # Remove explicit environment variable assignment, rely on os.getenv within client
-    # environment = environment_str # Pass the string directly
 
     # Initialize the TradeStation client
     # Rely on client internal logic to read env vars loaded by load_dotenv()
