@@ -12,7 +12,7 @@ Usage:
 
 Requirements:
     - A valid TradeStation account
-    - API credentials in .env file (run `get_refresh_token.sh` to populate REFRESH_TOKEN)
+    - API credentials in .env file
 """
 
 import asyncio
@@ -26,12 +26,12 @@ async def main():
     # Load environment variables from .env file
     load_dotenv()
 
-    # Initialize the TradeStation client
-    client = TradeStationClient(debug=True)
+    # Initialize the TradeStation client without debug to avoid printing auth tokens
+    client = TradeStationClient(debug=False)
 
     try:
-        # Get all accounts
-        print("\nGetting All Accounts:")
+        # Fetch all accounts. The service method now handles filtering unsupported types.
+        print("\nFetching accounts...")
         accounts = await client.brokerage.get_accounts()
 
         # Process and display the results
@@ -68,6 +68,9 @@ async def main():
 
     except Exception as e:
         print(f"Error fetching accounts: {e}")
+    finally:
+        # Close the client session to clean up resources
+        await client.close()
 
 
 if __name__ == "__main__":
