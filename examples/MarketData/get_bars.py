@@ -18,15 +18,8 @@ load_dotenv()
 
 
 async def main():
-    # Initialize the TradeStation client; override Simulation env to Live for bar history examples
-    env = os.getenv("ENVIRONMENT", "Simulation")
-    if env.lower() == "simulation":
-        print(
-            "Warning: Simulation environment may not support bar history; using Live environment for this example."
-        )
-        client = TradeStationClient(environment="Live")
-    else:
-        client = TradeStationClient()
+    # Initialize the TradeStation client
+    client = TradeStationClient()
 
     try:
         # Example 1: Get daily bars for the last 5 days
