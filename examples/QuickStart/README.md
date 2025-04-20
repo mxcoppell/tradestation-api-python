@@ -34,8 +34,6 @@ REFRESH_TOKEN=your_refresh_token
 ENVIRONMENT=Simulation  # or 'Live' for production
 ```
 
-> **Note**: You can get your refresh token by running the `get_refresh_token.sh` script in the root directory.
-
 2. Install the required dependencies:
 
 ```bash
