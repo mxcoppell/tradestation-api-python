@@ -16,7 +16,8 @@ from src.ts_types.market_data import (
     Heartbeat,
     StreamErrorResponse,
 )
-from src.utils.websocket_stream import WebSocketStream
+
+# from src.utils.websocket_stream import WebSocketStream
 from pydantic import ValidationError
 
 
@@ -29,28 +30,18 @@ def mock_http_client():
 
 
 @pytest.fixture
-def mock_stream_manager():
-    """Create a mock StreamManager for testing."""
-    return AsyncMock()
-
-
-@pytest.fixture
-def market_data_service(mock_http_client, mock_stream_manager):
+def market_data_service(mock_http_client):
     """Create a MarketDataService with mock dependencies."""
+    # Pass None or remove the stream_manager argument if no longer needed by the service constructor
+    mock_stream_manager = AsyncMock()  # Keep if constructor still requires it
     return MarketDataService(mock_http_client, mock_stream_manager)
 
 
 @pytest.fixture
 def mock_stream_reader():
-    """Create a mock StreamReader for SSE."""
+    """Create a mock StreamReader for testing stream consumption."""
     mock = AsyncMock(spec=aiohttp.StreamReader)
-    # Simulate readline yielding JSON data
-    mock_data = [
-        json.dumps({"Delta": "0.5", "Strikes": ["100"]}).encode("utf-8"),  # Simplified Spread
-        json.dumps({"Heartbeat": 1, "Timestamp": "2023-01-01T00:01:00Z"}).encode("utf-8"),
-        b"",
-    ]
-    mock.readline.side_effect = mock_data
+    mock.readline = AsyncMock()  # Will set side_effect in the test
     return mock
 
 
@@ -149,11 +140,12 @@ class TestStreamOptionQuotes:
         with pytest.raises(ValueError, match="Invalid option symbol format"):
             await market_data_service.stream_option_quotes(OptionQuoteParams(legs=legs))
 
+    # Rename and refactor this test
     @pytest.mark.asyncio
-    async def test_integration_with_websocket_stream(
-        self, market_data_service, mock_stream_manager
+    async def test_integration_with_stream_reader(
+        self, market_data_service, mock_http_client, mock_stream_reader
     ):
-        """Test the integration with WebSocketStream for processing option quote data."""
+        """Test the integration with StreamReader for processing option quote data."""
         # Arrange
         params = OptionQuoteParams(
             legs=[
@@ -163,55 +155,14 @@ class TestStreamOptionQuotes:
             enableGreeks=True,
         )
 
-        # Set up mock stream with callback handling
-        mock_stream = AsyncMock(spec=WebSocketStream)
-        mock_callback = None
-
-        def mock_set_callback(callback):
-            nonlocal mock_callback
-            mock_callback = callback
-
-        mock_stream.set_callback.side_effect = mock_set_callback
-        mock_stream_manager.create_stream.return_value = mock_stream
-
-        # Act
-        stream = await market_data_service.stream_option_quotes(params)
+        # Mock HttpClient.create_stream to return the mock StreamReader
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Define example data messages
         spread_data = {
             "Delta": "0.55",
             "Gamma": "0.03",
-            "Theta": "-0.045",
-            "Vega": "0.12",
-            "Rho": "0.08",
-            "ImpliedVolatility": "0.23",
-            "IntrinsicValue": "5.25",
-            "ExtrinsicValue": "2.75",
-            "TheoreticalValue": "8.00",
-            "TheoreticalValue_IV": "8.10",
-            "ProbabilityITM": "0.65",
-            "ProbabilityOTM": "0.35",
-            "ProbabilityBE": "0.55",
-            "ProbabilityITM_IV": "0.66",
-            "ProbabilityOTM_IV": "0.34",
-            "ProbabilityBE_IV": "0.56",
-            "StandardDeviation": "0.28",
-            "DailyOpenInterest": 1250,
-            "Ask": "8.15",
-            "Bid": "7.95",
-            "Mid": "8.05",
-            "AskSize": 25,
-            "BidSize": 30,
-            "Close": "8.10",
-            "High": "8.25",
-            "Last": "8.05",
-            "Low": "7.90",
-            "NetChange": "0.05",
-            "NetChangePct": "0.62%",
-            "Open": "8.00",
-            "PreviousClose": "8.00",
-            "Volume": 450,
-            "Side": "Both",
+            # ... (rest of spread_data fields) ...
             "Strikes": ["190"],
             "Legs": [
                 {
@@ -230,63 +181,90 @@ class TestStreamOptionQuotes:
                 },
             ],
         }
-
         heartbeat_data = {"Heartbeat": "HeartbeatValue", "Timestamp": "2023-01-01T00:00:00Z"}
-
         error_data = {"Error": "ErrorValue", "Message": "Error message details", "StatusCode": 400}
+        non_json_line = b"this is not json\n"
+        empty_line = b"\n"
 
-        # Assert stream is properly returned
-        assert stream == mock_stream
+        # Simulate StreamReader behavior
+        lines_to_return = [
+            json.dumps(spread_data).encode("utf-8") + b"\n",
+            json.dumps(heartbeat_data).encode("utf-8") + b"\n",
+            json.dumps(error_data).encode("utf-8") + b"\n",
+            non_json_line,
+            empty_line,
+            b"",  # Simulate end of stream
+        ]
+        mock_stream_reader.readline.side_effect = lines_to_return
 
-        # Verify callback processes data correctly (if set)
-        if mock_callback:
-            # Create a tracking list to verify event handling
-            processed_events = []
+        # Act: Call the service method to get the stream reader
+        stream_reader_result = await market_data_service.stream_option_quotes(params)
 
-            async def test_callback(data):
-                processed_events.append(data)
-                return None
+        # Assert the stream reader was returned
+        assert stream_reader_result == mock_stream_reader
 
-            # Set up a callback and trigger data events
-            stream.set_callback(test_callback)
+        # Act: Simulate processing the stream reader
+        processed_data = []
+        non_json_count = 0
+        while True:
+            line = await stream_reader_result.readline()
+            if not line:
+                break
+            try:
+                line_str = line.strip().decode("utf-8")
+                if not line_str:
+                    continue  # Skip empty lines
+                data = json.loads(line_str)
+                processed_data.append(data)
+            except json.JSONDecodeError:
+                non_json_count += 1
+            except UnicodeDecodeError:
+                pass  # Handle if necessary
 
-            # Simulate data events
-            await mock_callback(spread_data)
-            await mock_callback(heartbeat_data)
-            await mock_callback(error_data)
+        # Assert data was processed correctly
+        assert len(processed_data) == 3
+        assert processed_data[0] == spread_data
+        assert processed_data[1] == heartbeat_data
+        assert processed_data[2] == error_data
+        assert non_json_count == 1
 
-            # Verify all events were processed
-            assert len(processed_events) == 3
-            assert processed_events[0] == spread_data
-            assert processed_events[1] == heartbeat_data
-            assert processed_events[2] == error_data
+        # Optional: Add specific validation for spread data structure if needed
+        assert "Delta" in processed_data[0]
+        assert len(processed_data[0]["Legs"]) == 2
 
     @pytest.mark.asyncio
-    async def test_stream_option_quotes_single_leg(self, market_data_service, mock_stream_manager):
-        """Test streaming option quotes with a single leg."""
+    async def test_stream_option_quotes_single_leg(
+        self, market_data_service, mock_http_client, mock_stream_reader
+    ):
+        """Test streaming option quotes with a single leg using StreamReader."""
         # Arrange
         params = OptionQuoteParams(
             legs=[OptionQuoteLeg(Symbol="AAPL 240119C190", Ratio=1)], enableGreeks=True
         )
 
-        # Expected query parameters
+        # Expected query parameters (match the service logic)
         expected_query_params = {
             "enableGreeks": True,
             "legs[0].Symbol": "AAPL 240119C190",
-            "legs[0].Ratio": 1,
         }
+        if hasattr(params.legs[0], "Ratio") and params.legs[0].Ratio is not None:
+            expected_query_params["legs[0].Ratio"] = params.legs[0].Ratio
 
-        # Mock the StreamManager.create_stream method
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
+        expected_endpoint = "/v3/marketdata/stream/options/quotes"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+
+        # Mock the HttpClient.create_stream method
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Act
         result = await market_data_service.stream_option_quotes(params)
 
-        # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/options/quotes",
-            expected_query_params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        # Assert create_stream was called correctly
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_endpoint,
+            params=expected_query_params,
+            headers=expected_headers,
         )
-        assert result == mock_stream
+
+        # Assert the StreamReader was returned
+        assert result == mock_stream_reader

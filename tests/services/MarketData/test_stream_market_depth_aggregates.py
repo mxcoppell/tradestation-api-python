@@ -15,7 +15,6 @@ from src.ts_types.market_data import (
     Heartbeat,
     StreamErrorResponse,
 )
-from src.utils.websocket_stream import WebSocketStream
 
 
 @pytest.fixture
@@ -27,30 +26,17 @@ def mock_http_client():
 
 
 @pytest.fixture
-def mock_stream_manager():
-    """Create a mock StreamManager for testing."""
-    return AsyncMock()
-
-
-@pytest.fixture
-def market_data_service(mock_http_client, mock_stream_manager):
+def market_data_service(mock_http_client):
     """Create a MarketDataService with mock dependencies."""
+    mock_stream_manager = AsyncMock()
     return MarketDataService(mock_http_client, mock_stream_manager)
 
 
 @pytest.fixture
 def mock_stream_reader():
-    """Create a mock StreamReader for SSE."""
+    """Create a mock StreamReader for testing stream consumption."""
     mock = AsyncMock(spec=aiohttp.StreamReader)
-    # Simulate readline yielding JSON data
-    mock_data = [
-        json.dumps(
-            {"Bids": [{"Price": "100.00", "TotalSize": 100, "OrderCount": 5}], "Asks": []}
-        ).encode("utf-8"),
-        json.dumps({"Heartbeat": 1, "Timestamp": "2023-01-01T00:01:00Z"}).encode("utf-8"),
-        b"",
-    ]
-    mock.readline.side_effect = mock_data
+    mock.readline = AsyncMock()
     return mock
 
 
@@ -125,26 +111,13 @@ class TestStreamMarketDepthAggregates:
             await market_data_service.stream_market_depth_aggregates(symbol, params)
 
     @pytest.mark.asyncio
-    async def test_integration_with_websocket_stream(
-        self, market_data_service, mock_stream_manager
+    async def test_integration_with_stream_reader(
+        self, market_data_service, mock_http_client, mock_stream_reader
     ):
-        """Test the integration with WebSocketStream for processing market depth data."""
+        """Test the integration with StreamReader for processing market depth data."""
         # Arrange
         symbol = "MSFT"
-        mock_stream = AsyncMock(spec=WebSocketStream)
-
-        # Simulate WebSocketStream behavior with callback handling
-        mock_callback = None
-
-        def mock_set_callback(callback):
-            nonlocal mock_callback
-            mock_callback = callback
-
-        mock_stream.set_callback.side_effect = mock_set_callback
-        mock_stream_manager.create_stream.return_value = mock_stream
-
-        # Act
-        stream = await market_data_service.stream_market_depth_aggregates(symbol)
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Define example data messages
         market_depth_data = {
@@ -160,17 +133,6 @@ class TestStreamMarketDepthAggregates:
                     "NumParticipants": 5,
                     "TotalOrderCount": 10,
                 },
-                {
-                    "EarliestTime": "2023-03-02T14:00:01Z",
-                    "LatestTime": "2023-03-02T14:00:06Z",
-                    "Side": "Bid",
-                    "Price": "214.90",
-                    "TotalSize": "2500",
-                    "BiggestSize": "1000",
-                    "SmallestSize": "200",
-                    "NumParticipants": 8,
-                    "TotalOrderCount": 15,
-                },
             ],
             "Asks": [
                 {
@@ -184,47 +146,57 @@ class TestStreamMarketDepthAggregates:
                     "NumParticipants": 6,
                     "TotalOrderCount": 12,
                 },
-                {
-                    "EarliestTime": "2023-03-02T14:00:01Z",
-                    "LatestTime": "2023-03-02T14:00:06Z",
-                    "Side": "Ask",
-                    "Price": "215.10",
-                    "TotalSize": "3000",
-                    "BiggestSize": "1200",
-                    "SmallestSize": "300",
-                    "NumParticipants": 10,
-                    "TotalOrderCount": 20,
-                },
             ],
         }
-
         heartbeat_data = {"Heartbeat": 1, "Timestamp": "2023-03-02T14:01:00Z"}
-
         error_data = {"Error": "InvalidSymbol", "Message": "Symbol not found"}
+        non_json_line = b"this is not json\n"
+        empty_line = b"\n"
 
-        # Use callback to test data processing
-        received_data = []
+        # Simulate StreamReader behavior
+        lines_to_return = [
+            json.dumps(market_depth_data).encode("utf-8") + b"\n",
+            json.dumps(heartbeat_data).encode("utf-8") + b"\n",
+            json.dumps(error_data).encode("utf-8") + b"\n",
+            non_json_line,
+            empty_line,
+            b"",  # Simulate end of stream
+        ]
+        mock_stream_reader.readline.side_effect = lines_to_return
 
-        async def test_callback(data):
-            received_data.append(data)
+        # Act: Call the service method to get the stream reader
+        stream_reader_result = await market_data_service.stream_market_depth_aggregates(symbol)
 
-        # Set the callback and simulate data reception
-        stream.set_callback(test_callback)
-        assert mock_callback is not None
+        # Assert the stream reader was returned
+        assert stream_reader_result == mock_stream_reader
 
-        # Simulate receiving data
-        await mock_callback(market_depth_data)
-        await mock_callback(heartbeat_data)
-        await mock_callback(error_data)
+        # Act: Simulate processing the stream reader (similar to test_stream_quotes)
+        processed_data = []
+        non_json_count = 0
+        while True:
+            line = await stream_reader_result.readline()
+            if not line:
+                break
+            try:
+                line_str = line.strip().decode("utf-8")
+                if not line_str:
+                    continue
+                data = json.loads(line_str)
+                processed_data.append(data)
+            except json.JSONDecodeError:
+                non_json_count += 1
+            except UnicodeDecodeError:
+                pass
 
         # Assert data was processed correctly
-        assert len(received_data) == 3
-        assert received_data[0] == market_depth_data
-        assert received_data[1] == heartbeat_data
-        assert received_data[2] == error_data
+        assert len(processed_data) == 3
+        assert processed_data[0] == market_depth_data
+        assert processed_data[1] == heartbeat_data
+        assert processed_data[2] == error_data
+        assert non_json_count == 1
 
-        # Validate that the bid and ask data structures match expectations
-        assert len(received_data[0]["Bids"]) == 2
-        assert len(received_data[0]["Asks"]) == 2
-        assert received_data[0]["Bids"][0]["Price"] == "214.95"
-        assert received_data[0]["Asks"][0]["Price"] == "215.05"
+        # Optional: Add specific validation for market depth data structure if needed
+        assert len(processed_data[0]["Bids"]) >= 1
+        assert len(processed_data[0]["Asks"]) >= 1
+        assert processed_data[0]["Bids"][0]["Price"] == "214.95"
+        assert processed_data[0]["Asks"][0]["Price"] == "215.05"

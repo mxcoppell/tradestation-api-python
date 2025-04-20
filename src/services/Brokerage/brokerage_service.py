@@ -806,6 +806,10 @@ class BrokerageService:
         Raises:
             Exception: If the request fails
         """
+        # Validate maximum accounts
+        if len(account_ids.split(",")) > 25:
+            raise ValueError("Maximum of 25 accounts allowed per request")
+
         endpoint_url = f"/v3/brokerage/stream/accounts/{account_ids}/orders"
         headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
 
