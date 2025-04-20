@@ -8,7 +8,7 @@ To use this library, you need to obtain TradeStation API credentials:
 
 1. Log in to your TradeStation account
 2. Navigate to the [Developer Portal](https://developer.tradestation.com/)
-3. Create a new application to get your Client ID and Client Secret
+3. Create a new application to get your Client ID and Refresh Token
 4. Note your application's redirect URI
 
 ## Authentication Methods
@@ -20,14 +20,10 @@ The library supports several methods for providing authentication credentials:
 The simplest way to authenticate is to set your credentials as environment variables:
 
 ```bash
-# Required
+# Mandatory
 CLIENT_ID=your_client_id
-CLIENT_SECRET=your_client_secret
 REFRESH_TOKEN=your_refresh_token
 ENVIRONMENT=Live  # or Simulation
-
-# Optional
-ACCESS_TOKEN=your_access_token  # Optional, will be obtained using refresh token if not provided
 ```
 
 You can use a `.env` file for this purpose. The library includes a `.env.sample` file you can copy and modify.
@@ -41,7 +37,6 @@ from src.client.tradestation_client import TradeStationClient
 
 client = TradeStationClient({
     "client_id": "your_client_id",
-    "client_secret": "your_client_secret",
     "refresh_token": "your_refresh_token",
     "environment": "Live"  # or "Simulation"
 })
@@ -60,7 +55,7 @@ client = TradeStationClient(
 )
 ```
 
-When using this method, the client will still look for `CLIENT_ID` and `CLIENT_SECRET` in the environment variables.
+When using this method, the client will still look for `CLIENT_ID` in the environment variables.
 
 ## Obtaining a Refresh Token
 
@@ -90,7 +85,6 @@ curl -X POST https://api.tradestation.com/v2/security/authorize \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=authorization_code" \
   -d "client_id=YOUR_CLIENT_ID" \
-  -d "client_secret=YOUR_CLIENT_SECRET" \
   -d "code=YOUR_CODE" \
   -d "redirect_uri=YOUR_REDIRECT_URI"
 ```
@@ -139,7 +133,7 @@ This will print information about token refreshing, API requests, and other usef
 
 ## Security Considerations
 
-- Always keep your Client Secret and Refresh Token secure
+- Always keep your Client ID and Refresh Token secure
 - Do not commit these values to version control
 - Use environment variables or a secure configuration manager in production
 - Consider using a secrets management service for production deployments 

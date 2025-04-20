@@ -9,7 +9,6 @@ class TestClientConfig:
         """Test that default values are correctly applied."""
         config = ClientConfig()
         assert config.client_id is None
-        assert config.client_secret is None
         assert config.refresh_token is None
         assert config.max_concurrent_streams is None
         assert config.environment is None
@@ -18,13 +17,11 @@ class TestClientConfig:
         """Test that values can be properly set."""
         config = ClientConfig(
             client_id="test_id",
-            client_secret="test_secret",
             refresh_token="test_refresh_token",
             max_concurrent_streams=5,
             environment="Simulation",
         )
         assert config.client_id == "test_id"
-        assert config.client_secret == "test_secret"
         assert config.refresh_token == "test_refresh_token"
         assert config.max_concurrent_streams == 5
         assert config.environment == "Simulation"

@@ -15,10 +15,9 @@ This example demonstrates how to:
 4. Handle the response and potential errors
 
 Required environment variables (.env):
-- CLIENT_ID: Your TradeStation API client ID
-- CLIENT_SECRET: Your TradeStation API client secret
-- REFRESH_TOKEN: Your TradeStation refresh token
-- ENVIRONMENT: 'Simulation' or 'Live'
+- CLIENT_ID: Your TradeStation API client ID (Mandatory)
+- REFRESH_TOKEN: Your TradeStation refresh token (Mandatory)
+- ENVIRONMENT: 'Simulation' or 'Live' (Mandatory)
 """
 
 

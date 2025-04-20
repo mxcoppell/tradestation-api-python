@@ -47,7 +47,6 @@ class TestTokenManager:
         """Set up test fixtures."""
         self.mock_config = ClientConfig(
             client_id="test-client-id",
-            client_secret="test-client-secret",
             refresh_token="test-refresh-token",
         )
 
@@ -258,7 +257,6 @@ class TestTokenManager:
         token_manager = TokenManager(
             ClientConfig(
                 client_id="test-client-id",
-                client_secret="test-client-secret",
             )
         )
 
@@ -268,20 +266,18 @@ class TestTokenManager:
 
     def test_constructor_env_vars(self):
         """Test constructor using environment variables."""
-        with patch.dict(
-            "os.environ", {"CLIENT_ID": "env-client-id", "CLIENT_SECRET": "env-client-secret"}
-        ):
+        with patch.dict("os.environ", {"CLIENT_ID": "env-client-id"}):
             token_manager = TokenManager()
             assert token_manager._config.client_id == "env-client-id"
-            assert token_manager._config.client_secret == "env-client-secret"
 
     def test_constructor_missing_credentials(self):
         """Test constructor raises error when credentials are missing."""
-        with patch.dict("os.environ", {"CLIENT_ID": "", "CLIENT_SECRET": ""}):
-            with pytest.raises(ValueError, match="Client ID and Client Secret are required"):
+        # Mock environment variables without credentials
+        with patch.dict("os.environ", {"CLIENT_ID": ""}):
+            # Test with missing client_id
+            with pytest.raises(ValueError, match="Client ID is required"):
                 TokenManager(
                     ClientConfig(
                         client_id=None,
-                        client_secret=None,
                     )
                 )

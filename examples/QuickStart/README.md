@@ -22,7 +22,7 @@ This directory contains quick-start examples that demonstrate the basic usage of
 
 - Python 3.8 or later
 - A TradeStation account with API access
-- API credentials (client ID, client secret, refresh token)
+- API credentials (client ID, refresh token)
 
 ## Setup
 
@@ -30,7 +30,6 @@ This directory contains quick-start examples that demonstrate the basic usage of
 
 ```
 CLIENT_ID=your_client_id
-CLIENT_SECRET=your_client_secret
 REFRESH_TOKEN=your_refresh_token
 ENVIRONMENT=Simulation  # or 'Live' for production
 ```

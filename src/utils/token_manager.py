@@ -27,11 +27,11 @@ class TokenManager:
         Initialize the TokenManager with client credentials.
 
         Args:
-            config: Optional configuration with client ID, secret, and refresh token.
+            config: Optional configuration with client ID and refresh token.
                    If not provided, values are read from environment variables.
 
         Raises:
-            ValueError: If client ID and client secret are not provided and not in environment.
+            ValueError: If client ID and refresh token are not provided and not in environment.
         """
         self._access_token: Optional[str] = None
         self._refresh_token: Optional[str] = None
@@ -40,20 +40,16 @@ class TokenManager:
 
         # Get credentials from config or environment
         client_id = config.client_id if config else None
-        client_secret = config.client_secret if config else None
 
         if not client_id:
             client_id = os.environ.get("CLIENT_ID")
-        if not client_secret:
-            client_secret = os.environ.get("CLIENT_SECRET")
 
-        if not client_id or not client_secret:
-            raise ValueError("Client ID and Client Secret are required")
+        if not client_id:
+            raise ValueError("Client ID is required")
 
         # Store configuration
         self._config = ClientConfig(
             client_id=client_id,
-            client_secret=client_secret,
             max_concurrent_streams=config.max_concurrent_streams if config else None,
             environment=config.environment if config else None,
         )
@@ -113,7 +109,6 @@ class TokenManager:
             data = {
                 "grant_type": "refresh_token",
                 "client_id": self._config.client_id,
-                "client_secret": self._config.client_secret,
                 "refresh_token": refresh_token,
             }
 

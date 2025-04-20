@@ -49,8 +49,6 @@ class TradeStationClient:
         # Load from environment if not in config
         if not config_dict.get("client_id"):
             config_dict["client_id"] = os.environ.get("CLIENT_ID")
-        if not config_dict.get("client_secret"):
-            config_dict["client_secret"] = os.environ.get("CLIENT_SECRET")
 
         # Override config with parameters if provided
         if refresh_token:

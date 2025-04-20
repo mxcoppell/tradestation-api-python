@@ -25,7 +25,7 @@ async def main():
     """
     # Initialize the TradeStation client
     # The client automatically handles authentication using environment variables:
-    # TRADESTATION_CLIENT_ID, TRADESTATION_CLIENT_SECRET, TRADESTATION_PAPER_ACCOUNT, TRADESTATION_REFRESH_TOKEN
+    # CLIENT_ID, REFRESH_TOKEN, ENVIRONMENT
     client = TradeStationClient()
 
     try:

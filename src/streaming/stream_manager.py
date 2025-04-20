@@ -48,7 +48,7 @@ class StreamManager:
         Args:
             token_manager: Optional TokenManager instance for authentication.
                            If not provided, a new one will be created.
-            config: Optional configuration with settings like client ID and secret.
+            config: Optional configuration with settings like client ID and refresh token.
                     If not provided, values are read from environment variables.
 
         Raises:

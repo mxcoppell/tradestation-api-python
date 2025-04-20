@@ -15,10 +15,9 @@ This example demonstrates how to:
 4. Handle the response and potential errors
 
 Required environment variables (.env):
-- CLIENT_ID: Your TradeStation API client ID
-- CLIENT_SECRET: Your TradeStation API client secret
-- REFRESH_TOKEN: Your TradeStation refresh token
-- ENVIRONMENT: 'Simulation' or 'Live'
+- CLIENT_ID: Your TradeStation API client ID (Mandatory)
+- REFRESH_TOKEN: Your TradeStation refresh token (Mandatory)
+- ENVIRONMENT: 'Simulation' or 'Live' (Mandatory)
 """
 
 
@@ -51,10 +50,11 @@ class SymbolEncoder(json.JSONEncoder):
 
 async def main():
     try:
-        print("Environment variables:")
-        print(f"CLIENT_ID: {'✓ (set)' if os.getenv('CLIENT_ID') else '✗ (not set)'}")
-        print(f"CLIENT_SECRET: {'✓ (set)' if os.getenv('CLIENT_SECRET') else '✗ (not set)'}")
-        print(f"REFRESH_TOKEN: {'✓ (set)' if os.getenv('REFRESH_TOKEN') else '✗ (not set)'}")
+        print("Verifying environment variables...")
+        print(f"CLIENT_ID: {os.getenv('CLIENT_ID') if os.getenv('CLIENT_ID') else '✗ (not set)'}")
+        print(
+            f"REFRESH_TOKEN: {os.getenv('REFRESH_TOKEN') if os.getenv('REFRESH_TOKEN') else '✗ (not set)'}"
+        )
         print(f"ENVIRONMENT: {os.getenv('ENVIRONMENT') or 'not set (using Simulation default)'}")
 
         # Initialize the TradeStation client

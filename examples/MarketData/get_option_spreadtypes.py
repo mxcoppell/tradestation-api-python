@@ -6,8 +6,7 @@ from src.client.tradestation_client import TradeStationClient
 # Load environment variables from .env file
 load_dotenv()
 
-# Ensure your .env file has TRADESTATION_CLIENT_ID, TRADESTATION_CLIENT_SECRET,
-# and TRADESTATION_REFRESH_TOKEN populated.
+# Ensure your .env file has CLIENT_ID, REFRESH_TOKEN, and ENVIRONMENT populated.
 # You can obtain a refresh token using the provided (or manually run) authentication flow.
 
 
