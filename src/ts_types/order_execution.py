@@ -407,6 +407,8 @@ class GroupOrderResponseSuccess(BaseModel):
 
     OrderID: str
     Message: str
+    Price: Optional[str] = None
+    StopPrice: Optional[str] = None
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -430,10 +432,42 @@ class GroupOrderResponse(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
 
+class GroupOrderConfirmationDetailTimeInForce(BaseModel):
+    """Nested TimeInForce structure within confirmation detail."""
+
+    Duration: Optional[str] = None  # Make optional as it might not always be present
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class GroupOrderConfirmationDetail(BaseModel):
+    """Actual structure of an item within the Confirmations list."""
+
+    OrderAssetCategory: Optional[str] = None
+    Currency: Optional[str] = None
+    Route: Optional[str] = None
+    TimeInForce: Optional[GroupOrderConfirmationDetailTimeInForce] = None
+    AccountID: Optional[str] = None
+    OrderConfirmID: Optional[str] = None  # Unique ID for this confirmation
+    EstimatedPrice: Optional[str] = None
+    EstimatedCost: Optional[str] = None
+    DebitCreditEstimatedCost: Optional[str] = None
+    EstimatedCommission: Optional[str] = None
+    SummaryMessage: Optional[str] = None  # User-friendly summary
+    # Add any other potential fields observed or expected, making them Optional
+    OrderID: Optional[str] = None  # Include OrderID if it might appear
+    Message: Optional[str] = None  # Include Message if it might appear
+    Price: Optional[str] = None
+    StopPrice: Optional[str] = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
 class GroupOrderConfirmationResponse(BaseModel):
     """Response from confirming a group order."""
 
-    Orders: List["GroupOrderResponseSuccess"]
+    # Use the new detail model
+    Confirmations: List["GroupOrderConfirmationDetail"]
     Errors: Optional[List[GroupOrderResponseError]] = None
 
     model_config = {"arbitrary_types_allowed": True}
