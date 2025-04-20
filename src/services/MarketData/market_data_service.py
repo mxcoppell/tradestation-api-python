@@ -1184,7 +1184,10 @@ class MarketDataService:
 
         # Validate and transform legs to query parameters
         query_params: Dict[str, Any] = {
-            "enableGreeks": params.enableGreeks if params.enableGreeks is not None else True
+            # Convert boolean to lowercase string for query parameter
+            "enableGreeks": str(
+                params.enableGreeks if params.enableGreeks is not None else True
+            ).lower()
         }
 
         # Validate risk free rate format
