@@ -11,7 +11,7 @@ from ...ts_types.market_data import (
     SpreadTypes,
     Strikes,
     RiskRewardAnalysisInput,
-    RiskRewardAnalysis,
+    RiskRewardAnalysisResult,
     OptionQuoteParams,
 )
 from ...utils.websocket_stream import WebSocketStream
@@ -461,9 +461,9 @@ class MarketDataService:
 
     async def get_option_risk_reward(
         self, analysis: Union[Dict[str, Any], RiskRewardAnalysisInput]
-    ) -> RiskRewardAnalysis:
+    ) -> RiskRewardAnalysisResult:
         """
-        Calculates risk and reward metrics for an option spread strategy.
+        Calculates risk and reward metrics for an option spread strategy using the OpenAPI defined structure.
 
         This endpoint calculates key risk/reward metrics for one or more option legs, including:
         - Maximum profit potential
@@ -482,7 +482,7 @@ class MarketDataService:
                        - StopPrice: Stop price for loss protection
 
         Returns:
-            A RiskRewardAnalysis object containing the risk/reward metrics
+            A RiskRewardAnalysisResult object containing the risk/reward metrics
 
         Raises:
             ValueError: If no legs are provided
@@ -522,15 +522,16 @@ class MarketDataService:
         if not analysis.get("Legs") or (hasattr(analysis, "Legs") and not analysis.Legs):
             raise ValueError("At least one leg is required")
 
-        # Make the API request
+        # Make the API request - Ensure input 'analysis' dict matches OpenAPI spec!
+        # The input model RiskRewardAnalysisInput defined in ts_types is likely WRONG.
         response = await self.http_client.post("/v3/marketdata/options/riskreward", data=analysis)
 
         # Check for errors in the response
         if "Error" in response:
             raise Exception(response.get("Message", "Unknown API error"))
 
-        # Parse the response into the RiskRewardAnalysis model
-        return RiskRewardAnalysis.model_validate(response)
+        # Parse the response into the CORRECT RiskRewardAnalysisResult model
+        return RiskRewardAnalysisResult.model_validate(response)
 
     async def get_option_strikes(
         self,

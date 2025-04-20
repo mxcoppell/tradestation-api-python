@@ -565,6 +565,7 @@ class RiskRewardLeg(BaseModel):
     """
     Represents a leg in an option spread for risk/reward analysis.
     """
+
     # The option symbol (e.g., 'AAPL 240119C150')
     Symbol: str
     # Position ratio (positive for long, negative for short)
@@ -581,6 +582,7 @@ class RiskRewardAnalysisInput(BaseModel):
     """
     Provides the required information to analyze the risk vs. reward of a potential option spread trade.
     """
+
     # The current price of the spread
     SpreadPrice: str
     # Array of legs in the option spread
@@ -590,7 +592,9 @@ class RiskRewardAnalysisInput(BaseModel):
 class RiskRewardAnalysis(BaseModel):
     """
     Result of analyzing the risk vs. reward of a potential option spread trade.
+    (NOTE: This model seems INCORRECT based on OpenAPI spec for /v3/marketdata/options/riskreward)
     """
+
     # The current price of the spread
     SpreadPrice: str
     # Maximum potential gain from the spread
@@ -603,6 +607,20 @@ class RiskRewardAnalysis(BaseModel):
     Commission: str
     # The legs of the spread with their individual metrics
     Legs: List[RiskRewardLeg]
+
+
+# NEW MODEL based on OpenAPI spec /v3/marketdata/options/riskreward response
+class RiskRewardAnalysisResult(BaseModel):
+    """
+    Result of the risk/reward analysis from the TradeStation API.
+    Matches the RiskRewardAnalysisResult schema in the OpenAPI spec.
+    """
+
+    MaxGainIsInfinite: bool
+    AdjustedMaxGain: str
+    MaxLossIsInfinite: bool
+    AdjustedMaxLoss: str
+    BreakevenPoints: List[str]
 
 
 class SpreadType(BaseModel):
