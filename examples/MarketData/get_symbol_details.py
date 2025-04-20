@@ -13,7 +13,7 @@ import asyncio
 import os
 from decimal import Decimal, ROUND_HALF_UP
 from dotenv import load_dotenv
-from src.tradestation import TradeStationClient  # Adjust import based on your project structure
+from src.client.tradestation_client import TradeStationClient
 
 # Load environment variables from .env file
 load_dotenv()
@@ -33,25 +33,25 @@ async def main():
         print("\n--- Example 1: Get details for MSFT ---")
         msft_details = await client.market_data.get_symbol_details("MSFT")
 
-        if msft_details.errors:
-            print(f"Error fetching MSFT details: {msft_details.errors[0].message}")
-        elif msft_details.symbols:
-            msft_symbol = msft_details.symbols[0]
-            print(f"Asset Type: {msft_symbol.asset_type}")
-            print(f"Description: {msft_symbol.description}")
-            print(f"Exchange: {msft_symbol.exchange}")
-            print(f"Currency: {msft_symbol.currency}")
-            if msft_symbol.price_format:
+        if msft_details.Errors:
+            print(f"Error fetching MSFT details: {msft_details.Errors[0].Message}")
+        elif msft_details.Symbols:
+            msft_symbol = msft_details.Symbols[0]
+            print(f"Asset Type: {msft_symbol.AssetType}")
+            print(f"Description: {msft_symbol.Description}")
+            print(f"Exchange: {msft_symbol.Exchange}")
+            print(f"Currency: {msft_symbol.Currency}")
+            if msft_symbol.PriceFormat:
                 print(
                     "Price Format:",
                     {
-                        "format": msft_symbol.price_format.format,
+                        "format": msft_symbol.PriceFormat.Format,
                         "decimals": (
-                            msft_symbol.price_format.decimals
-                            if msft_symbol.price_format.decimals is not None
+                            msft_symbol.PriceFormat.Decimals
+                            if msft_symbol.PriceFormat.Decimals is not None
                             else "N/A"
                         ),
-                        "increment": msft_symbol.price_format.increment,
+                        "increment": msft_symbol.PriceFormat.Increment,
                     },
                 )
         else:
@@ -71,59 +71,59 @@ async def main():
 
         # Process successful results
         print("\nDetails for Multiple Symbols:")
-        if multi_details.symbols:
-            for symbol in multi_details.symbols:
-                print(f"\n{symbol.symbol} ({symbol.asset_type}):")
-                print(f"Description: {symbol.description}")
-                print(f"Exchange: {symbol.exchange}")
-                if symbol.price_format:
+        if multi_details.Symbols:
+            for symbol in multi_details.Symbols:
+                print(f"\n{symbol.Symbol} ({symbol.AssetType}):")
+                print(f"Description: {symbol.Description}")
+                print(f"Exchange: {symbol.Exchange}")
+                if symbol.PriceFormat:
                     decimals_str = (
-                        symbol.price_format.decimals
-                        if symbol.price_format.decimals is not None
+                        symbol.PriceFormat.Decimals
+                        if symbol.PriceFormat.Decimals is not None
                         else "N/A"
                     )
-                    print(f"Price Format: {symbol.price_format.format} ({decimals_str} decimals)")
+                    print(f"Price Format: {symbol.PriceFormat.Format} ({decimals_str} decimals)")
                 else:
                     print("Price Format: N/A")
 
                 # Asset-specific properties
-                if symbol.asset_type == "STOCKOPTION":
-                    print(f"Expiration: {symbol.expiration_date}")
-                    print(f"Strike: {symbol.strike_price}")
-                    print(f"Type: {symbol.option_type}")
-                elif symbol.asset_type == "FUTURE":
-                    print(f"Expiration: {symbol.expiration_date}")
-                    print(f"Type: {symbol.future_type}")
+                if symbol.AssetType == "STOCKOPTION":
+                    print(f"Expiration: {symbol.ExpirationDate}")
+                    print(f"Strike: {symbol.StrikePrice}")
+                    print(f"Type: {symbol.OptionType}")
+                elif symbol.AssetType == "FUTURE":
+                    print(f"Expiration: {symbol.ExpirationDate}")
+                    print(f"Type: {symbol.FutureType}")
                 print("---")
         else:
             print("No symbols successfully retrieved.")
 
         # Handle any errors
-        if multi_details.errors:
+        if multi_details.Errors:
             print("\nErrors encountered:")
-            for error in multi_details.errors:
-                print(f"{error.symbol}: {error.message}")
+            for error in multi_details.Errors:
+                print(f"{error.Symbol}: {error.Message}")
 
         # --- Example 3: Format prices using symbol details ---
         # Using MSFT details fetched earlier
         print("\n--- Example 3: Price Formatting Example (using MSFT details) ---")
-        if msft_details.symbols and msft_details.symbols[0].price_format:
-            stock_format = msft_details.symbols[0].price_format
+        if msft_details.Symbols and msft_details.Symbols[0].PriceFormat:
+            stock_format = msft_details.Symbols[0].PriceFormat
             price = Decimal("123.456")  # Use Decimal for precision
             print(f"Original Price: {price}")
 
             try:
-                if stock_format.format == "Decimal":
-                    if stock_format.decimals is not None:
+                if stock_format.Format == "Decimal":
+                    if stock_format.Decimals is not None:
                         # Quantize to the specified number of decimal places
-                        quantizer = Decimal("1." + "0" * int(stock_format.decimals))
+                        quantizer = Decimal("1." + "0" * int(stock_format.Decimals))
                         formatted_price = price.quantize(quantizer, rounding=ROUND_HALF_UP)
                         print(f"Formatted Decimal Price: {formatted_price}")
                     else:
                         print("Decimal format specified but no decimals provided.")
-                elif stock_format.format == "Fraction":
-                    if stock_format.fraction is not None:
-                        denominator = Decimal(stock_format.fraction)
+                elif stock_format.Format == "Fraction":
+                    if stock_format.Fraction is not None:
+                        denominator = Decimal(stock_format.Fraction)
                         whole = int(price)
                         fractional_part = price - whole
                         # Round numerator to nearest whole number
@@ -133,11 +133,11 @@ async def main():
                         )
                     else:
                         print("Fraction format specified but no denominator provided.")
-                elif stock_format.format == "SubFraction":
-                    if stock_format.fraction is not None and stock_format.sub_fraction is not None:
-                        denominator = Decimal(stock_format.fraction)
+                elif stock_format.Format == "SubFraction":
+                    if stock_format.Fraction is not None and stock_format.SubFraction is not None:
+                        denominator = Decimal(stock_format.Fraction)
                         sub_denominator_part = Decimal(
-                            stock_format.sub_fraction
+                            stock_format.SubFraction
                         )  # e.g., 2 for 1/2 of 1/32
                         sub_fraction_digits = len(
                             str(int(sub_denominator_part))
@@ -169,7 +169,7 @@ async def main():
                             "SubFraction format specified but missing fraction or subfraction values."
                         )
                 else:
-                    print(f"Unsupported Price Format: {stock_format.format}")
+                    print(f"Unsupported Price Format: {stock_format.Format}")
             except Exception as fmt_error:
                 print(f"Error formatting price: {fmt_error}")
                 print(f"Price Format Details: {stock_format}")
@@ -181,6 +181,12 @@ async def main():
         import traceback
 
         traceback.print_exc()  # Print full traceback for debugging
+    finally:
+        # Ensure the client session is closed gracefully
+        if "client" in locals() and client:
+            print("\nClosing client session...")
+            await client.close()
+            print("Client session closed.")
 
 
 if __name__ == "__main__":
