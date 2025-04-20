@@ -423,7 +423,6 @@ This document provides clear guidelines for AI agents working on this project. F
 ## Troubleshooting Common Issues
 
 1. **Authentication Problems**
-   - Re-run `get_refresh_token.sh` to refresh your credentials
    - Ensure your `.env` file has the correct values
 
 2. **Poetry Issues**
