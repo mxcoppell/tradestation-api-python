@@ -56,14 +56,18 @@ This document provides clear guidelines for AI agents working on this project. F
    poetry shell
    ```
 
-4. **Authentication Setup** (for testing functions requiring authentication)
-   ```bash
-   # Get a refresh token
-   ./get_refresh_token.sh
+4. **Authentication Setup & Verification** (MANDATORY before running examples/tests requiring auth)
+   
+   a. **Check `.env` File:**
+      - **BEFORE** attempting to run any example script or test that requires authentication, you MUST verify that the `.env` file in the project root contains valid values for:
+        - `CLIENT_ID`
+        - `REFRESH_TOKEN`
+        - `ENVIRONMENT` (e.g., `simulation` or `live`)
+      - If any of these variables are missing or empty, **STOP** and inform the user they need to update the `.env` file with their credentials and environment settings.
+      - **DO NOT PROCEED** with running the authenticated script/test until the user confirms the `.env` file is updated.
 
-   # Update .env file with your credentials
-   # Make sure to never commit your actual credentials
-   ```
+   b. **Security Reminder:**
+      - Always ensure the actual `.env` file is listed in `.gitignore` and never commit your actual credentials to the repository.
 
 ## Implementation Process
 
