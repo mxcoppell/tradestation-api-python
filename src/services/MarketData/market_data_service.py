@@ -711,7 +711,7 @@ class MarketDataService:
         self, symbol: str, params: Optional[Dict[str, Any]] = None
     ) -> aiohttp.StreamReader:
         """
-        Stream market depth quotes for equities, futures and stock options.
+        Stream market depth quotes for equities, futures and stock options using Server-Sent Events (SSE).
         A separate quote is returned for each price, side, and participant.
 
         This stream provides real-time updates for market depth (Level 2) data with individual
@@ -777,18 +777,20 @@ class MarketDataService:
             if max_levels <= 0:
                 raise ValueError("maxlevels must be a positive integer")
 
-        # Create the stream
-        return await self.stream_manager.create_stream(
-            f"/v3/marketdata/stream/marketdepth/quotes/{symbol}",
-            params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
-        )
+        # Construct endpoint URL
+        endpoint_url = f"/v3/marketdata/stream/marketdepth/quotes/{symbol}"
+
+        # Define headers for SSE
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+
+        # Create the stream using HttpClient for SSE
+        return await self.http_client.create_stream(endpoint_url, params=params, headers=headers)
 
     async def stream_market_depth_aggregates(
         self, symbol: str, params: Optional[Dict[str, Any]] = None
     ) -> aiohttp.StreamReader:
         """
-        Stream real-time aggregated market depth data for a symbol.
+        Stream real-time aggregated market depth data for a symbol using Server-Sent Events (SSE).
 
         This endpoint provides aggregated market depth data (Level 2) showing all bids and offers
         at various price points. The data is aggregated by price level, showing total size and
@@ -856,18 +858,20 @@ class MarketDataService:
             if max_levels < 1 or max_levels > 100:
                 raise ValueError("maxlevels must be between 1 and 100")
 
-        # Create the stream
-        return await self.stream_manager.create_stream(
-            f"/v3/marketdata/stream/marketdepth/aggregates/{symbol}",
-            params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
-        )
+        # Construct endpoint URL
+        endpoint_url = f"/v3/marketdata/stream/marketdepth/aggregates/{symbol}"
+
+        # Define headers for SSE
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+
+        # Create the stream using HttpClient for SSE
+        return await self.http_client.create_stream(endpoint_url, params=params, headers=headers)
 
     async def stream_option_chain(
         self, underlying: str, params: Optional[Dict[str, Any]] = None
     ) -> aiohttp.StreamReader:
         """
-        Stream a chain of option spreads for a given underlying symbol, spread type, and expiration.
+        Stream a chain of option spreads for a given underlying symbol, spread type, and expiration using SSE.
         A maximum of 10 concurrent streams is allowed.
 
         For options calculations, the WebAPI uses the following:
@@ -1027,16 +1031,18 @@ class MarketDataService:
             if risk_free_rate < 0 or risk_free_rate > 1:
                 raise ValueError("riskFreeRate must be a decimal value between 0 and 1")
 
-        # Create the stream
-        return await self.stream_manager.create_stream(
-            f"/v3/marketdata/stream/options/chains/{underlying}",
-            params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
-        )
+        # Construct endpoint URL
+        endpoint_url = f"/v3/marketdata/stream/options/chains/{underlying}"
+
+        # Define headers for SSE
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+
+        # Create the stream using HttpClient for SSE
+        return await self.http_client.create_stream(endpoint_url, params=params, headers=headers)
 
     async def stream_option_quotes(self, params: OptionQuoteParams) -> aiohttp.StreamReader:
         """
-        Stream quotes for option spreads (multi-leg strategies).
+        Stream quotes for option spreads (multi-leg strategies) using Server-Sent Events (SSE).
         A maximum of 10 concurrent streams is allowed.
 
         For options calculations, the WebAPI uses the following:
@@ -1204,9 +1210,13 @@ class MarketDataService:
             if leg.Ratio is not None:
                 query_params[f"legs[{index}].Ratio"] = leg.Ratio
 
-        # Create the stream
-        return await self.stream_manager.create_stream(
-            "/v3/marketdata/stream/options/quotes",
-            query_params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        # Construct endpoint URL
+        endpoint_url = "/v3/marketdata/stream/options/quotes"
+
+        # Define headers for SSE
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+
+        # Create the stream using HttpClient for SSE
+        return await self.http_client.create_stream(
+            endpoint_url, params=query_params, headers=headers
         )

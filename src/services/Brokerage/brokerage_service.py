@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
+import aiohttp
 
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
-from ...utils.stream_manager import WebSocketStream
 from ...ts_types.brokerage import (
     HistoricalOrdersById,
     Account,
@@ -425,10 +425,6 @@ class BrokerageService:
                   - QuantityOrdered: Original quantity ordered
                   - QuantityRemaining: Quantity still to be filled
                   - Symbol: Symbol being traded
-                  - ExpirationDate: Option expiration date (for options)
-                  - OptionType: Call or Put (for options)
-                  - StrikePrice: Strike price (for options)
-                  - Underlying: Underlying symbol (for options)
                 - OpenedDateTime: When the order was placed
                 - OrderID: Unique identifier for the order
                 - OrderType: Type of order (Market, Limit, etc.)
@@ -740,12 +736,12 @@ class BrokerageService:
         else:
             return Positions.model_validate(response)
 
-    async def stream_orders_by_order_id(self, account_ids: str, order_ids: str) -> WebSocketStream:
+    async def stream_orders_by_order_id(
+        self, account_ids: str, order_ids: str
+    ) -> aiohttp.StreamReader:
         """
-        Streams specific open orders for the given account IDs and order IDs.
-
-        This endpoint establishes a real-time stream for updates on specific orders.
-        Updates can include status changes, fills, cancellations, etc.
+        Streams Order changes for the given Order IDs using Server-Sent Events (SSE).
+        This provides real-time updates for specific orders.
 
         Args:
             account_ids: Comma-separated string of account IDs (e.g., "123456,789012").
@@ -754,169 +750,64 @@ class BrokerageService:
                        Maximum 50 order IDs (assumption, needs verification based on API docs).
 
         Returns:
-            A WebSocketStream object that asynchronously yields order update messages.
-            Each message is typically a JSON object representing the order state.
+            An aiohttp.StreamReader that yields order data.
 
         Raises:
-            ValueError: If the number of provided account IDs or order IDs exceeds limits.
-            Exception: If the stream connection fails or parameters are invalid.
-
-        Example:
-            ```python
-            # Assuming brokerage_service is an initialized BrokerageService instance
-            order_stream = await brokerage_service.stream_orders_by_order_id(
-                account_ids="YOUR_ACCOUNT_ID",
-                order_ids="YOUR_ORDER_ID_1,YOUR_ORDER_ID_2"
-            )
-
-            async for order_update in order_stream:
-                print(f"Received order update: {order_update}")
-                # Process the update (e.g., update local state, trigger actions)
-            ```
+            Exception: If the request fails
         """
-        # Convert comma-separated strings to lists
-        account_id_list = account_ids.split(",")
-        order_id_list = order_ids.split(",")
+        endpoint_url = f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}"
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
 
-        # Basic validation for the number of IDs
-        if len(account_id_list) > 25:
-            raise ValueError("Maximum number of account IDs (25) exceeded.")
-        # Assuming a limit of 50 for order IDs, based on historical orders endpoint pattern
-        if len(order_id_list) > 50:
-            raise ValueError("Maximum number of order IDs (50) exceeded.")
+        # Use HttpClient for SSE
+        return await self.http_client.create_stream(endpoint_url, params=None, headers=headers)
 
-        # Create the stream
-        return await self.stream_manager.create_stream(
-            f"/v3/brokerage/stream/accounts/{account_ids}/orders/{order_ids}",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
-        )
-
-    async def stream_positions(self, account_ids: str, changes: bool = False) -> WebSocketStream:
+    async def stream_positions(
+        self, account_ids: str, changes: bool = False
+    ) -> aiohttp.StreamReader:
         """
-        Stream positions for the given accounts. Request valid for Cash, Margin, Futures, and DVP account types.
-
-        This method provides real-time streaming updates for positions in the specified accounts, allowing
-        applications to track and respond to position changes as they occur. When a stream is first opened
-        with changes=true, streaming positions will return the full snapshot first for all positions, and
-        then any changes after that.
+        Streams Position changes for the given Accounts using Server-Sent Events (SSE).
+        This provides real-time updates for positions.
 
         Args:
             account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
                         1 to 25 Account IDs can be specified. Recommended batch size is 10.
-            changes: Optional. A boolean value that specifies whether or not position updates are streamed as changes.
-                    When a stream is first opened with changes=true, streaming positions will return the full snapshot
-                    first for all positions, and then any changes after that. When changes=true, the PositionID field
-                    is returned with each change, along with the fields that changed.
+            changes: Optional. Whether to stream only changes (True) or full positions (False). Default: False
 
         Returns:
-            A WebSocketStream that emits:
-            - Position objects for position updates
-            - StreamStatus objects for stream status updates
-            - Heartbeat objects every 5 seconds when idle
-            - StreamPositionsErrorResponse objects for any errors
+            An aiohttp.StreamReader that yields position data.
 
         Raises:
             ValueError: If more than 25 account IDs are specified
             Exception: If the request fails due to network issues or API errors
-
-        Example:
-            ```python
-            # Stream positions for a single account
-            stream = await brokerage_service.stream_positions("123456789")
-
-            # Stream positions for multiple accounts
-            stream = await brokerage_service.stream_positions("123456789,987654321")
-
-            # Stream position changes only
-            stream = await brokerage_service.stream_positions("123456789", True)
-
-            # Process position updates
-            async for message in stream:
-                if hasattr(message, "PositionID"):
-                    # Handle position update
-                    print(f"Position update: {message.Symbol} - {message.Quantity}")
-                elif hasattr(message, "StreamStatus"):
-                    # Handle stream status update
-                    print(f"Stream status: {message.StreamStatus}")
-                elif hasattr(message, "Heartbeat"):
-                    # Handle heartbeat
-                    print(f"Heartbeat: {message.Heartbeat}")
-                elif hasattr(message, "Error"):
-                    # Handle error
-                    print(f"Error: {message.Error} - {message.Message}")
-            ```
         """
         # Validate maximum accounts
         if len(account_ids.split(",")) > 25:
             raise ValueError("Maximum of 25 accounts allowed per request")
 
-        # Set up parameters
-        params = {}
-        if changes:
-            params["changes"] = changes
+        endpoint_url = f"/v3/brokerage/stream/accounts/{account_ids}/positions"
+        params = {"changes": str(changes).lower()}  # API expects string 'true' or 'false'
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
 
-        # Create the stream
-        return await self.stream_manager.create_stream(
-            f"/v3/brokerage/stream/accounts/{account_ids}/positions",
-            params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
-        )
+        # Use HttpClient for SSE
+        return await self.http_client.create_stream(endpoint_url, params=params, headers=headers)
 
-    async def stream_orders(self, account_ids: str) -> WebSocketStream:
+    async def stream_orders(self, account_ids: str) -> aiohttp.StreamReader:
         """
-        Stream orders for the given accounts. Request valid for Cash, Margin, Futures, and DVP account types.
-
-        This method provides real-time streaming updates for orders in the specified accounts, allowing
-        applications to track and respond to order status changes as they occur. The stream will emit
-        events when orders are placed, modified, filled, or canceled.
+        Streams Order changes for the given Accounts using Server-Sent Events (SSE).
+        This provides real-time updates for all orders associated with the accounts.
 
         Args:
             account_ids: List of valid Account IDs in comma separated format (e.g. "61999124,68910124").
                         1 to 25 Account IDs can be specified. Recommended batch size is 10.
 
         Returns:
-            A WebSocketStream that emits:
-            - Order objects for order updates
-            - StreamStatus objects for stream status updates
-            - Heartbeat objects every 5 seconds when idle
-            - StreamOrderErrorResponse objects for any errors
+            An aiohttp.StreamReader that yields order data.
 
         Raises:
-            ValueError: If more than 25 account IDs are specified
-            Exception: If the request fails due to network issues or API errors
-
-        Example:
-            ```python
-            # Stream orders for a single account
-            stream = await brokerage_service.stream_orders("123456789")
-
-            # Stream orders for multiple accounts
-            stream = await brokerage_service.stream_orders("123456789,987654321")
-
-            # Process order updates
-            async for message in stream:
-                if hasattr(message, "OrderID"):
-                    # Handle order update
-                    print(f"Order update: {message.OrderID} - {message.Status}")
-                elif hasattr(message, "StreamStatus"):
-                    # Handle stream status update
-                    print(f"Stream status: {message.StreamStatus}")
-                elif hasattr(message, "Heartbeat"):
-                    # Handle heartbeat
-                    print(f"Heartbeat: {message.Heartbeat}")
-                elif hasattr(message, "Error"):
-                    # Handle error
-                    print(f"Error: {message.Error} - {message.Message}")
-            ```
+            Exception: If the request fails
         """
-        # Validate maximum accounts
-        if len(account_ids.split(",")) > 25:
-            raise ValueError("Maximum of 25 accounts allowed per request")
+        endpoint_url = f"/v3/brokerage/stream/accounts/{account_ids}/orders"
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
 
-        # Create the stream
-        return await self.stream_manager.create_stream(
-            f"/v3/brokerage/stream/accounts/{account_ids}/orders",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v3+json"}},
-        )
+        # Use HttpClient for SSE
+        return await self.http_client.create_stream(endpoint_url, params=None, headers=headers)

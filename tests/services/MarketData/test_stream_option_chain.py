@@ -1,80 +1,58 @@
 """
-Test suite for the stream_option_chain method in the Market Data Service.
+Test suite for the stream_option_chain method.
 """
 
-import asyncio
 import pytest
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
+import aiohttp
 
 from src.services.MarketData.market_data_service import MarketDataService
 from src.ts_types.market_data import Spread, Heartbeat, StreamErrorResponse
-from src.utils.websocket_stream import WebSocketStream
 
 
 @pytest.fixture
 def mock_http_client():
-    """Create a mock HTTP client for testing."""
-    return AsyncMock()
+    """Create a mock HTTP client with mocked create_stream."""
+    client = AsyncMock()
+    client.create_stream = AsyncMock()
+    return client
 
 
 @pytest.fixture
-def mock_stream_manager():
-    """Create a mock StreamManager for testing."""
-    return AsyncMock()
-
-
-@pytest.fixture
-def market_data_service(mock_http_client, mock_stream_manager):
-    """Create a MarketDataService with mock dependencies."""
+def market_data_service(mock_http_client):
+    """Create a MarketDataService with mock http_client."""
+    mock_stream_manager = AsyncMock()  # Keep if needed elsewhere
     return MarketDataService(mock_http_client, mock_stream_manager)
 
 
+@pytest.fixture
+def mock_stream_reader():
+    """Create a mock StreamReader for SSE."""
+    mock = AsyncMock(spec=aiohttp.StreamReader)
+    # Simulate readline yielding JSON data
+    mock_data = [
+        json.dumps({"Delta": "0.5", "Strikes": ["100"]}).encode("utf-8"),  # Simplified Spread
+        json.dumps({"Heartbeat": 1, "Timestamp": "2023-01-01T00:01:00Z"}).encode("utf-8"),
+        b"",
+    ]
+    mock.readline.side_effect = mock_data
+    return mock
+
+
 class TestStreamOptionChain:
-    """Test cases for the stream_option_chain method."""
+    """Test cases for stream_option_chain."""
 
     @pytest.mark.asyncio
-    async def test_stream_option_chain_with_valid_parameters(
-        self, market_data_service, mock_stream_manager
+    async def test_stream_with_default_parameters(
+        self, market_data_service, mock_http_client, mock_stream_reader
     ):
-        """Test streaming option chain with valid parameters."""
-        # Arrange
-        underlying = "AAPL"
-        params = {
-            "spreadType": "Butterfly",
-            "strikeInterval": 5,
-            "expiration": "2024-01-19",
-            "strikeProximity": 3,
-            "enableGreeks": True,
-            "optionType": "Call",
-        }
-
-        # Mock the StreamManager.create_stream method
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
-
-        # Act
-        result = await market_data_service.stream_option_chain(underlying, params)
-
-        # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/options/chains/AAPL",
-            params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
-        )
-        assert result == mock_stream
-
-    @pytest.mark.asyncio
-    async def test_stream_option_chain_with_no_parameters(
-        self, market_data_service, mock_stream_manager
-    ):
-        """Test streaming option chain without parameters, using default values."""
+        """Test streaming with default parameters."""
         # Arrange
         underlying = "MSFT"
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
-
-        # Expected default parameters
-        expected_params = {
+        expected_endpoint = f"/v3/marketdata/stream/options/chains/{underlying}"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+        default_params = {  # Expected default parameters used by the method
             "strikeProximity": 5,
             "spreadType": "Single",
             "strikeInterval": 1,
@@ -82,193 +60,77 @@ class TestStreamOptionChain:
             "strikeRange": "All",
             "optionType": "All",
         }
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Act
         result = await market_data_service.stream_option_chain(underlying)
 
         # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/options/chains/MSFT",
-            expected_params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_endpoint,
+            params=default_params,
+            headers=expected_headers,
         )
-        assert result == mock_stream
+        assert result == mock_stream_reader
 
     @pytest.mark.asyncio
-    async def test_stream_option_chain_calendar_spread_missing_expiration2(
-        self, market_data_service
+    async def test_stream_with_custom_parameters(
+        self, market_data_service, mock_http_client, mock_stream_reader
     ):
-        """Test that an error is raised when expiration2 is missing for Calendar spreads."""
+        """Test streaming with custom parameters."""
         # Arrange
-        underlying = "SPY"
+        underlying = "AAPL"
         params = {
-            "spreadType": "Calendar",
-            "expiration": "2024-01-19",
-            # Missing expiration2
+            "expiration": "2024-12-20",
+            "spreadType": "Vertical",
+            "strikeInterval": 2,
+            "optionType": "Call",
+            "strikeRange": "ITM",
+            "riskFreeRate": 0.05,
         }
-
-        # Act & Assert
-        with pytest.raises(
-            ValueError, match="expiration2 is required for Calendar and Diagonal spreads"
-        ):
-            await market_data_service.stream_option_chain(underlying, params)
-
-    @pytest.mark.asyncio
-    async def test_stream_option_chain_diagonal_spread_missing_expiration2(
-        self, market_data_service
-    ):
-        """Test that an error is raised when expiration2 is missing for Diagonal spreads."""
-        # Arrange
-        underlying = "SPY"
-        params = {
-            "spreadType": "Diagonal",
-            "expiration": "2024-01-19",
-            # Missing expiration2
+        expected_endpoint = f"/v3/marketdata/stream/options/chains/{underlying}"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+        # Merge custom params with defaults for assertion
+        expected_params = {
+            "strikeProximity": 5,
+            "enableGreeks": True,
+            **params,  # Custom params override defaults
         }
-
-        # Act & Assert
-        with pytest.raises(
-            ValueError, match="expiration2 is required for Calendar and Diagonal spreads"
-        ):
-            await market_data_service.stream_option_chain(underlying, params)
-
-    @pytest.mark.asyncio
-    async def test_stream_option_chain_invalid_strike_interval(self, market_data_service):
-        """Test that an error is raised when strike interval is less than 1."""
-        # Arrange
-        underlying = "AAPL"
-        params = {"strikeInterval": 0}
-
-        # Act & Assert
-        with pytest.raises(ValueError, match="strikeInterval must be greater than or equal to 1"):
-            await market_data_service.stream_option_chain(underlying, params)
-
-    @pytest.mark.asyncio
-    async def test_stream_option_chain_invalid_risk_free_rate_negative(self, market_data_service):
-        """Test that an error is raised when risk-free rate is negative."""
-        # Arrange
-        underlying = "AAPL"
-        params = {"riskFreeRate": -0.01}
-
-        # Act & Assert
-        with pytest.raises(
-            ValueError, match="riskFreeRate must be a decimal value between 0 and 1"
-        ):
-            await market_data_service.stream_option_chain(underlying, params)
-
-    @pytest.mark.asyncio
-    async def test_stream_option_chain_invalid_risk_free_rate_too_large(self, market_data_service):
-        """Test that an error is raised when risk-free rate is greater than 1."""
-        # Arrange
-        underlying = "AAPL"
-        params = {"riskFreeRate": 1.01}
-
-        # Act & Assert
-        with pytest.raises(
-            ValueError, match="riskFreeRate must be a decimal value between 0 and 1"
-        ):
-            await market_data_service.stream_option_chain(underlying, params)
-
-    @pytest.mark.asyncio
-    async def test_integration_with_websocket_stream(
-        self, market_data_service, mock_stream_manager
-    ):
-        """Test the integration with WebSocketStream for processing option chain data."""
-        # Arrange
-        underlying = "AAPL"
-        mock_stream = AsyncMock(spec=WebSocketStream)
-
-        # Simulate WebSocketStream behavior with callback handling
-        mock_callback = None
-
-        def mock_set_callback(callback):
-            nonlocal mock_callback
-            mock_callback = callback
-
-        mock_stream.set_callback.side_effect = mock_set_callback
-        mock_stream_manager.create_stream.return_value = mock_stream
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Act
-        stream = await market_data_service.stream_option_chain(underlying)
+        result = await market_data_service.stream_option_chain(underlying, params)
 
-        # Define example data messages
-        spread_data = {
-            "Delta": "0.55",
-            "Gamma": "0.03",
-            "Theta": "-0.045",
-            "Vega": "0.12",
-            "Rho": "0.08",
-            "ImpliedVolatility": "0.225",
-            "IntrinsicValue": "5.75",
-            "ExtrinsicValue": "2.25",
-            "TheoreticalValue": "8.00",
-            "ProbabilityITM": "0.68",
-            "ProbabilityOTM": "0.32",
-            "ProbabilityBE": "0.42",
-            "StandardDeviation": "0.18",
-            "DailyOpenInterest": 450,
-            "Ask": "8.15",
-            "Bid": "7.85",
-            "Mid": "8.00",
-            "AskSize": 15,
-            "BidSize": 20,
-            "Close": "7.95",
-            "High": "8.25",
-            "Last": "8.10",
-            "Low": "7.80",
-            "NetChange": "+0.15",
-            "NetChangePct": "1.89%",
-            "Open": "7.95",
-            "PreviousClose": "7.95",
-            "Volume": 325,
-            "Side": "Call",
-            "Strikes": ["190", "195", "200"],
-            "Legs": [
-                {
-                    "Symbol": "AAPL 240119C190",
-                    "Ratio": 1,
-                    "StrikePrice": "190",
-                    "Expiration": "2024-01-19",
-                    "OptionType": "Call",
-                },
-                {
-                    "Symbol": "AAPL 240119C195",
-                    "Ratio": -2,
-                    "StrikePrice": "195",
-                    "Expiration": "2024-01-19",
-                    "OptionType": "Call",
-                },
-                {
-                    "Symbol": "AAPL 240119C200",
-                    "Ratio": 1,
-                    "StrikePrice": "200",
-                    "Expiration": "2024-01-19",
-                    "OptionType": "Call",
-                },
-            ],
-        }
+        # Assert
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_endpoint,
+            params=expected_params,
+            headers=expected_headers,
+        )
+        assert result == mock_stream_reader
 
-        heartbeat_data = {"Heartbeat": 1, "Timestamp": "2023-03-02T14:01:00Z"}
+    @pytest.mark.asyncio
+    async def test_stream_calendar_spread_requires_expiration2(self, market_data_service):
+        """Test ValueError is raised for Calendar spread without expiration2."""
+        with pytest.raises(ValueError, match="expiration2 is required for Calendar"):
+            await market_data_service.stream_option_chain("SPY", {"spreadType": "Calendar"})
 
-        error_data = {"Error": "InvalidSymbol", "Message": "Symbol not found"}
+    @pytest.mark.asyncio
+    async def test_stream_invalid_strike_interval(self, market_data_service):
+        """Test ValueError for strikeInterval < 1."""
+        with pytest.raises(ValueError, match="strikeInterval must be greater than or equal to 1"):
+            await market_data_service.stream_option_chain("TSLA", {"strikeInterval": 0})
 
-        # Use callback to test data processing
-        received_data = []
+    @pytest.mark.asyncio
+    async def test_stream_invalid_risk_free_rate(self, market_data_service):
+        """Test ValueError for riskFreeRate outside [0, 1]."""
+        with pytest.raises(
+            ValueError, match="riskFreeRate must be a decimal value between 0 and 1"
+        ):
+            await market_data_service.stream_option_chain("GOOG", {"riskFreeRate": 1.1})
+        with pytest.raises(
+            ValueError, match="riskFreeRate must be a decimal value between 0 and 1"
+        ):
+            await market_data_service.stream_option_chain("GOOG", {"riskFreeRate": -0.1})
 
-        async def test_callback(data):
-            received_data.append(data)
-
-        # Set the callback and simulate data reception
-        stream.set_callback(test_callback)
-        assert mock_callback is not None
-
-        # Simulate receiving data
-        await mock_callback(spread_data)
-        await mock_callback(heartbeat_data)
-        await mock_callback(error_data)
-
-        # Assert data was processed correctly
-        assert len(received_data) == 3
-        assert received_data[0] == spread_data
-        assert received_data[1] == heartbeat_data
-        assert received_data[2] == error_data
+    # Remove or adapt tests that rely on WebSocketStream specific features

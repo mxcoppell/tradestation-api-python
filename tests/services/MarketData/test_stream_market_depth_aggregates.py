@@ -4,7 +4,9 @@ Test suite for the stream_market_depth_aggregates method in the Market Data Serv
 
 import asyncio
 import pytest
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
+import aiohttp
 
 from src.services.MarketData.market_data_service import MarketDataService
 from src.ts_types.market_data import (
@@ -18,8 +20,10 @@ from src.utils.websocket_stream import WebSocketStream
 
 @pytest.fixture
 def mock_http_client():
-    """Create a mock HTTP client for testing."""
-    return AsyncMock()
+    """Create a mock HTTP client with mocked create_stream."""
+    client = AsyncMock()
+    client.create_stream = AsyncMock()
+    return client
 
 
 @pytest.fixture
@@ -34,71 +38,87 @@ def market_data_service(mock_http_client, mock_stream_manager):
     return MarketDataService(mock_http_client, mock_stream_manager)
 
 
+@pytest.fixture
+def mock_stream_reader():
+    """Create a mock StreamReader for SSE."""
+    mock = AsyncMock(spec=aiohttp.StreamReader)
+    # Simulate readline yielding JSON data
+    mock_data = [
+        json.dumps(
+            {"Bids": [{"Price": "100.00", "TotalSize": 100, "OrderCount": 5}], "Asks": []}
+        ).encode("utf-8"),
+        json.dumps({"Heartbeat": 1, "Timestamp": "2023-01-01T00:01:00Z"}).encode("utf-8"),
+        b"",
+    ]
+    mock.readline.side_effect = mock_data
+    return mock
+
+
 class TestStreamMarketDepthAggregates:
     """Test cases for the stream_market_depth_aggregates method."""
 
     @pytest.mark.asyncio
-    async def test_stream_market_depth_aggregates_with_valid_parameters(
-        self, market_data_service, mock_stream_manager
+    async def test_stream_with_default_parameters(
+        self, market_data_service, mock_http_client, mock_stream_reader
     ):
-        """Test streaming market depth aggregates with valid parameters."""
+        """Test streaming with default parameters."""
         # Arrange
         symbol = "MSFT"
-        params = {"maxlevels": 50}
-
-        # Mock the StreamManager.create_stream method
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
-
-        # Act
-        result = await market_data_service.stream_market_depth_aggregates(symbol, params)
-
-        # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/marketdepth/aggregates/MSFT",
-            params,
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
-        )
-        assert result == mock_stream
-
-    @pytest.mark.asyncio
-    async def test_stream_market_depth_aggregates_with_no_parameters(
-        self, market_data_service, mock_stream_manager
-    ):
-        """Test streaming market depth aggregates without parameters."""
-        # Arrange
-        symbol = "AAPL"
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
+        expected_endpoint = f"/v3/marketdata/stream/marketdepth/aggregates/{symbol}"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Act
         result = await market_data_service.stream_market_depth_aggregates(symbol)
 
         # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/marketdepth/aggregates/AAPL",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_endpoint,
+            params={},
+            headers=expected_headers,
         )
-        assert result == mock_stream
+        assert result == mock_stream_reader
 
     @pytest.mark.asyncio
-    async def test_stream_market_depth_aggregates_maxlevels_too_small(self, market_data_service):
-        """Test that an error is raised when maxlevels is less than 1."""
+    async def test_stream_with_custom_maxlevels(
+        self, market_data_service, mock_http_client, mock_stream_reader
+    ):
+        """Test streaming with a custom maxlevels parameter."""
         # Arrange
         symbol = "AAPL"
-        params = {"maxlevels": 0}
+        params = {"maxlevels": 50}
+        expected_endpoint = f"/v3/marketdata/stream/marketdepth/aggregates/{symbol}"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+        mock_http_client.create_stream.return_value = mock_stream_reader
+
+        # Act
+        result = await market_data_service.stream_market_depth_aggregates(symbol, params)
+
+        # Assert
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_endpoint,
+            params=params,
+            headers=expected_headers,
+        )
+        assert result == mock_stream_reader
+
+    @pytest.mark.asyncio
+    async def test_stream_invalid_maxlevels_too_low(self, market_data_service):
+        """Test that an error is raised for maxlevels < 1."""
+        # Arrange
+        symbol = "GOOG"
+        params = {"maxlevels": 0}  # Invalid level
 
         # Act & Assert
         with pytest.raises(ValueError, match="maxlevels must be between 1 and 100"):
             await market_data_service.stream_market_depth_aggregates(symbol, params)
 
     @pytest.mark.asyncio
-    async def test_stream_market_depth_aggregates_maxlevels_too_large(self, market_data_service):
-        """Test that an error is raised when maxlevels is greater than 100."""
+    async def test_stream_invalid_maxlevels_too_high(self, market_data_service):
+        """Test that an error is raised for maxlevels > 100."""
         # Arrange
-        symbol = "AAPL"
-        params = {"maxlevels": 101}
+        symbol = "AMZN"
+        params = {"maxlevels": 101}  # Invalid level
 
         # Act & Assert
         with pytest.raises(ValueError, match="maxlevels must be between 1 and 100"):
