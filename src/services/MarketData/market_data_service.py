@@ -159,7 +159,7 @@ class MarketDataService:
 
     async def stream_quotes(self, symbols: Union[str, List[str]]) -> WebSocketStream:
         """
-        Streams Quote changes for one or more symbols.
+        Streams Quote changes for one or more symbols using Server-Sent Events (SSE).
 
         This endpoint provides real-time updates for:
         - Current prices (Last, Ask, Bid)
@@ -176,7 +176,7 @@ class MarketDataService:
                     No more than 100 symbols per request.
 
         Returns:
-            A WebSocketStream that emits:
+            An aiohttp.StreamReader that yields JSON data chunks for:
             - QuoteStream objects for quote updates
             - Heartbeat objects every 5 seconds when idle
             - StreamErrorResponse objects for any errors
@@ -188,33 +188,25 @@ class MarketDataService:
         Example:
             ```python
             # Get a stream for multiple symbols
-            stream = await market_data.stream_quotes(["MSFT", "BTCUSD"])
+            stream_reader = await market_data.stream_quotes(["MSFT", "BTCUSD"])
 
-            # Set up a callback to process quote updates
-            async def handle_quote_data(data):
-                if 'Ask' in data:
-                    # Handle quote update
-                    print(f"Quote update for {data['Symbol']}: Last: {data['Last']}, Bid: {data['Bid']}, Ask: {data['Ask']}")
-                elif 'Heartbeat' in data:
-                    # Handle heartbeat
-                    print(f"Heartbeat: {data['Timestamp']}")
-                else:
-                    # Handle error
-                    print(f"Error: {data.get('Message', 'Unknown error')}")
+            # Process the stream data
+            while True:
+                line = await stream_reader.readline()
+                if not line:
+                    break
+                try:
+                    data = json.loads(line.strip())
+                    if 'Ask' in data: # Check if it's a quote
+                        print(f"Quote: {data['Symbol']} Last: {data['Last']}")
+                    elif 'Heartbeat' in data: # Check if it's a heartbeat
+                        print(f"Heartbeat: {data['Timestamp']}")
+                    elif 'Error' in data: # Check if it's an error
+                        print(f"Error: {data['Message']}")
+                except json.JSONDecodeError:
+                    print(f"Received non-JSON line: {line.strip()}")
 
-            stream.set_callback(handle_quote_data)
-
-            # Or use an async for loop
-            async for data in stream:
-                if 'Ask' in data:
-                    # Handle quote update
-                    print(f"Quote update for {data['Symbol']}")
-                elif 'Heartbeat' in data:
-                    # Handle heartbeat
-                    print(f"Heartbeat: {data['Timestamp']}")
-                else:
-                    # Handle error
-                    print(f"Error: {data.get('Message', 'Unknown error')}")
+            # Close the stream (typically handled by HttpClient.close())
             ```
         """
         # Convert to list if string
@@ -231,11 +223,16 @@ class MarketDataService:
         if len(symbols_list) > 100:
             raise ValueError("Maximum of 100 symbols allowed per request")
 
-        # Join symbols with commas and create the stream
-        return await self.stream_manager.create_stream(
-            f"/v3/marketdata/stream/quotes/{','.join(symbols_list)}",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        # Construct the correct endpoint URL
+        endpoint_url = f"/v3/marketdata/stream/quotes/{','.join(symbols_list)}"
+
+        # Define the correct headers for SSE
+        headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
+
+        # Use the HttpClient's create_stream method for SSE
+        # Note: The return type hint should be updated to reflect StreamReader
+        return await self.http_client.create_stream(
+            endpoint_url, params=None, headers=headers  # Explicitly pass None for params
         )
 
     async def get_option_expirations(
