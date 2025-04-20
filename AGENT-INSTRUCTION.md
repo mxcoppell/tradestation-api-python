@@ -157,6 +157,12 @@ This document provides clear guidelines for AI agents working on this project. F
    # Ensure all tests pass
    poetry run pytest
    
+   # **CRITICAL: If the issue created/modified an example script:**
+   # Run the example from the project root to ensure it executes without errors 
+   # and produces the expected/correct output. 
+   # Example: poetry run python examples/YourService/your_example.py
+   # **MUST fix any errors discovered during execution before proceeding!**
+
    # Commit your changes with descriptive messages
    git add .
    git commit -m "Implement [feature] for issue #XXX"
