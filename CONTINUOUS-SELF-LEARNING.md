@@ -72,6 +72,7 @@
 - **New:** Assuming all TradeStation streaming endpoints use WebSockets; some use HTTP SSE.
 - **New:** Using `await` on non-awaitable methods like `aiohttp.ClientResponse.raise_for_status()`.
 - **New:** Incorrectly mocking SSE streams as WebSocket streams in tests.
+- **New:** Using `gh issue view <id> --comments` to fetch issue details; this command only retrieves *comments* added after the initial description. Use `gh issue view <id>` to get the full issue description and subsequent comments.
 
 ### Issue Resolution Patterns
 - For streaming implementations, follow the existing pattern of internal validation followed by `stream_manager.create_stream` call **or** `http_client.create_stream` depending on the underlying protocol (WebSocket vs SSE).

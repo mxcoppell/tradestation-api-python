@@ -72,7 +72,7 @@ This document provides clear guidelines for AI agents working on this project. F
 ## Implementation Process
 
 1. **Understand requirements**
-   - Carefully read the full issue description
+   - Carefully read the full issue description. Use the command `gh issue view <ISSUE_NUMBER> | cat` to fetch the complete issue description and comments.
    - Study referenced TypeScript files if applicable
    - Follow all implementation guidelines listed in the issue
    - For each issue, plan both the implementation and its corresponding test files
