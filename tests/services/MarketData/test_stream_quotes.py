@@ -4,22 +4,29 @@ Test suite for the stream_quotes method in the Market Data Service.
 
 import asyncio
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+import json
+from unittest.mock import AsyncMock, MagicMock
+import aiohttp
 
 from src.services.MarketData.market_data_service import MarketDataService
 from src.ts_types.market_data import QuoteStream, Heartbeat, StreamErrorResponse
-from src.utils.websocket_stream import WebSocketStream
+
+# Remove WebSocketStream import as it's no longer used directly by stream_quotes
+# from src.utils.websocket_stream import WebSocketStream
 
 
 @pytest.fixture
 def mock_http_client():
     """Create a mock HTTP client for testing."""
-    return AsyncMock()
+    client = AsyncMock()
+    # Mock the create_stream method specifically for these tests
+    client.create_stream = AsyncMock()
+    return client
 
 
 @pytest.fixture
 def mock_stream_manager():
-    """Create a mock StreamManager for testing."""
+    """Create a mock StreamManager (kept for other service tests, but not used here)."""
     return AsyncMock()
 
 
@@ -33,71 +40,66 @@ class TestStreamQuotes:
     """Test cases for the stream_quotes method."""
 
     @pytest.mark.asyncio
-    async def test_stream_quotes_with_list_of_symbols(
-        self, market_data_service, mock_stream_manager
-    ):
+    async def test_stream_quotes_with_list_of_symbols(self, market_data_service, mock_http_client):
         """Test streaming quotes with a list of symbols."""
         # Arrange
         symbols = ["MSFT", "AAPL", "GOOGL"]
+        expected_url = "/v3/marketdata/stream/quotes/MSFT,AAPL,GOOGL"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
 
-        # Mock the StreamManager.create_stream method
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
+        mock_stream_reader = AsyncMock(spec=aiohttp.StreamReader)
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Act
         result = await market_data_service.stream_quotes(symbols)
 
         # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/quotes/MSFT,AAPL,GOOGL",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_url, params=None, headers=expected_headers  # Explicitly check params is None
         )
-        assert result == mock_stream
+        assert result == mock_stream_reader
 
     @pytest.mark.asyncio
     async def test_stream_quotes_with_string_of_symbols(
-        self, market_data_service, mock_stream_manager
+        self, market_data_service, mock_http_client
     ):
         """Test streaming quotes with a comma-separated string of symbols."""
         # Arrange
         symbols = "MSFT,AAPL,GOOGL"
+        expected_url = "/v3/marketdata/stream/quotes/MSFT,AAPL,GOOGL"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
 
-        # Mock the StreamManager.create_stream method
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
+        mock_stream_reader = AsyncMock(spec=aiohttp.StreamReader)
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Act
         result = await market_data_service.stream_quotes(symbols)
 
         # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/quotes/MSFT,AAPL,GOOGL",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_url, params=None, headers=expected_headers
         )
-        assert result == mock_stream
+        assert result == mock_stream_reader
 
     @pytest.mark.asyncio
-    async def test_stream_quotes_with_single_symbol(self, market_data_service, mock_stream_manager):
+    async def test_stream_quotes_with_single_symbol(self, market_data_service, mock_http_client):
         """Test streaming quotes with a single symbol."""
         # Arrange
         symbol = "MSFT"
+        expected_url = "/v3/marketdata/stream/quotes/MSFT"
+        expected_headers = {"Accept": "application/vnd.tradestation.streams.v2+json"}
 
-        # Mock the StreamManager.create_stream method
-        mock_stream = MagicMock(spec=WebSocketStream)
-        mock_stream_manager.create_stream.return_value = mock_stream
+        mock_stream_reader = AsyncMock(spec=aiohttp.StreamReader)
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
         # Act
         result = await market_data_service.stream_quotes(symbol)
 
         # Assert
-        mock_stream_manager.create_stream.assert_called_once_with(
-            "/v3/marketdata/stream/quotes/MSFT",
-            {},
-            {"headers": {"Accept": "application/vnd.tradestation.streams.v2+json"}},
+        mock_http_client.create_stream.assert_called_once_with(
+            expected_url, params=None, headers=expected_headers
         )
-        assert result == mock_stream
+        assert result == mock_stream_reader
 
     @pytest.mark.asyncio
     async def test_stream_quotes_with_too_many_symbols(self, market_data_service):
@@ -110,83 +112,60 @@ class TestStreamQuotes:
             await market_data_service.stream_quotes(symbols)
 
     @pytest.mark.asyncio
-    async def test_integration_with_websocket_stream(
-        self, market_data_service, mock_stream_manager
-    ):
-        """Test the integration with WebSocketStream for processing quote data."""
+    async def test_integration_with_stream_reader(self, market_data_service, mock_http_client):
+        """Test the integration with StreamReader for processing quote data."""
         # Arrange
         symbols = ["MSFT", "AAPL"]
-        mock_stream = AsyncMock(spec=WebSocketStream)
-
-        # Simulate WebSocketStream behavior with callback handling
-        mock_callback = None
-
-        def mock_set_callback(callback):
-            nonlocal mock_callback
-            mock_callback = callback
-
-        mock_stream.set_callback.side_effect = mock_set_callback
-        mock_stream_manager.create_stream.return_value = mock_stream
-
-        # Act
-        stream = await market_data_service.stream_quotes(symbols)
+        mock_stream_reader = AsyncMock(spec=aiohttp.StreamReader)
 
         # Define example data messages
-        quote_data = {
-            "Symbol": "MSFT",
-            "Ask": "215.25",
-            "AskSize": "300",
-            "Bid": "215.20",
-            "BidSize": "200",
-            "Close": "214.25",
-            "DailyOpenInterest": "0",
-            "High": "216.50",
-            "Low": "214.75",
-            "High52Week": "224.75",
-            "High52WeekTimestamp": "2023-01-21T14:00:00Z",
-            "Last": "215.22",
-            "Low52Week": "190.25",
-            "Low52WeekTimestamp": "2022-11-10T14:00:00Z",
-            "MarketFlags": {
-                "IsBats": False,
-                "IsDelayed": False,
-                "IsHalted": False,
-                "IsHardToBorrow": False,
-            },
-            "NetChange": "0.97",
-            "NetChangePct": "0.45",
-            "Open": "214.75",
-            "PreviousClose": "214.25",
-            "PreviousVolume": "32567400",
-            "TickSizeTier": "0",
-            "TradeTime": "2023-03-02T16:00:00Z",
-            "Volume": "5789200",
-            "LastSize": "100",
-            "LastVenue": "NSDQ",
-            "VWAP": "215.1234",
-        }
-
+        quote_data = {"Symbol": "MSFT", "Ask": "215.25", "Bid": "215.20", "Last": "215.22"}
         heartbeat_data = {"Heartbeat": 1, "Timestamp": "2023-03-02T14:01:00Z"}
-
         error_data = {"Error": "InvalidSymbol", "Message": "Symbol not found"}
+        non_json_line = b"this is not json\n"
+        empty_line = b"\n"
 
-        # Use callback to test data processing
-        received_data = []
+        # Simulate StreamReader behavior
+        lines_to_return = [
+            json.dumps(quote_data).encode("utf-8") + b"\n",  # Valid quote
+            json.dumps(heartbeat_data).encode("utf-8") + b"\n",  # Valid heartbeat
+            json.dumps(error_data).encode("utf-8") + b"\n",  # Valid error
+            non_json_line,
+            empty_line,
+            b"",  # Simulate end of stream
+        ]
 
-        async def test_callback(data):
-            received_data.append(data)
+        mock_stream_reader.readline = AsyncMock(side_effect=lines_to_return)
+        mock_http_client.create_stream.return_value = mock_stream_reader
 
-        # Set the callback and simulate data reception
-        stream.set_callback(test_callback)
-        assert mock_callback is not None
+        # Act: Call the service method to get the stream reader
+        stream_reader = await market_data_service.stream_quotes(symbols)
 
-        # Simulate receiving data
-        await mock_callback(quote_data)
-        await mock_callback(heartbeat_data)
-        await mock_callback(error_data)
+        # Assert the stream reader was returned
+        assert stream_reader == mock_stream_reader
+
+        # Act: Simulate processing the stream reader (like in the example)
+        processed_data = []
+        non_json_count = 0
+        while True:
+            line = await stream_reader.readline()
+            if not line:
+                break
+            try:
+                line_str = line.strip().decode("utf-8")
+                if not line_str:
+                    continue  # Skip empty lines
+                data = json.loads(line_str)
+                processed_data.append(data)
+            except json.JSONDecodeError:
+                non_json_count += 1
+            except UnicodeDecodeError:
+                # Handle potential decode errors if needed
+                pass
 
         # Assert data was processed correctly
-        assert len(received_data) == 3
-        assert received_data[0] == quote_data
-        assert received_data[1] == heartbeat_data
-        assert received_data[2] == error_data
+        assert len(processed_data) == 3
+        assert processed_data[0] == quote_data
+        assert processed_data[1] == heartbeat_data
+        assert processed_data[2] == error_data
+        assert non_json_count == 1

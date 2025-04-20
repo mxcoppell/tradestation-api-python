@@ -50,7 +50,7 @@ def mock_stream_response():
     response.status = 200
     response.headers = {"X-RateLimit-Remaining": "100"}
     response.content = AsyncMock(spec=StreamReader)
-    response.raise_for_status = AsyncMock()
+    response.raise_for_status = MagicMock()
     return response
 
 
@@ -231,7 +231,7 @@ class TestHttpClient:
             timeout=None,
         )
         client._process_response.assert_awaited_once_with(mock_stream_response, "/test")
-        mock_stream_response.raise_for_status.assert_awaited_once()
+        mock_stream_response.raise_for_status.assert_called_once()
         assert result == mock_stream_response.content
 
     @pytest.mark.asyncio

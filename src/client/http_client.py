@@ -266,7 +266,10 @@ class HttpClient:
             raise
 
     async def create_stream(
-        self, url: str, params: Optional[Dict[str, Any]] = None
+        self,
+        url: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> aiohttp.StreamReader:
         """
         Create a stream for streaming endpoints.
@@ -274,23 +277,36 @@ class HttpClient:
         Args:
             url: The endpoint URL
             params: Query parameters
+            headers: Optional custom headers to include in the request
 
         Returns:
             Stream reader for reading the stream data
         """
         session = await self._ensure_session()
-        headers = await self._prepare_request(url)
+
+        # Prepare base headers with authentication
+        base_headers = await self._prepare_request(url)
+
+        # Merge custom headers with base headers, prioritizing custom headers
+        final_headers = base_headers.copy()
+        if headers:
+            final_headers.update(headers)
 
         full_url = f"{self.base_url}{url}"
+
+        # Debug print
+        self._debug_print(f"Making GET stream request to: {full_url}")
+        self._debug_print(f"Headers: {final_headers}")
+
         response = await session.get(
             full_url,
             params=params,
-            headers=headers,
-            timeout=None,  # Streaming connections need no timeout
+            headers=final_headers,
+            timeout=None,
         )
 
         await self._process_response(response, url)
-        await response.raise_for_status()
+        response.raise_for_status()
 
         return response.content
 
