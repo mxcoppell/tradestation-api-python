@@ -15,6 +15,7 @@ from ...ts_types.market_data import (
     OptionQuoteParams,
 )
 from ...utils.websocket_stream import WebSocketStream
+import aiohttp  # for catching 404 in bar history
 
 
 class MarketDataService:
@@ -444,8 +445,16 @@ class MarketDataService:
                 "startdate is deprecated, use lastdate instead"
             )
 
-        # Make the API request
-        response = await self.http_client.get(f"/v3/marketdata/barcharts/{symbol}", params=params)
+        # Make the API request, handle 404 as no data
+        try:
+            response = await self.http_client.get(
+                f"/v3/marketdata/barcharts/{symbol}", params=params
+            )
+        except aiohttp.ClientResponseError as e:
+            if e.status == 404:
+                # No bars found for given symbol/parameters
+                return BarsResponse(Bars=[])
+            raise
 
         # Parse the response into the BarsResponse model
         return BarsResponse.model_validate(response)
