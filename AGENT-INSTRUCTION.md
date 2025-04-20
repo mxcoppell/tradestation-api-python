@@ -85,9 +85,9 @@ This document provides clear guidelines for AI agents working on this project. F
    - Note any TypeScript-specific patterns that need Python equivalents
    - Pay attention to how features are separated in the TypeScript codebase
 
-3. **Review Existing Python Code (If Applicable)**
-   - Before writing new code, search the existing Python codebase (`src/` and `examples/`) for related functionality or patterns.
-   - Look for similar service methods, data models, utility functions, or example usage that can be reused or adapted.
+3. **Prioritize and Review Existing Python Code/Examples**
+   - **CRITICAL: Before looking at external sources (like TypeScript or web search), ALWAYS check the existing Python examples in the `examples/` directory first.** Find examples demonstrating similar functionality or API calls. Adapt existing examples whenever possible. This is often faster and more accurate than external searching.
+   - After checking examples, review the relevant service implementation in the `src/` directory for related methods, data models, or utility functions that can be reused or adapted.
    - Understanding existing patterns helps maintain consistency.
 
 4. **Implementation Guidelines**

@@ -628,17 +628,17 @@ class StreamOrderResponseData(BaseModel):
     # The status of the order
     Status: OrderStatus
     # Description of the order status
-    StatusDescription: str
+    StatusDescription: Optional[str] = None
     # The type of order (e.g., "Market", "Limit")
-    OrderType: str
+    OrderType: Optional[str] = None
     # The symbol being traded
-    Symbol: str
+    Symbol: Optional[str] = None
     # Total quantity ordered
-    Quantity: str
+    Quantity: Optional[str] = None
     # Quantity that has been filled
-    FilledQuantity: str
+    FilledQuantity: Optional[str] = None
     # Quantity remaining to be filled
-    RemainingQuantity: str
+    RemainingQuantity: Optional[str] = None
     # The commission fee for the order
     CommissionFee: Optional[str] = None
     # The currency of the order
