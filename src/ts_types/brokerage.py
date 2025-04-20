@@ -362,11 +362,11 @@ class OrderLeg(BaseModel):
     # Quantity that has been executed
     ExecQuantity: str
     # Price at which the order was executed
-    ExecutionPrice: str
+    ExecutionPrice: Optional[str] = None
     # Expiration date for options
     ExpirationDate: Optional[str] = None
     # Whether the position is being opened or closed
-    OpenOrClose: Literal["Open", "Close"]
+    OpenOrClose: Optional[Literal["Open", "Close"]] = None
     # Type of option (CALL or PUT)
     OptionType: Optional[str] = None
     # Total quantity ordered
@@ -480,6 +480,8 @@ class HistoricalOrder(OrderBase):
     Historical order information extending the base order.
     """
 
+    # The date and time when the order was closed/filled
+    ClosedDateTime: Optional[str] = None
     # The status of the historical order
     Status: Optional[HistoricalOrderStatus] = None
     # Description of the order status
