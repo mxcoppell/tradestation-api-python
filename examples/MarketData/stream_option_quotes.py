@@ -48,33 +48,13 @@ async def handle_quote_data(data: Dict[str, Any]):
         # Extract symbols from legs for clarity
         leg_symbols = [leg.get("Symbol", "N/A") for leg in data.get("Legs", [])]
         print(f"Spread Legs: {', '.join(leg_symbols)}")
-        print(f"Timestamp: {data.get('Timestamp', 'N/A')}")  # Add timestamp if available
 
-        print("\n  Market Data:")
-        print(f"    Last: {data.get('Last', 'N/A')}")
-        print(f"    Bid: {data.get('Bid', 'N/A')} (Size: {data.get('BidSize', 'N/A')})")
-        print(f"    Ask: {data.get('Ask', 'N/A')} (Size: {data.get('AskSize', 'N/A')})")
-        print(f"    Volume: {data.get('Volume', 'N/A')}")
-        print(f"    Open Interest: {data.get('DailyOpenInterest', 'N/A')}")
-        print(
-            f"    Net Change: {data.get('NetChange', 'N/A')} ({data.get('NetChangePct', 'N/A')}%)"
-        )
-
-        print("\n  Greeks:")
-        print(f"    Delta: {data.get('Delta', 'N/A')}")
-        print(f"    Gamma: {data.get('Gamma', 'N/A')}")
-        print(f"    Theta: {data.get('Theta', 'N/A')}")
-        print(f"    Vega: {data.get('Vega', 'N/A')}")
-        print(f"    Rho: {data.get('Rho', 'N/A')}")
-
-        print("\n  Volatility & Value:")
-        print(f"    Implied Volatility: {data.get('ImpliedVolatility', 'N/A')}")
-        print(f"    Intrinsic Value: {data.get('IntrinsicValue', 'N/A')}")
-        print(f"    Extrinsic Value: {data.get('ExtrinsicValue', 'N/A')}")
-        print(f"    Theoretical Value: {data.get('TheoreticalValue', 'N/A')}")
-
-        # Add other fields if needed (e.g., Probabilities)
-
+        # --- Print All Received Fields ---
+        print("\n  All Received Fields:")
+        for key, value in data.items():
+            # Exclude Legs as it's already printed and can be large
+            if key != "Legs":
+                print(f"    {key}: {value}")
         print("-" * 60)
 
     elif "Heartbeat" in data:
