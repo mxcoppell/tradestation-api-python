@@ -139,13 +139,13 @@ See [Authentication Guide](docs/authentication.md) for the full scoop.
 
 Ready for more details?
 
-*   [🚀 Quick Start Guide](docs/quick_start.md)
-*   [🔑 Authentication](docs/authentication.md)
-*   [📊 Market Data](docs/market_data.md) - *Coming Soon*
-*   [💼 Brokerage (Accounts, Positions)](docs/brokerage.md) - *Coming Soon*
-*   [📈 Order Execution](docs/order_execution.md) - *Coming Soon*
-*   [⚡ Streaming Data](docs/streaming.md)
-*   [🚦 Rate Limiting](docs/rate_limiting.md)
+*   [🚀 Quick Start Guide](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/quick_start.md)
+*   [🔑 Authentication](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/authentication.md)
+*   [📊 Market Data](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/market_data.md) - *Coming Soon*
+*   [💼 Brokerage (Accounts, Positions)](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/brokerage.md) - *Coming Soon*
+*   [📈 Order Execution](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/order_execution.md) - *Coming Soon*
+*   [⚡ Streaming Data](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/streaming.md)
+*   [🚦 Rate Limiting](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/rate_limiting.md)
 
 ## Contributing 🤝
 
