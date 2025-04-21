@@ -16,6 +16,7 @@ from src.ts_types.order_execution import (
     GroupOrderResponseError,
     GroupOrderResponseSuccess,
     GroupOrderType,
+    GroupOrderConfirmationDetail,
     MarketActivationRule,
     OrderConfirmationResponse,
     OrderDuration,
@@ -446,14 +447,43 @@ class TestOrderExecutionTypes:
 
     def test_group_order_confirmation_response(self):
         """Test the GroupOrderConfirmationResponse model."""
-        success = GroupOrderResponseSuccess(
-            OrderID="ORD123456", Message="Order placed successfully"
+        # Use the new GroupOrderConfirmationDetail model for the items
+        # Adjust the mock data to match the fields in GroupOrderConfirmationDetail
+        detail1 = GroupOrderConfirmationDetail(
+            OrderConfirmID="CONFIRM1",
+            SummaryMessage="First leg confirmed",
+            EstimatedCost="100.00",
+            # Add other relevant fields if needed for assertion
+        )
+        detail2 = GroupOrderConfirmationDetail(
+            OrderConfirmID="CONFIRM2",
+            SummaryMessage="Second leg confirmed",
+            EstimatedCost="200.00",
+        )
+        error = GroupOrderResponseError(
+            OrderID="ERROR1", Error="Some Error", Message="Something went wrong"
         )
 
-        response = GroupOrderConfirmationResponse(Orders=[success])
-        assert len(response.Orders) == 1
-        assert response.Orders[0] == success
-        assert response.Errors is None
+        # Initialize with Confirmations list using the new detail model
+        response = GroupOrderConfirmationResponse(Confirmations=[detail1, detail2], Errors=[error])
+
+        assert len(response.Confirmations) == 2
+        assert response.Confirmations[0].OrderConfirmID == "CONFIRM1"
+        assert response.Confirmations[0].SummaryMessage == "First leg confirmed"
+        assert response.Confirmations[1].OrderConfirmID == "CONFIRM2"
+        assert response.Confirmations[1].SummaryMessage == "Second leg confirmed"
+        assert len(response.Errors) == 1
+        assert response.Errors[0].OrderID == "ERROR1"
+
+        # Test with empty Confirmations
+        response_no_confirm = GroupOrderConfirmationResponse(Confirmations=[], Errors=[error])
+        assert len(response_no_confirm.Confirmations) == 0
+        assert len(response_no_confirm.Errors) == 1
+
+        # Test with empty Errors
+        response_no_error = GroupOrderConfirmationResponse(Confirmations=[detail1])
+        assert len(response_no_error.Confirmations) == 1
+        assert response_no_error.Errors is None
 
     def test_routes_response(self):
         """Test the RoutesResponse model."""

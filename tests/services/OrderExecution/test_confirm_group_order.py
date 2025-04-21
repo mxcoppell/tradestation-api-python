@@ -16,9 +16,9 @@ class TestConfirmGroupOrder:
     @pytest.mark.asyncio
     async def test_confirm_bracket_order(self, order_execution_service, http_client_mock):
         """Test confirmation of a bracket order"""
-        # Mock response data
+        # Mock response data - Use "Confirmations" key
         mock_response = {
-            "Orders": [
+            "Confirmations": [
                 {"OrderID": "ORDER123", "Message": "Order confirmed"},
                 {"OrderID": "ORDER124", "Message": "Order confirmed"},
                 {"OrderID": "ORDER125", "Message": "Order confirmed"},
@@ -72,23 +72,23 @@ class TestConfirmGroupOrder:
             "/v3/orderexecution/ordergroupconfirm", request.model_dump(exclude_none=True)
         )
 
-        # Verify the result
+        # Verify the result - Access "Confirmations" field
         assert isinstance(result, GroupOrderConfirmationResponse)
-        assert len(result.Orders) == 3
-        assert result.Orders[0].OrderID == "ORDER123"
-        assert result.Orders[0].Message == "Order confirmed"
-        assert result.Orders[1].OrderID == "ORDER124"
-        assert result.Orders[1].Message == "Order confirmed"
-        assert result.Orders[2].OrderID == "ORDER125"
-        assert result.Orders[2].Message == "Order confirmed"
+        assert len(result.Confirmations) == 3
+        assert result.Confirmations[0].OrderID == "ORDER123"
+        assert result.Confirmations[0].Message == "Order confirmed"
+        assert result.Confirmations[1].OrderID == "ORDER124"
+        assert result.Confirmations[1].Message == "Order confirmed"
+        assert result.Confirmations[2].OrderID == "ORDER125"
+        assert result.Confirmations[2].Message == "Order confirmed"
         assert result.Errors is None
 
     @pytest.mark.asyncio
     async def test_confirm_oco_order(self, order_execution_service, http_client_mock):
         """Test confirmation of an OCO order"""
-        # Mock response data
+        # Mock response data - Use "Confirmations" key
         mock_response = {
-            "Orders": [
+            "Confirmations": [
                 {"OrderID": "ORDER123", "Message": "Order confirmed"},
                 {"OrderID": "ORDER124", "Message": "Order confirmed"},
             ]
@@ -132,13 +132,13 @@ class TestConfirmGroupOrder:
             "/v3/orderexecution/ordergroupconfirm", request.model_dump(exclude_none=True)
         )
 
-        # Verify the result
+        # Verify the result - Access "Confirmations" field
         assert isinstance(result, GroupOrderConfirmationResponse)
-        assert len(result.Orders) == 2
-        assert result.Orders[0].OrderID == "ORDER123"
-        assert result.Orders[0].Message == "Order confirmed"
-        assert result.Orders[1].OrderID == "ORDER124"
-        assert result.Orders[1].Message == "Order confirmed"
+        assert len(result.Confirmations) == 2
+        assert result.Confirmations[0].OrderID == "ORDER123"
+        assert result.Confirmations[0].Message == "Order confirmed"
+        assert result.Confirmations[1].OrderID == "ORDER124"
+        assert result.Confirmations[1].Message == "Order confirmed"
         assert result.Errors is None
 
     @pytest.mark.asyncio
@@ -146,9 +146,9 @@ class TestConfirmGroupOrder:
         self, order_execution_service, http_client_mock
     ):
         """Test validation errors when confirming a group order"""
-        # Mock response with errors
+        # Mock response with errors - Use "Confirmations" key (can be empty)
         mock_response = {
-            "Orders": [],
+            "Confirmations": [],
             "Errors": [
                 {
                     "OrderID": "ORDER123",
@@ -168,7 +168,7 @@ class TestConfirmGroupOrder:
                 OrderRequest(
                     AccountID="123456",
                     Symbol="MSFT",
-                    Quantity="-100",  # Invalid quantity
+                    Quantity="-100",
                     OrderType=OrderType.MARKET,
                     TradeAction=OrderSide.BUY,
                     TimeInForce=TimeInForce(Duration=OrderDuration.DAY),
@@ -185,9 +185,9 @@ class TestConfirmGroupOrder:
             "/v3/orderexecution/ordergroupconfirm", request.model_dump(exclude_none=True)
         )
 
-        # Verify the result
+        # Verify the result - Access "Confirmations" field
         assert isinstance(result, GroupOrderConfirmationResponse)
-        assert len(result.Orders) == 0
+        assert len(result.Confirmations) == 0
         assert len(result.Errors) == 1
         assert result.Errors[0].OrderID == "ORDER123"
         assert result.Errors[0].Error == "INVALID_QUANTITY"
