@@ -89,6 +89,9 @@
 - Bar streaming endpoints can provide both historical and real-time data in the same stream.
 - Bar streams include IsRealtime and IsEndOfHistory flags to distinguish between historical and real-time data.
 - **New:** Quote streaming (`/v3/marketdata/stream/quotes/{symbols}`) uses HTTP SSE, not WebSockets.
+- **New:** Troubleshooting `ssl.SSLCertVerificationError` when running examples locally.
+- **New:** **Account Suffixes**: Account IDs ending in 'M' usually denote margin accounts, while 'D' might denote cash accounts. Essential for selecting the correct account for certain order types (e.g., short selling requires margin).
+- **New:** **Order Confirmation Endpoint (`/v3/orderexecution/orderconfirm`)**: Even when confirming a *single* order, this endpoint returns a JSON structure that matches the `GroupOrderConfirmationResponse` model, containing a `Confirmations` list with a single entry. It does *not* return the simpler `OrderConfirmationResponse` model. Always parse the response using `GroupOrderConfirmationResponse`.
 
 ### Authentication Nuances
 - 
