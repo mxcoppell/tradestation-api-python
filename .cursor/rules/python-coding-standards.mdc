@@ -1,0 +1,45 @@
+---
+description: Python Coding Standards
+globs: **/*.py
+alwaysApply: false
+---
+# Python Coding Standards
+
+PEP 8 — Style Guide for Python Code
+Follow PEP 8 (Python Enhancement Proposal 8) ensures consistency across projects and makes code more readable.
+
+## Use 4 spaces per indentation level.
+- Limit lines to 79 characters to improve readability.
+- Use lowercase for variable names, and use underscores to separate words (snake_case).
+- Use uppercase for constants.
+- Use spaces around operators and after commas.
+
+## Meaningful Variable Names
+Choose meaningful and descriptive names for variables, functions, and classes. 
+This improves code readability and reduces the need for comments.
+
+## Avoid Magic Numbers
+Magic numbers are hard-coded numeric literals without any explanation. 
+Instead, use named constants or variables with descriptive names to enhance code readability.
+
+## List Comprehensions and Generators
+List comprehensions and generators are Pythonic ways to create lists and iterators, respectively. 
+They provide a concise and efficient way to work with collections.
+
+## Error Handling with Try-Except Blocks
+Always handle exceptions using try-except blocks to prevent the program from crashing when encountering errors.
+
+## Avoid Using Global Variables
+Global variables can lead to code that is difficult to reason about and debug. 
+Instead, use function arguments and return values to pass data between functions.
+
+## Commenting and Documentation
+Document your code using clear and concise comments. Well-documented code is easier to maintain and understand.
+
+## Virtual Environments
+Use virtual environments to isolate project dependencies. 
+This prevents conflicts between different projects and ensures a clean development environment.
+
+## Unit Testing
+Write unit tests to ensure that your code functions as expected. Automated tests help catch bugs early 
+and make code changes safer.

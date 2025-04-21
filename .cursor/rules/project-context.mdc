@@ -1,0 +1,30 @@
+---
+description: Project Context and General Instructions
+globs: **/*
+alwaysApply: false
+---
+# Project Context and General Instructions
+
+Every time you choose to apply a rule(s), explicitly state the rule(s) in the output. You can abbreviate the rule description to a single word or phrase.
+
+## Project Context
+[Brief description ]
+- [more description]
+- [more description]
+- [more description]
+
+## Code Style and Structure
+- Write concise, technical Python code with accurate examples
+- Use functional and declarative programming patterns
+- Use classes to encapsulate data and behavior and facilitate object-oriented programming principles
+- Prefer iteration and modularization over code duplication
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError)
+- Manage the project directory structure professionally
+
+## Tech Stack
+- Python (>=3.11)
+- aiohttp (>=3.8.0)
+- poetry (dependency management)
+- pytest
+- pytest-asyncio
+
