@@ -292,12 +292,25 @@ class OrderReplaceRequest(BaseModel):
     }
     """
 
+    AccountID: Optional[str] = None
+    OrderID: Optional[str] = None
     Quantity: Optional[str] = None
     LimitPrice: Optional[str] = None
     StopPrice: Optional[str] = None
     OrderType: Optional[Union["OrderType", str]] = None
     TimeInForce: Optional[Union["OrderReplaceTimeInForce", dict]] = None
     AdvancedOptions: Optional[Union["OrderReplaceAdvancedOptions", dict]] = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class ReplaceOrderResponse(BaseModel):
+    """Response from replacing an order (PUT /orders/{id})."""
+
+    OrderID: str
+    Message: str
+    # Add Error field? API documentation isn't explicit, but good practice
+    # Error: Optional[str] = None # Assuming similar pattern to CancelOrderResponse on error
 
     model_config = {"arbitrary_types_allowed": True}
 

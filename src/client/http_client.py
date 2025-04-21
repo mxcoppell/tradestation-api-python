@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
-from aiohttp import ClientResponse, ClientSession, ClientError, ClientTimeout
+from aiohttp import ClientResponse, ClientSession
 
 from src.ts_types.config import ClientConfig
 from src.utils.rate_limiter import RateLimiter
