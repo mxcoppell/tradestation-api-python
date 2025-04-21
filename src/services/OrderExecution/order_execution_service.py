@@ -86,7 +86,7 @@ class OrderExecutionService:
         )
         return OrderResponse(**response)
 
-    async def confirm_order(self, request: OrderRequest) -> OrderConfirmationResponse:
+    async def confirm_order(self, request: OrderRequest) -> GroupOrderConfirmationResponse:
         """
         Creates an Order Confirmation without actually placing it.
         Returns estimated cost and commission information.
@@ -109,7 +109,7 @@ class OrderExecutionService:
         response = await self.http_client.post(
             "/v3/orderexecution/orderconfirm", request.model_dump(exclude_none=True)
         )
-        return OrderConfirmationResponse(**response)
+        return GroupOrderConfirmationResponse(**response)
 
     async def cancel_order(self, order_id: str) -> CancelOrderResponse:
         """
