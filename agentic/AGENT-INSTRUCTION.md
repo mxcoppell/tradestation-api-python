@@ -161,7 +161,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - Include descriptive title and description
    - Reference the issue number in the description
    - Use "Closes #XXX" or "Fixes #XXX" in the PR description to ensure automatic issue closure when merged
-   - **ALWAYS include any updates to `CONTINUOUS-SELF-LEARNING.md` as part of your PR if you've added new knowledge**
+   - **ALWAYS include any updates to `agentic/CONTINUOUS-SELF-LEARNING.md` as part of your PR if you've added new knowledge**
 
 2. **PR Submission Steps**
    ```bash
@@ -251,7 +251,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - References to the issue number
    - Any important implementation details
    - How to test the changes
-   - **Knowledge Base Updates:** Mention if you added new entries to `CONTINUOUS-SELF-LEARNING.md` and summarize what knowledge was captured
+   - **Knowledge Base Updates:** Mention if you added new entries to `agentic/CONTINUOUS-SELF-LEARNING.md` and summarize what knowledge was captured
    - **Issue Closure Reference:**
      - Always include the issue closure reference at the BOTTOM of the PR description
      - Use one of these exact formats: `Closes #XXX`, `Fixes #XXX`, or `Resolves #XXX`
@@ -432,12 +432,12 @@ This document provides clear guidelines for AI agents working on this project. F
 ## Continuous Self-Learning
 
 1. **Knowledge Capture**
-   - Document any new lessons learned during implementation in `CONTINUOUS-SELF-LEARNING.md`
+   - Document any new lessons learned during implementation in `agentic/CONTINUOUS-SELF-LEARNING.md`
    - Include code patterns, best practices, and solutions to challenging problems
    - Document any API quirks or undocumented behavior
 
 2. **Technology Stack Updates**
-   - When discovering new libraries or tools relevant to the project, add them to `CONTINUOUS-SELF-LEARNING.md`
+   - When discovering new libraries or tools relevant to the project, add them to `agentic/CONTINUOUS-SELF-LEARNING.md`
    - Include version information, use cases, and integration examples
    - Document any compatibility issues or dependencies
 
@@ -453,7 +453,7 @@ This document provides clear guidelines for AI agents working on this project. F
    - After resolving complex errors or debugging challenges
 
 5. **When to Reference the Knowledge Base**
-   - **ALWAYS check `CONTINUOUS-SELF-LEARNING.md` before starting work on a new issue**
+   - **ALWAYS check `agentic/CONTINUOUS-SELF-LEARNING.md` before starting work on a new issue**
    - When implementing similar functionality to previously completed issues
    - When encountering errors or challenges that might have been solved before
    - Before proposing new architectural approaches

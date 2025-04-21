@@ -20,6 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.mypy_cache/
 
 # Virtual Environment
 venv/
@@ -30,7 +31,6 @@ ENV/
 # IDE
 .idea/
 .vscode/
-.cursor/
 *.swp
 *.swo
 .DS_Store
@@ -89,3 +89,6 @@ config.local.json
 
 # Generated documentation
 docs/_build/ 
+
+# Local utilities
+local_utils/
