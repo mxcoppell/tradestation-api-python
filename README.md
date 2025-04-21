@@ -1,123 +1,156 @@
-# TradeStation API Python Wrapper
+# TradeStation API Python Wrapper 🚀
 
-A Python client library for the TradeStation API. This library provides a Pythonic interface to interact with TradeStation's API, allowing developers to easily integrate trading applications with TradeStation.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
+Hey there, Trader! 👋 Ready to connect your Python apps to the TradeStation universe? This library makes it easy-peasy.
 
-- **Authentication**: Simplified OAuth workflow with auto-refresh capabilities
-- **Market Data**: Access real-time and historical price data, quotes, symbols, and more
-- **Brokerage**: Retrieve accounts, positions, balances, and orders
-- **Order Execution**: Place, modify, and cancel orders
-- **Streaming**: Real-time data streaming with WebSocket support
-- **Rate Limiting**: Built-in rate limit handling to prevent API throttling
+Think of it as your friendly Pythonic remote control for TradeStation's API. Build trading bots, analyze data, manage your account – all with clean, asynchronous Python code.
 
-## Requirements
+## What Can You Do? ✨
 
-- Python 3.11+
-- TradeStation account
-- TradeStation API credentials (Client ID and Refresh Token)
+*   **Log In Easily:** Handles the tricky OAuth 2.0 stuff (including token refreshes) so you don't have to.
+*   **Market Pulse:** Grab real-time quotes, historical price bars, symbol details, and more.
+*   **Account Access:** Check your balances, see your positions, and review order history.
+*   **Trade Time:** Place, change, or cancel orders programmatically.
+*   **Live Streams:** Get data beamed straight to you with WebSocket support.
+*   **Plays Nicely:** Built-in rate limiting helps you avoid getting timed out by the API.
 
-## Installation
+## What You'll Need 📋
+
+*   Python 3.11 or newer (Gotta have that async power!)
+*   A TradeStation Account (Real or Simulated)
+*   Your TradeStation API Credentials (Client ID & Refresh Token - get these from the [Developer Portal](https://developer.tradestation.com/))
+
+## Get It Installed! 💻
+
+Open your terminal and let's get this library installed.
 
 ```bash
-# Install with Poetry (recommended)
+# 1. Clone the project (if you haven't already)
+git clone https://github.com/mxcoppell/tradestation-api-python.git
+cd tradestation-api-python
+
+# 2. Install using Poetry (Recommended ✨)
 poetry install
 
-# Or with pip
-pip install tradestation-api-python  # Coming soon
+# OR: Use pip if you prefer
+# pip install -e .
 ```
 
-## Quick Start
+## Quick Start: Your First API Call! 🚀
+
+Let's fetch a stock quote right now!
+
+1.  **Set up your secrets:** Copy `.env.sample` to `.env` and fill in your `CLIENT_ID`, `REFRESH_TOKEN`, and `ENVIRONMENT` (`Live` or `Simulation`).
+    ```bash
+    cp .env.sample .env
+    # Now edit .env with your details!
+    ```
+2.  **Run this Python code:**
 
 ```python
 import asyncio
+import os
 from dotenv import load_dotenv
 from src.client.tradestation_client import TradeStationClient
 
-async def main():
-    # Load environment variables from .env file
+async def get_a_quote():
+    # Load secrets from .env file
     load_dotenv()
-    
-    # Create a client using environment variables
-    # Requires CLIENT_ID, REFRESH_TOKEN, ENVIRONMENT in .env
+    print(f"Using Environment: {os.getenv('ENVIRONMENT')}")
+
+    # Create the client (it reads your .env automatically!)
     client = TradeStationClient()
-    
+
     try:
-        # Get quote for a symbol
-        quote = await client.market_data.get_quotes(["AAPL"])
-        print(f"AAPL: ${quote.Quotes[0].Last}")
-        
-        # Get account balances
-        accounts = await client.brokerage.get_accounts()
-        print(f"Found {len(accounts.Accounts)} accounts")
-        
+        print("Asking TradeStation for an AAPL quote...")
+        # Use the market data service to get a quote snapshot
+        quote_response = await client.market_data.get_quote_snapshots("AAPL")
+
+        if quote_response and quote_response.Quotes:
+            aapl_price = quote_response.Quotes[0].Last
+            print(f"----> Got it! AAPL last price: ${aapl_price}")
+        else:
+            print("Hmm, couldn't get the quote. Error:", getattr(quote_response, 'Errors', 'Unknown error'))
+
+    except Exception as e:
+        print(f"Whoops! Something went wrong: {e}")
     finally:
-        # Always close the client when done
+        print("Closing the connection.")
+        # Always close the client when you're finished!
         await client.close()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(get_a_quote())
 ```
 
-See the `examples` directory for more comprehensive examples.
+Want more? Check out the `examples/QuickStart` directory for scripts you can run immediately!
 
-## Project Structure
+## Project Peek 👀
+
+Curious how it's organized?
 
 ```
 .
-├── docs/                 # API documentation
-├── examples/             # Example scripts
-│   ├── Brokerage/        # Account and order history examples
-│   ├── MarketData/       # Price, quote, and symbol examples
-│   └── OrderExecution/   # Order placement and management examples
-└── src/                  # Source code
-    ├── client/           # Main client implementation
-    ├── services/         # API service implementations
-    │     ├── Brokerage/
-    │     ├── MarketData/
-    │     └── OrderExecution/
-    ├── streaming/        # WebSocket streaming implementation
-    ├── ts_types/         # Type definitions
-    └── utils/            # Utility functions and helpers
+├── docs/                 # You are here! (Hopefully useful docs)
+├── examples/             # Ready-to-run example scripts!
+│   ├── QuickStart/       # Start here!
+│   ├── Brokerage/        # Account & order history examples
+│   ├── MarketData/       # Price, quote, & symbol examples
+│   └── OrderExecution/   # Placing & managing orders examples
+└── src/                  # The heart of the library
+    ├── client/           # The main TradeStationClient
+    ├── services/         # API sections (MarketData, Brokerage, etc.)
+    ├── streaming/        # WebSocket streaming code
+    ├── ts_types/         # Data models (Pydantic types)
+    └── utils/            # Helpers (Auth, Rate Limiting, etc.)
 ```
 
-## Authentication
+## Logging In (Authentication) 🔒
 
-The library supports OAuth authentication using refresh tokens. You can provide credentials in several ways:
+The library needs your API keys to talk to TradeStation. The easiest way is the `.env` file (shown in Quick Start).
 
-1. Environment variables:
-   - `CLIENT_ID`: Your TradeStation API client ID (Mandatory)
-   - `REFRESH_TOKEN`: Your refresh token (Mandatory)
-   - `ENVIRONMENT`: Either "Live" or "Simulation" (Mandatory)
+Other ways:
 
-2. Configuration dictionary:
-   ```python
-   client = TradeStationClient({
-       "client_id": "your_client_id",
-       "refresh_token": "your_refresh_token",
-       "environment": "Live"  # or "Simulation"
-   })
-   ```
+1.  **Environment Variables:** Set `CLIENT_ID`, `REFRESH_TOKEN`, `ENVIRONMENT` directly in your system.
+2.  **Python Dictionary:**
+    ```python
+    client = TradeStationClient({
+        "client_id": "your_id",
+        "refresh_token": "your_token",
+        "environment": "Simulation"
+    })
+    ```
+3.  **Direct Parameters:**
+    ```python
+    client = TradeStationClient(
+        refresh_token="your_token",
+        environment="Live" # CLIENT_ID still needs to be in env or config
+    )
+    ```
 
-3. Direct parameters:
-   ```python
-   client = TradeStationClient(
-       refresh_token="your_refresh_token",
-       environment="Live"  # Credentials loaded from environment
-   )
-   ```
+See [Authentication Guide](docs/authentication.md) for the full scoop.
 
-## Documentation
+## Dive Deeper (Documentation) 📚
 
-See the following resources for more information:
+Ready for more details?
 
-- [Authentication](docs/authentication.md) - Coming soon
-- [Market Data](docs/market_data.md) - Coming soon
-- [Brokerage](docs/brokerage.md) - Coming soon
-- [Order Execution](docs/order_execution.md) - Coming soon
-- [Streaming](docs/streaming.md) - Coming soon
-- [Rate Limiting](docs/rate_limiting.md) - Coming soon
+*   [🚀 Quick Start Guide](docs/quick_start.md)
+*   [🔑 Authentication](docs/authentication.md)
+*   [📊 Market Data](docs/market_data.md) - *Coming Soon*
+*   [💼 Brokerage (Accounts, Positions)](docs/brokerage.md) - *Coming Soon*
+*   [📈 Order Execution](docs/order_execution.md) - *Coming Soon*
+*   [⚡ Streaming Data](docs/streaming.md)
+*   [🚦 Rate Limiting](docs/rate_limiting.md)
 
-## License
+## Contributing 🤝
 
-MIT 
+Got ideas or found a bug? Feel free to open an issue or submit a pull request!
+
+## License 📜
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+Happy Trading! 🎉 
