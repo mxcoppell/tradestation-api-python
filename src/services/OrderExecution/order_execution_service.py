@@ -13,6 +13,7 @@ from ...ts_types.order_execution import (
     OrderConfirmationResponse,
     OrderResponse,
     OrderReplaceRequest,
+    ReplaceOrderResponse,
 )
 
 
@@ -59,7 +60,9 @@ class OrderExecutionService:
         )
         return OrderResponse(**response)
 
-    async def replace_order(self, order_id: str, request: OrderReplaceRequest) -> OrderResponse:
+    async def replace_order(
+        self, order_id: str, request: OrderReplaceRequest
+    ) -> ReplaceOrderResponse:
         """
         Replaces an existing order with new parameters.
         Valid for all account types.
@@ -84,7 +87,7 @@ class OrderExecutionService:
         response = await self.http_client.put(
             f"/v3/orderexecution/orders/{order_id}", request.model_dump(exclude_none=True)
         )
-        return OrderResponse(**response)
+        return ReplaceOrderResponse(**response)
 
     async def confirm_order(self, request: OrderRequest) -> GroupOrderConfirmationResponse:
         """
