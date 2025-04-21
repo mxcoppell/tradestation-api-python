@@ -142,7 +142,7 @@ Ready for more details?
 *   [🚀 Quick Start Guide](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/quick_start.md)
 *   [🔑 Authentication](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/authentication.md)
 *   [📊 Market Data](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/market_data.md)
-*   [💼 Brokerage (Accounts, Positions)](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/brokerage.md)
+*   [💼 Brokerage](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/brokerage.md)
 *   [📈 Order Execution](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/order_execution.md)
 *   [⚡ Streaming Data](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/streaming.md)
 *   [🚦 Rate Limiting](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/rate_limiting.md)
