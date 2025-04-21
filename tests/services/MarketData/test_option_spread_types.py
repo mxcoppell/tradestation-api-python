@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock
 
-from src.ts_types.market_data import SpreadTypes
+from tradestation.ts_types.market_data import SpreadTypes
 
 
 class TestOptionSpreadTypes:

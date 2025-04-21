@@ -1,6 +1,6 @@
 import pytest
 
-from src.ts_types.market_data import Expirations
+from tradestation.ts_types.market_data import Expirations
 
 
 class TestOptionExpirations:

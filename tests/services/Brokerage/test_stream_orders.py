@@ -7,9 +7,9 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 
-from src.services.Brokerage.brokerage_service import BrokerageService
-from src.ts_types.brokerage import Order, StreamStatus, StreamOrderErrorResponse
-from src.ts_types.market_data import Heartbeat
+from tradestation.services.Brokerage.brokerage_service import BrokerageService
+from tradestation.ts_types.brokerage import Order, StreamStatus, StreamOrderErrorResponse
+from tradestation.ts_types.market_data import Heartbeat
 
 
 @pytest.fixture

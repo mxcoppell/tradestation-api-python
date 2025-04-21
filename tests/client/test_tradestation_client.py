@@ -2,13 +2,13 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 
-from src.client.tradestation_client import TradeStationClient
-from src.client.http_client import HttpClient
-from src.streaming.stream_manager import StreamManager
-from src.services.MarketData.market_data_service import MarketDataService
-from src.services.OrderExecution.order_execution_service import OrderExecutionService
-from src.services.Brokerage.brokerage_service import BrokerageService
-from src.ts_types.config import ClientConfig
+from tradestation.client.tradestation_client import TradeStationClient
+from tradestation.client.http_client import HttpClient
+from tradestation.streaming.stream_manager import StreamManager
+from tradestation.services.MarketData.market_data_service import MarketDataService
+from tradestation.services.OrderExecution.order_execution_service import OrderExecutionService
+from tradestation.services.Brokerage.brokerage_service import BrokerageService
+from tradestation.ts_types.config import ClientConfig
 
 
 class TestTradeStationClient:

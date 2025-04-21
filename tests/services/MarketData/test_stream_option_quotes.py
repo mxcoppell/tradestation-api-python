@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import json
 import aiohttp
 
-from src.services.MarketData.market_data_service import MarketDataService
-from src.ts_types.market_data import (
+from tradestation.services.MarketData.market_data_service import MarketDataService
+from tradestation.ts_types.market_data import (
     OptionQuoteParams,
     OptionQuoteLeg,
     Spread,
@@ -17,7 +17,7 @@ from src.ts_types.market_data import (
     StreamErrorResponse,
 )
 
-# from src.utils.websocket_stream import WebSocketStream
+# from tradestation.utils.websocket_stream import WebSocketStream
 from pydantic import ValidationError
 
 

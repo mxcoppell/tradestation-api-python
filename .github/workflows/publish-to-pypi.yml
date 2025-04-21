@@ -1,0 +1,64 @@
+name: Publish Python Package to PyPI
+
+on:
+  release:
+    types: [published] # Triggered when a release is published on GitHub
+
+permissions:
+  contents: read
+  id-token: write # Required for trusted publishing
+
+jobs:
+  build-and-publish:
+    name: Build and publish Python distributions to PyPI
+    runs-on: ubuntu-latest
+    # Remove the environment block, trusted publishing setup is on PyPI's side
+    # environment:
+    #   name: pypi
+    #   url: https://pypi.org/p/tradestation-api # URL to the package on PyPI
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11" # Match the project's minimum supported version
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
+    - name: Install project
+      run: poetry install --no-interaction
+
+    # Optional: Add tests here if needed before publishing
+    # - name: Run tests
+    #   run: |
+    #     source .venv/bin/activate
+    #     pytest
+
+    - name: Build package
+      run: poetry build
+
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      # Ensure PyPI project settings are configured for trusted publishing from this repo/workflow
+      # Package URL: https://pypi.org/p/tradestation-api-python # Updated URL comment
+
+    # No API token needed, uses trusted publishing via OIDC
+    # Ensure PyPI project settings are configured for trusted publishing from this repo/workflow 

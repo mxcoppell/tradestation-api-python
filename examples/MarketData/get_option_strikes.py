@@ -11,10 +11,10 @@ from dotenv import load_dotenv
 # sys.path.insert(0, str(project_root / "src"))
 
 # Direct import from src directory structure
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client.tradestation_client import TradeStationClient
 
 # Corrected import path and class name for ApiError
-from src.ts_types.config import ApiError
+from tradestation.ts_types.config import ApiError
 
 
 # Load environment variables from .env file

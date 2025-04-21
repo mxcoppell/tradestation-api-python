@@ -15,10 +15,10 @@ import json
 import os
 from typing import List, Dict, Any
 from dotenv import load_dotenv
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client.tradestation_client import TradeStationClient
 
 # Correct the import path for OptionQuoteParams and OptionQuoteLeg
-from src.ts_types.market_data import OptionQuoteParams, OptionQuoteLeg
+from tradestation.ts_types.market_data import OptionQuoteParams, OptionQuoteLeg
 
 # Load environment variables from .env file
 load_dotenv()

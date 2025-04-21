@@ -1,12 +1,37 @@
 [tool.poetry]
 name = "tradestation-api-python"
 version = "0.1.0"
-description = "A Python client library for the TradeStation API"
-authors = ["mxcoppell <mxcoppell@example.com>"]
+description = "An unofficial, asynchronous Python client library for the TradeStation API, providing access to market data, brokerage, and order execution services."
+authors = ["mxcoppell <mxcoppell@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/mxcoppell/tradestation-api-python"
 repository = "https://github.com/mxcoppell/tradestation-api-python"
-packages = [{ include = "src" }]
+documentation = "https://github.com/mxcoppell/tradestation-api-python/tree/main/docs"
+keywords = [
+    "tradestation",
+    "trading",
+    "api",
+    "finance",
+    "algorithmic trading",
+    "algotrading",
+    "asyncio",
+    "brokerage",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+packages = [{ include = "tradestation", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

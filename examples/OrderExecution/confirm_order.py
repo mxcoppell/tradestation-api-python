@@ -30,10 +30,10 @@ import aiohttp
 from pydantic import ValidationError
 
 # Import the client
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client.tradestation_client import TradeStationClient
 
 # Import necessary types from the order execution definitions
-from src.ts_types.order_execution import (
+from tradestation.ts_types.order_execution import (
     OrderRequest,
     TimeInForce,
     OrderType,
@@ -45,7 +45,7 @@ from src.ts_types.order_execution import (
     GroupOrderResponseError,  # Use group error model if errors come in that structure
     OrderResponseError,  # Keep regular error model just in case
 )
-from src.ts_types.brokerage import Account
+from tradestation.ts_types.brokerage import Account
 
 
 async def main():

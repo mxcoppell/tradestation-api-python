@@ -1,7 +1,7 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client.tradestation_client import TradeStationClient
 
 # Load environment variables from .env file
 load_dotenv()

@@ -40,12 +40,12 @@ from pydantic import ValidationError
 import traceback
 
 # Import the client
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client.tradestation_client import TradeStationClient
 
 # Import necessary types
-from src.ts_types.brokerage import Account, Order, Orders
-from src.ts_types.market_data import Quote, QuoteSnapshot
-from src.ts_types.order_execution import (
+from tradestation.ts_types.brokerage import Account, Order, Orders
+from tradestation.ts_types.market_data import Quote, QuoteSnapshot
+from tradestation.ts_types.order_execution import (
     OrderRequest,
     OrderReplaceRequest,
     TimeInForce,

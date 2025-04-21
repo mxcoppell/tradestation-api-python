@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 
-from src.ts_types.order_execution import (
+from tradestation.ts_types.order_execution import (
     OrderRequest,
     OrderType,
     OrderSide,

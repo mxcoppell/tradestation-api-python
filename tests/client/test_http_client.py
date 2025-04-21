@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 from aiohttp import ClientResponse, StreamReader
 
-from src.client.http_client import HttpClient
-from src.ts_types.config import ClientConfig
-from src.utils.rate_limiter import RateLimiter
-from src.utils.token_manager import TokenManager
+from tradestation.client.http_client import HttpClient
+from tradestation.ts_types.config import ClientConfig
+from tradestation.utils.rate_limiter import RateLimiter
+from tradestation.utils.token_manager import TokenManager
 
 
 @pytest.fixture

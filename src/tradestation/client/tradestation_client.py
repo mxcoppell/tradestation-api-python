@@ -1,9 +1,22 @@
+import asyncio
+import logging
 from typing import Optional, Dict, Any, Union, cast, Literal
 import os
 
 from ..ts_types.config import ClientConfig
+from ..utils.token_manager import TokenManager
+from ..utils.rate_limiter import RateLimiter
 from .http_client import HttpClient
 from ..utils.stream_manager import StreamManager
+
+# Corrected imports for service classes
+from ..services.MarketData.market_data_service import MarketDataService
+from ..services.OrderExecution.order_execution_service import OrderExecutionService
+from ..services.Brokerage.brokerage_service import BrokerageService
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Remove this import to avoid circular dependency
 # from src.services.MarketData.market_data_service import MarketDataService
@@ -30,12 +43,12 @@ class TradeStationClient:
             environment: Either "Live" or "Simulation".
             debug: Whether to print debug messages.
         """
-        from src.ts_types.config import ClientConfig
+        from ..ts_types.config import ClientConfig
 
         # Import here to avoid circular dependency
-        from src.services.MarketData.market_data_service import MarketDataService
-        from src.services.OrderExecution.order_execution_service import OrderExecutionService
-        from src.services.Brokerage.brokerage_service import BrokerageService
+        from ..services.MarketData.market_data_service import MarketDataService
+        from ..services.OrderExecution.order_execution_service import OrderExecutionService
+        from ..services.Brokerage.brokerage_service import BrokerageService
 
         if config is None:
             config = {}

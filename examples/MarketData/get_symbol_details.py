@@ -13,7 +13,7 @@ import asyncio
 import os
 from decimal import Decimal, ROUND_HALF_UP
 from dotenv import load_dotenv
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client.tradestation_client import TradeStationClient
 
 # Load environment variables from .env file
 load_dotenv()

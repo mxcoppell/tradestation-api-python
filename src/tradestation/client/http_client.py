@@ -9,10 +9,18 @@ from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
 from aiohttp import ClientResponse, ClientSession
+from dotenv import load_dotenv
+import os
+import time
 
-from src.ts_types.config import ClientConfig
-from src.utils.rate_limiter import RateLimiter
-from src.utils.token_manager import TokenManager
+from ..ts_types.config import ClientConfig
+from ..utils.rate_limiter import RateLimiter
+from ..utils.token_manager import TokenManager
+
+# Load environment variables
+load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 class HttpClient:
@@ -29,7 +37,7 @@ class HttpClient:
             config: Configuration settings for the client (dict or ClientConfig object)
             debug: Whether to print debug messages
         """
-        from src.ts_types.config import ClientConfig
+        from ..ts_types.config import ClientConfig
 
         self.debug = debug
 

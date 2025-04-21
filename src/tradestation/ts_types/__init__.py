@@ -1,11 +1,11 @@
 """Types for the TradeStation API Python wrapper."""
 
-from src.ts_types.config import (
+from .config import (
     ApiError,
     AuthResponse,
     ClientConfig,
 )
-from src.ts_types.market_data import (
+from .market_data import (
     AggregatedQuoteData,
     Quote,
     QuoteError,
@@ -49,7 +49,7 @@ from src.ts_types.market_data import (
     OptionRiskRewardRequest,
     OptionRiskReward,
 )
-from src.ts_types.brokerage import (
+from .brokerage import (
     Account,
     Activity,
     AccountDetail,
@@ -62,7 +62,7 @@ from src.ts_types.brokerage import (
     OrderStatus,
     TrailingStop,
 )
-from src.ts_types.order_execution import (
+from .order_execution import (
     ActivationTrigger,
     ActivationTriggers,
     AdvancedOptions,
