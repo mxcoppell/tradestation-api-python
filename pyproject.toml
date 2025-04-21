@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "tradestation-api-python"
-version = "0.1.0"
+version = "1.0.0"
 description = "A Python client library for the TradeStation API"
 authors = ["mxcoppell <mxcoppell@example.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/mxcoppell/tradestation-api-python"
-packages = [{ include = "src" }]
+packages = [{ include = "tradestation", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

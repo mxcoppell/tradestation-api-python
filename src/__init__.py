@@ -5,4 +5,4 @@ to interact with TradeStation's API, allowing developers to easily integrate tra
 with TradeStation.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
