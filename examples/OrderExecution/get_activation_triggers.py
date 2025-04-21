@@ -54,9 +54,11 @@ async def main():
             else:
                 for trigger in activation_triggers_response.ActivationTriggers:
                     if isinstance(trigger, ActivationTrigger):
-                        print(
-                            f"  - Key: {trigger.Key:<5} Name: {trigger.Name:<25} Description: {trigger.Description}"
-                        )
+                        # Print details on separate lines with indentation
+                        print(f"  - Trigger:")
+                        print(f"      Key:         {trigger.Key}")
+                        print(f"      Name:        {trigger.Name}")
+                        print(f"      Description: {trigger.Description}")
                     else:
                         print(f"  - Unexpected item type in triggers list: {trigger}")
         else:
