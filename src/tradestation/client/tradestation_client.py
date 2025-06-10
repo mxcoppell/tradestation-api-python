@@ -4,6 +4,7 @@ import os
 from ..ts_types.config import ClientConfig
 from .http_client import HttpClient
 from ..utils.stream_manager import StreamManager
+from ..services import MarketDataService, OrderExecutionService, BrokerageService
 
 # Remove this import to avoid circular dependency
 # from src.services.MarketData.market_data_service import MarketDataService
@@ -30,12 +31,7 @@ class TradeStationClient:
             environment: Either "Live" or "Simulation".
             debug: Whether to print debug messages.
         """
-        from src.ts_types.config import ClientConfig
-
-        # Import here to avoid circular dependency
-        from src.services.MarketData.market_data_service import MarketDataService
-        from src.services.OrderExecution.order_execution_service import OrderExecutionService
-        from src.services.Brokerage.brokerage_service import BrokerageService
+        from ..ts_types.config import ClientConfig
 
         if config is None:
             config = {}

@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
 
-from src.utils.token_manager import TokenManager
-from src.ts_types.config import AuthResponse, ClientConfig
+from tradestation.utils.token_manager import TokenManager
+from tradestation.ts_types.config import AuthResponse, ClientConfig
 
 
 class MockResponse:

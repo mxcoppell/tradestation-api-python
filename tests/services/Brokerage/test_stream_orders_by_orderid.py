@@ -7,7 +7,7 @@ import json
 from unittest.mock import AsyncMock, MagicMock
 import aiohttp
 
-from src.services.Brokerage.brokerage_service import BrokerageService
+from tradestation.services.Brokerage.brokerage_service import BrokerageService
 
 
 @pytest.fixture

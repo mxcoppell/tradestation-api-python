@@ -1,6 +1,6 @@
 import pytest
 
-from src.ts_types.market_data import SymbolNames
+from tradestation.ts_types.market_data import SymbolNames
 
 
 class TestCryptoSymbolNames:

@@ -1,5 +1,5 @@
 import pytest
-from src.ts_types.order_execution import ActivationTriggers, ActivationTrigger
+from tradestation.ts_types.order_execution import ActivationTriggers, ActivationTrigger
 
 
 class TestGetActivationTriggers:

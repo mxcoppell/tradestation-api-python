@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.ts_types.order_execution import (
+from tradestation.ts_types.order_execution import (
     ActivationTrigger,
     ActivationTriggers,
     AdvancedOptions,

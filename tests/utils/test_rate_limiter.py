@@ -4,7 +4,7 @@ from typing import Dict, Union
 
 import pytest
 
-from src.utils.rate_limiter import RateLimiter
+from tradestation.utils.rate_limiter import RateLimiter
 
 
 class TestRateLimiter:

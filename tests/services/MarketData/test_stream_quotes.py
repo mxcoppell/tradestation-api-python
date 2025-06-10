@@ -8,11 +8,11 @@ import json
 from unittest.mock import AsyncMock, MagicMock
 import aiohttp
 
-from src.services.MarketData.market_data_service import MarketDataService
-from src.ts_types.market_data import QuoteStream, Heartbeat, StreamErrorResponse
+from tradestation.services.MarketData.market_data_service import MarketDataService
+from tradestation.ts_types.market_data import QuoteStream, Heartbeat, StreamErrorResponse
 
 # Remove WebSocketStream import as it's no longer used directly by stream_quotes
-# from src.utils.websocket_stream import WebSocketStream
+# from tradestation.utils.websocket_stream import WebSocketStream
 
 
 @pytest.fixture
