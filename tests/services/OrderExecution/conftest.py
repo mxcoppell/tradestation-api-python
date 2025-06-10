@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.client.http_client import HttpClient
-from src.services.OrderExecution.order_execution_service import OrderExecutionService
-from src.streaming.stream_manager import StreamManager
+from tradestation.client.http_client import HttpClient
+from tradestation.services.OrderExecution.order_execution_service import OrderExecutionService
+from tradestation.streaming.stream_manager import StreamManager
 
 
 @pytest.fixture

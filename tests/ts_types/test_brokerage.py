@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.ts_types.brokerage import (
+from tradestation.ts_types.brokerage import (
     Account,
     AccountDetail,
     AccountType,

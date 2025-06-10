@@ -20,7 +20,7 @@ import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client import TradeStationClient
 
 
 async def main():

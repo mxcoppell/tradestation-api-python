@@ -2,13 +2,11 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 
-from src.client.tradestation_client import TradeStationClient
-from src.client.http_client import HttpClient
-from src.streaming.stream_manager import StreamManager
-from src.services.MarketData.market_data_service import MarketDataService
-from src.services.OrderExecution.order_execution_service import OrderExecutionService
-from src.services.Brokerage.brokerage_service import BrokerageService
-from src.ts_types.config import ClientConfig
+from tradestation.client.tradestation_client import TradeStationClient
+from tradestation.client.http_client import HttpClient
+from tradestation.streaming.stream_manager import StreamManager
+from tradestation.services import MarketDataService, OrderExecutionService, BrokerageService
+from tradestation.ts_types.config import ClientConfig
 
 
 class TestTradeStationClient:
@@ -53,22 +51,25 @@ class TestTradeStationClient:
     ):
         with (
             patch(
-                "src.client.tradestation_client.HttpClient", return_value=mock_http_client
+                "tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client
             ) as mock_http_client_cls,
             patch(
-                "src.client.tradestation_client.StreamManager", return_value=mock_stream_manager
+                "tradestation.client.tradestation_client.StreamManager", return_value=mock_stream_manager
             ) as mock_stream_manager_cls,
             patch(
-                "src.services.MarketData.market_data_service.MarketDataService",
+                "tradestation.client.tradestation_client.MarketDataService",
                 return_value=mock_services["market_data"],
+                create=True,
             ) as mock_market_data_cls,
             patch(
-                "src.services.OrderExecution.order_execution_service.OrderExecutionService",
+                "tradestation.client.tradestation_client.OrderExecutionService",
                 return_value=mock_services["order_execution"],
+                create=True,
             ) as mock_order_execution_cls,
             patch(
-                "src.services.Brokerage.brokerage_service.BrokerageService",
+                "tradestation.client.tradestation_client.BrokerageService",
                 return_value=mock_services["brokerage"],
+                create=True,
             ) as mock_brokerage_cls,
         ):
 
@@ -96,11 +97,11 @@ class TestTradeStationClient:
         config_lower = {**config, "environment": "simulation"}
 
         with (
-            patch("src.client.tradestation_client.HttpClient") as mock_http_client,
-            patch("src.client.tradestation_client.StreamManager"),
-            patch("src.services.MarketData.market_data_service.MarketDataService"),
-            patch("src.services.OrderExecution.order_execution_service.OrderExecutionService"),
-            patch("src.services.Brokerage.brokerage_service.BrokerageService"),
+            patch("tradestation.client.tradestation_client.HttpClient") as mock_http_client,
+            patch("tradestation.client.tradestation_client.StreamManager"),
+            patch("tradestation.client.tradestation_client.MarketDataService", create=True),
+            patch("tradestation.client.tradestation_client.OrderExecutionService", create=True),
+            patch("tradestation.client.tradestation_client.BrokerageService", create=True),
         ):
 
             client = TradeStationClient(config_lower)
@@ -125,19 +126,22 @@ class TestTradeStationClient:
 
     def test_get_refresh_token(self, config, mock_http_client, mock_stream_manager, mock_services):
         with (
-            patch("src.client.tradestation_client.HttpClient", return_value=mock_http_client),
-            patch("src.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
+            patch("tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client),
+            patch("tradestation.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
             patch(
-                "src.services.MarketData.market_data_service.MarketDataService",
+                "tradestation.client.tradestation_client.MarketDataService",
                 return_value=mock_services["market_data"],
+                create=True,
             ),
             patch(
-                "src.services.OrderExecution.order_execution_service.OrderExecutionService",
+                "tradestation.client.tradestation_client.OrderExecutionService",
                 return_value=mock_services["order_execution"],
+                create=True,
             ),
             patch(
-                "src.services.Brokerage.brokerage_service.BrokerageService",
+                "tradestation.client.tradestation_client.BrokerageService",
                 return_value=mock_services["brokerage"],
+                create=True,
             ),
         ):
 
@@ -158,19 +162,22 @@ class TestTradeStationClient:
 
     def test_close_all_streams(self, config, mock_http_client, mock_stream_manager, mock_services):
         with (
-            patch("src.client.tradestation_client.HttpClient", return_value=mock_http_client),
-            patch("src.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
+            patch("tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client),
+            patch("tradestation.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
             patch(
-                "src.services.MarketData.market_data_service.MarketDataService",
+                "tradestation.client.tradestation_client.MarketDataService",
                 return_value=mock_services["market_data"],
+                create=True,
             ),
             patch(
-                "src.services.OrderExecution.order_execution_service.OrderExecutionService",
+                "tradestation.client.tradestation_client.OrderExecutionService",
                 return_value=mock_services["order_execution"],
+                create=True,
             ),
             patch(
-                "src.services.Brokerage.brokerage_service.BrokerageService",
+                "tradestation.client.tradestation_client.BrokerageService",
                 return_value=mock_services["brokerage"],
+                create=True,
             ),
         ):
 

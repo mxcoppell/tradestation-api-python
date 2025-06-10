@@ -26,10 +26,10 @@ import aiohttp
 from pydantic import ValidationError
 
 # Import the client
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client import TradeStationClient
 
 # Import necessary types
-from src.ts_types.order_execution import RoutesResponse, Route
+from tradestation.ts_types.order_execution import RoutesResponse, Route
 
 
 async def main():

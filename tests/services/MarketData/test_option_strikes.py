@@ -1,7 +1,7 @@
 import pytest
 from typing import Dict, Any
 
-from src.ts_types.market_data import Strikes
+from tradestation.ts_types.market_data import Strikes
 
 
 @pytest.mark.asyncio

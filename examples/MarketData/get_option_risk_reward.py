@@ -12,13 +12,13 @@ import os
 from dotenv import load_dotenv
 from typing import List, Dict, Any
 
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client import TradeStationClient
 
 # Note: The Pydantic models RiskRewardAnalysisInput/RiskRewardLeg in ts_types are INCORRECT for this endpoint.
 # We are using a dictionary matching the OpenAPI spec instead.
 # from src.ts_types.market_data import RiskRewardAnalysisInput, RiskRewardLeg
 # from src.ts_types.market_data import RiskRewardAnalysis # The old response model IS incorrect
-from src.ts_types.market_data import RiskRewardAnalysisResult  # The CORRECT response model
+from tradestation.ts_types.market_data import RiskRewardAnalysisResult  # The CORRECT response model
 
 
 async def main():

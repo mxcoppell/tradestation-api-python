@@ -56,7 +56,7 @@ Let's fetch a stock quote right now!
 import asyncio
 import os
 from dotenv import load_dotenv
-from src.client.tradestation_client import TradeStationClient
+from tradestation import TradeStationClient
 
 async def get_a_quote():
     # Load secrets from .env file
@@ -103,11 +103,12 @@ Curious how it's organized?
 │   ├── MarketData/       # Price, quote, & symbol examples
 │   └── OrderExecution/   # Placing & managing orders examples
 └── src/                  # The heart of the library
-    ├── client/           # The main TradeStationClient
-    ├── services/         # API sections (MarketData, Brokerage, etc.)
-    ├── streaming/        # WebSocket streaming code
-    ├── ts_types/         # Data models (Pydantic types)
-    └── utils/            # Helpers (Auth, Rate Limiting, etc.)
+    └── tradestation/     # The importable package
+        ├── client/       # The main TradeStationClient
+        ├── services/     # API sections (MarketData, Brokerage, etc.)
+        ├── streaming/    # WebSocket streaming code
+        ├── ts_types/     # Data models (Pydantic types)
+        └── utils/        # Helpers (Auth, Rate Limiting, etc.)
 ```
 
 ## Logging In (Authentication) 🔒

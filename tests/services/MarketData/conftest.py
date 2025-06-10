@@ -3,15 +3,15 @@ from unittest.mock import AsyncMock, MagicMock
 import sys
 import pathlib
 
-# Add project root to the Python path to allow 'from src.' imports
+# Add project root to the Python path to allow 'from tradestation.' imports
 project_root = (
     pathlib.Path(__file__).resolve().parents[3]
 )  # tests/services/MarketData -> tests/services -> tests -> root
 sys.path.insert(0, str(project_root))
 
-from src.services.MarketData.market_data_service import MarketDataService
-from src.streaming.stream_manager import StreamManager
-from src.client.http_client import HttpClient
+from tradestation.services.MarketData.market_data_service import MarketDataService
+from tradestation.streaming.stream_manager import StreamManager
+from tradestation.client.http_client import HttpClient
 
 
 @pytest.fixture

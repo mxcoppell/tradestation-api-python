@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.client.http_client import HttpClient
-from src.services.Brokerage.brokerage_service import BrokerageService
-from src.streaming.stream_manager import StreamManager
-from src.ts_types.brokerage import (
+from tradestation.client.http_client import HttpClient
+from tradestation.services.Brokerage.brokerage_service import BrokerageService
+from tradestation.streaming.stream_manager import StreamManager
+from tradestation.ts_types.brokerage import (
     BalancesBOD,
     BODBalance,
     BODBalanceDetail,

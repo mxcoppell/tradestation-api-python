@@ -1,8 +1,8 @@
 import asyncio
 from typing import Dict, List, Optional, Union, Any
 
-from src.ts_types.config import ClientConfig
-from src.utils.websocket_stream import WebSocketStream
+from ..ts_types.config import ClientConfig
+from .websocket_stream import WebSocketStream
 
 
 class StreamManager:

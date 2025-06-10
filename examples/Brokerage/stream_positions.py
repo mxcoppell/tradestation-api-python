@@ -22,8 +22,8 @@ from typing import List
 from dotenv import load_dotenv  # type: ignore
 
 # Use the client directly
-from src.client.tradestation_client import TradeStationClient
-from src.ts_types.brokerage import Account  # Use Account type for fetching
+from tradestation.client import TradeStationClient
+from tradestation.ts_types.brokerage import Account  # Use Account type for fetching
 
 # Flag to indicate if we're still running
 running = True

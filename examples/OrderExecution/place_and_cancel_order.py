@@ -32,12 +32,12 @@ import aiohttp
 from pydantic import ValidationError
 
 # Import the client
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client import TradeStationClient
 
 # Import necessary types
-from src.ts_types.brokerage import Account
-from src.ts_types.market_data import Quote, QuoteSnapshot
-from src.ts_types.order_execution import (
+from tradestation.ts_types.brokerage import Account
+from tradestation.ts_types.market_data import Quote, QuoteSnapshot
+from tradestation.ts_types.order_execution import (
     OrderRequest,
     TimeInForce,
     OrderType,

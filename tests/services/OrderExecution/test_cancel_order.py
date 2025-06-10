@@ -1,5 +1,5 @@
 import pytest
-from src.ts_types.order_execution import CancelOrderResponse
+from tradestation.ts_types.order_execution import CancelOrderResponse
 
 
 class TestCancelOrder:

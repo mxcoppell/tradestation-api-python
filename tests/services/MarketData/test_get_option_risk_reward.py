@@ -2,10 +2,10 @@ import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.client.http_client import HttpClient
-from src.streaming.stream_manager import StreamManager
-from src.services.MarketData.market_data_service import MarketDataService
-from src.ts_types.market_data import RiskRewardAnalysisResult
+from tradestation.client.http_client import HttpClient
+from tradestation.streaming.stream_manager import StreamManager
+from tradestation.services.MarketData.market_data_service import MarketDataService
+from tradestation.ts_types.market_data import RiskRewardAnalysisResult
 
 
 @pytest.fixture

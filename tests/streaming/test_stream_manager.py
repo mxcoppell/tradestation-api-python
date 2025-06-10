@@ -11,9 +11,9 @@ import aiohttp
 from aiohttp import WSMsgType
 from pydantic import ValidationError
 
-from src.streaming.stream_manager import StreamManager
-from src.ts_types.config import ClientConfig
-from src.utils.token_manager import TokenManager
+from tradestation.streaming.stream_manager import StreamManager
+from tradestation.ts_types.config import ClientConfig
+from tradestation.utils.token_manager import TokenManager
 
 # Filter out all AsyncMock coroutine warnings - these are expected in testing
 pytestmark = pytest.mark.filterwarnings("ignore::RuntimeWarning")
@@ -421,7 +421,7 @@ async def test_process_error_message(stream_manager):
         error_message = {"Error": "TestError", "Message": "This is a test error"}
 
         # Process the error message
-        with patch("src.streaming.stream_manager.logger.error") as mock_logger:
+        with patch("tradestation.streaming.stream_manager.logger.error") as mock_logger:
             await stream_manager._handle_text_message("test_stream", json.dumps(error_message))
 
             # Verify the error was logged
@@ -459,7 +459,7 @@ async def test_process_invalid_json(stream_manager):
         invalid_json = "{not valid json"
 
         # Process the invalid JSON
-        with patch("src.streaming.stream_manager.logger.error") as mock_logger:
+        with patch("tradestation.streaming.stream_manager.logger.error") as mock_logger:
             await stream_manager._handle_text_message("test_stream", invalid_json)
 
             # Verify the error was logged
@@ -599,7 +599,7 @@ async def test_reconnect_with_backoff_failure(stream_manager):
         with (
             patch.object(stream_manager, "connect_stream", connect_mock),
             patch("asyncio.sleep", AsyncMock()),  # Skip the delay
-            patch("src.streaming.stream_manager.logger.error") as mock_logger,
+            patch("tradestation.streaming.stream_manager.logger.error") as mock_logger,
         ):
             # Attempt reconnection
             await stream_manager._reconnect_with_backoff("test_stream")
