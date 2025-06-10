@@ -7,7 +7,7 @@ to TradeStation's brokerage, order execution, and market data services.
 from .client import TradeStationClient, HttpClient
 from .services import MarketDataService, BrokerageService, OrderExecutionService
 
-__version__ = "1.0.2"
+__version__ = "1.1.0"
 __all__ = [
     "TradeStationClient",
     "HttpClient",

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta  # Keep datetime/timedelta in case need
 from dotenv import load_dotenv
 
 # Import the specific client class
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client import TradeStationClient
 
 
 async def main() -> None:

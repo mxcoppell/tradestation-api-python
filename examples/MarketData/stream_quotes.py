@@ -3,7 +3,7 @@ import asyncio
 import signal
 import json
 from dotenv import load_dotenv
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client import TradeStationClient
 
 # Load environment variables from .env file (default)
 load_dotenv()

@@ -5,7 +5,7 @@ import random  # Import random to pick a random order
 from dotenv import load_dotenv
 
 # Import the specific client class
-from src.client.tradestation_client import TradeStationClient
+from tradestation.client import TradeStationClient
 
 
 # Helper function to print order details cleanly
