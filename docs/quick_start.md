@@ -11,7 +11,7 @@ You have two easy options to get the TradeStation API Python Wrapper:
 The easiest way to get started is by installing the package directly from PyPI:
 
 ```bash
-pip install tradestation-api-python
+pip install tradestation-api
 ```
 
 ### Option B: Get the Source Code
