@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "tradestation-api"
+name = "tradestation-api-python"
 version = "1.1.0"
 description = "A Python wrapper for the TradeStation WebAPI, providing easy access to brokerage, order execution, and market data services."
 authors = ["mxcoppell"]
