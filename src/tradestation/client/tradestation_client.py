@@ -30,6 +30,11 @@ class TradeStationClient:
             refresh_token: A refresh token to initialize the client with.
             environment: Either "Live" or "Simulation".
             debug: Whether to print debug messages.
+            
+        Raises:
+            ValueError: When environment is not specified or invalid configuration is provided
+            TradeStationAuthError: When authentication fails
+            TradeStationAPIError: When there is an issue initializing the client
         """
         from ..ts_types.config import ClientConfig
 
@@ -84,17 +89,30 @@ class TradeStationClient:
 
         Returns:
             The current refresh token or None if none is available
+            
+        Raises:
+            TradeStationAuthError: When there are authentication issues
         """
         return self.http_client.get_refresh_token()
 
     def close_all_streams(self) -> None:
         """
         Closes all active streams
+        
+        Raises:
+            TradeStationStreamError: When there are issues closing streams
+            TradeStationNetworkError: When there are network issues during stream closure
         """
         self.stream_manager.close_all_streams()
 
     async def close(self):
-        """Close the client and release resources."""
+        """
+        Close the client and release resources.
+        
+        Raises:
+            TradeStationAPIError: When there are issues closing the client
+            TradeStationNetworkError: When there are network issues during closure
+        """
         if hasattr(self, "http_client") and hasattr(self.http_client, "close"):
             await self.http_client.close()
         if hasattr(self, "stream_manager") and hasattr(self.stream_manager, "close"):

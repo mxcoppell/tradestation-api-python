@@ -111,6 +111,102 @@ Curious how it's organized?
         └── utils/        # Helpers (Auth, Rate Limiting, etc.)
 ```
 
+## Error Handling 🛡️
+
+This library provides a comprehensive exception system to help you handle API errors gracefully:
+
+### Exception Hierarchy
+
+```
+TradeStationAPIError (base exception)
+├── TradeStationAuthError           # Authentication failures (401, 403)
+├── TradeStationRateLimitError      # Rate limit exceeded (429)
+├── TradeStationResourceNotFoundError # Resource not found (404)
+├── TradeStationValidationError     # Invalid request parameters (400)
+├── TradeStationNetworkError        # Network connectivity issues
+├── TradeStationServerError         # Server-side errors (5xx)
+├── TradeStationTimeoutError        # Request timeouts
+└── TradeStationStreamError         # WebSocket streaming issues
+```
+
+### Using Exception Handling
+
+```python
+from tradestation import TradeStationClient
+from tradestation import (
+    TradeStationAPIError,
+    TradeStationAuthError,
+    TradeStationRateLimitError,
+    TradeStationValidationError,
+    TradeStationNetworkError
+)
+
+async def handle_with_care():
+    client = TradeStationClient()
+    
+    try:
+        quotes = await client.market_data.get_quotes("AAPL,MSFT")
+        print(f"Success! Got quotes for {len(quotes)} symbols")
+        
+    except TradeStationAuthError as e:
+        print(f"Authentication failed: {e}")
+        # Handle credential refresh or re-login
+        
+    except TradeStationRateLimitError as e:
+        print(f"Rate limit hit: {e}")
+        if hasattr(e, 'retry_after') and e.retry_after:
+            print(f"Try again in {e.retry_after} seconds")
+            
+    except TradeStationValidationError as e:
+        print(f"Invalid request: {e}")
+        if e.validation_errors:
+            print(f"Validation details: {e.validation_errors}")
+            
+    except TradeStationNetworkError as e:
+        print(f"Network issue: {e}")
+        # Implement retry with backoff
+        
+    except TradeStationAPIError as e:
+        # Catch-all for any other API errors
+        print(f"API error: {e}")
+        if e.status_code:
+            print(f"Status code: {e.status_code}")
+        if e.request_id:
+            print(f"Request ID: {e.request_id}")
+```
+
+### Implementing Retries
+
+For transient errors like rate limits, network issues, or server errors, you might want to implement retry logic:
+
+```python
+import asyncio
+import random
+
+async def retry_with_backoff(func, max_attempts=3):
+    attempt = 0
+    while attempt < max_attempts:
+        try:
+            return await func()
+        except (TradeStationRateLimitError, TradeStationNetworkError, 
+                TradeStationServerError, TradeStationTimeoutError) as e:
+            attempt += 1
+            if attempt >= max_attempts:
+                raise  # Re-raise if we've hit max attempts
+                
+            # Calculate backoff delay (with jitter)
+            if isinstance(e, TradeStationRateLimitError) and e.retry_after:
+                delay = e.retry_after
+            else:
+                # Exponential backoff with jitter
+                delay = (2 ** attempt) * (0.5 + 0.5 * random.random())
+                
+            print(f"Retrying in {delay:.2f} seconds...")
+            await asyncio.sleep(delay)
+```
+
+For a complete error handling example, check out the `examples/QuickStart/error_handling.py` file.
+
 ## Logging In (Authentication) 🔒
 
 The library needs your API keys to talk to TradeStation. The easiest way is the `.env` file (shown in Quick Start).
@@ -147,6 +243,7 @@ Ready for more details?
 *   [📈 Order Execution](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/order_execution.md)
 *   [⚡ Streaming Data](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/streaming.md)
 *   [🚦 Rate Limiting](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/rate_limiting.md)
+*   [🛡️ Error Handling](https://github.com/mxcoppell/tradestation-api-python/blob/main/docs/error_handling.md)
 
 ## Contributing 🤝
 
