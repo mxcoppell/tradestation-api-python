@@ -187,14 +187,31 @@ def map_http_error(status_code: int, response_data: Optional[Dict[str, Any]] = N
     
     # Map status code to appropriate exception
     if status_code == 400:
+        # Extract only validation-specific fields, not the entire response
+        validation_errors = None
+        if response_data and isinstance(response_data, dict):
+            # Look for common validation error field names
+            for field in ['errors', 'validation_errors', 'field_errors', 'validationErrors']:
+                if field in response_data:
+                    validation_errors = response_data[field]
+                    break
+            
+            # If no specific validation field found but the response has a details field
+            # that contains field-level errors, use that
+            if validation_errors is None and 'details' in response_data:
+                if isinstance(response_data['details'], dict) and any(
+                    k for k in response_data['details'].keys() 
+                    if k not in ['message', 'error', 'error_description', 'request_id']
+                ):
+                    validation_errors = response_data['details']
+        
         return TradeStationValidationError(
             message=error_message,
             status_code=status_code,
             request_id=request_id,
             response=response_data,
-            # Pass validation errors separately without including in message
-            # The class constructor will handle combining them if needed
-            validation_errors=response_data
+            # Pass only specific validation errors, not the entire response
+            validation_errors=validation_errors
         )
     elif status_code in (401, 403):
         return TradeStationAuthError(
