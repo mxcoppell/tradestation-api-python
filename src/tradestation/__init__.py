@@ -6,6 +6,17 @@ to TradeStation's brokerage, order execution, and market data services.
 
 from .client import TradeStationClient, HttpClient
 from .services import MarketDataService, BrokerageService, OrderExecutionService
+from .utils.exceptions import (
+    TradeStationAPIError,
+    TradeStationAuthError,
+    TradeStationRateLimitError,
+    TradeStationResourceNotFoundError,
+    TradeStationValidationError,
+    TradeStationNetworkError,
+    TradeStationServerError,
+    TradeStationTimeoutError,
+    TradeStationStreamError,
+)
 
 __version__ = "1.1.0"
 __all__ = [
@@ -14,4 +25,14 @@ __all__ = [
     "MarketDataService",
     "BrokerageService",
     "OrderExecutionService",
+    # Exception classes
+    "TradeStationAPIError",
+    "TradeStationAuthError",
+    "TradeStationRateLimitError",
+    "TradeStationResourceNotFoundError",
+    "TradeStationValidationError",
+    "TradeStationNetworkError",
+    "TradeStationServerError",
+    "TradeStationTimeoutError",
+    "TradeStationStreamError",
 ] 

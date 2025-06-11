@@ -13,6 +13,18 @@ from aiohttp import ClientResponse, ClientSession
 from ..ts_types.config import ClientConfig
 from ..utils.rate_limiter import RateLimiter
 from ..utils.token_manager import TokenManager
+from ..utils.exceptions import (
+    TradeStationAPIError,
+    TradeStationAuthError,
+    TradeStationNetworkError,
+    TradeStationRateLimitError,
+    TradeStationResourceNotFoundError,
+    TradeStationServerError,
+    TradeStationTimeoutError,
+    TradeStationValidationError,
+    map_http_error,
+    handle_request_exception,
+)
 
 
 class HttpClient:
@@ -80,8 +92,15 @@ class HttpClient:
         # Wait for rate limiting slot
         await self.rate_limiter.wait_for_slot(url)
 
-        # Get valid token (will refresh if needed)
-        token = await self.token_manager.get_valid_access_token()
+        try:
+            # Get valid token (will refresh if needed)
+            token = await self.token_manager.get_valid_access_token()
+        except Exception as e:
+            # Convert to proper authentication error
+            raise TradeStationAuthError(
+                message=f"Failed to obtain valid access token: {str(e)}",
+                original_error=e
+            ) from e
 
         return {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
 
@@ -104,6 +123,54 @@ class HttpClient:
         """
         return self.token_manager.get_refresh_token()
 
+    async def _handle_response(self, response: ClientResponse) -> Dict[str, Any]:
+        """
+        Handle API response and parse the JSON data or raise appropriate exceptions.
+        
+        Args:
+            response: The response from the API
+            
+        Returns:
+            Parsed JSON response data
+            
+        Raises:
+            TradeStationAPIError: When an API error occurs
+        """
+        # Debug print
+        self._debug_print(f"Response status: {response.status}")
+        
+        # Handle HTTP errors
+        if response.status >= 400:
+            # Attempt to parse error response body
+            try:
+                error_data = await response.json()
+                self._debug_print(f"Error response: {error_data}")
+            except:
+                # If response is not valid JSON, use text
+                error_text = await response.text()
+                self._debug_print(f"Error response text: {error_text}")
+                error_data = {"error": error_text}
+            
+            # Extract request ID from headers if available
+            request_id = response.headers.get("X-Request-ID") or response.headers.get("Request-ID")
+            if request_id:
+                error_data["request_id"] = request_id
+                
+            # Map HTTP status to appropriate exception and raise
+            raise map_http_error(response.status, error_data)
+            
+        # Get JSON response
+        try:
+            return await response.json()
+        except (json.JSONDecodeError, aiohttp.ContentTypeError) as e:
+            # Handle JSON parsing errors
+            self._debug_print(f"JSON parsing error: {str(e)}")
+            raise TradeStationAPIError(
+                message=f"Invalid JSON response from API: {str(e)}",
+                status_code=response.status,
+                original_error=e
+            ) from e
+
     async def get(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Make a GET request to the specified endpoint.
@@ -114,6 +181,16 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
+            
+        Raises:
+            TradeStationAuthError: When authentication fails
+            TradeStationRateLimitError: When rate limits are exceeded
+            TradeStationResourceNotFoundError: When the requested resource doesn't exist
+            TradeStationValidationError: When the request is invalid
+            TradeStationNetworkError: When network connectivity issues occur
+            TradeStationServerError: When server errors occur
+            TradeStationTimeoutError: When the request times out
+            TradeStationAPIError: For other API errors
         """
         session = await self._ensure_session()
         headers = await self._prepare_request(url)
@@ -127,25 +204,28 @@ class HttpClient:
         try:
             async with session.get(full_url, params=params, headers=headers) as response:
                 if response is None:
-                    raise ValueError("Response object is None")
-
-                # Debug print
-                self._debug_print(f"Response status: {response.status}")
+                    raise TradeStationAPIError("Response object is None")
 
                 # Process response headers for rate limiting
                 await self._process_response(response, url)
 
-                # Handle HTTP errors
-                if response.status >= 400:
-                    error_text = await response.text()
-                    self._debug_print(f"Error response: {error_text}")
-                    await response.raise_for_status()  # This will raise an appropriate HTTPError
-
-                # Get JSON response
-                return await response.json()
-        except Exception as e:
+                # Handle the response and return the data
+                return await self._handle_response(response)
+                
+        except aiohttp.ClientError as e:
+            # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
+            raise handle_request_exception(e) from e
+        except TradeStationAPIError:
+            # Re-raise our own exceptions
             raise
+        except Exception as e:
+            # Handle unexpected exceptions
+            self._debug_print(f"Unexpected error: {str(e)}")
+            raise TradeStationAPIError(
+                message=f"Unexpected error during GET request: {str(e)}",
+                original_error=e
+            ) from e
 
     async def post(self, url: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -157,6 +237,16 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
+            
+        Raises:
+            TradeStationAuthError: When authentication fails
+            TradeStationRateLimitError: When rate limits are exceeded
+            TradeStationResourceNotFoundError: When the requested resource doesn't exist
+            TradeStationValidationError: When the request is invalid
+            TradeStationNetworkError: When network connectivity issues occur
+            TradeStationServerError: When server errors occur
+            TradeStationTimeoutError: When the request times out
+            TradeStationAPIError: For other API errors
         """
         session = await self._ensure_session()
         headers = await self._prepare_request(url)
@@ -169,23 +259,26 @@ class HttpClient:
 
         try:
             async with session.post(full_url, json=data, headers=headers) as response:
-                # Debug print
-                self._debug_print(f"Response status: {response.status}")
-
                 # Process response headers for rate limiting
                 await self._process_response(response, url)
 
-                # Handle HTTP errors
-                if response.status >= 400:
-                    error_text = await response.text()
-                    self._debug_print(f"Error response: {error_text}")
-                    await response.raise_for_status()  # This will raise an appropriate HTTPError
-
-                # Get JSON response
-                return await response.json()
-        except Exception as e:
+                # Handle the response and return the data
+                return await self._handle_response(response)
+                
+        except aiohttp.ClientError as e:
+            # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
+            raise handle_request_exception(e) from e
+        except TradeStationAPIError:
+            # Re-raise our own exceptions
             raise
+        except Exception as e:
+            # Handle unexpected exceptions
+            self._debug_print(f"Unexpected error: {str(e)}")
+            raise TradeStationAPIError(
+                message=f"Unexpected error during POST request: {str(e)}",
+                original_error=e
+            ) from e
 
     async def put(self, url: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -197,6 +290,16 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
+            
+        Raises:
+            TradeStationAuthError: When authentication fails
+            TradeStationRateLimitError: When rate limits are exceeded
+            TradeStationResourceNotFoundError: When the requested resource doesn't exist
+            TradeStationValidationError: When the request is invalid
+            TradeStationNetworkError: When network connectivity issues occur
+            TradeStationServerError: When server errors occur
+            TradeStationTimeoutError: When the request times out
+            TradeStationAPIError: For other API errors
         """
         session = await self._ensure_session()
         headers = await self._prepare_request(url)
@@ -209,23 +312,26 @@ class HttpClient:
 
         try:
             async with session.put(full_url, json=data, headers=headers) as response:
-                # Debug print
-                self._debug_print(f"Response status: {response.status}")
-
                 # Process response headers for rate limiting
                 await self._process_response(response, url)
 
-                # Handle HTTP errors
-                if response.status >= 400:
-                    error_text = await response.text()
-                    self._debug_print(f"Error response: {error_text}")
-                    await response.raise_for_status()  # This will raise an appropriate HTTPError
-
-                # Get JSON response
-                return await response.json()
-        except Exception as e:
+                # Handle the response and return the data
+                return await self._handle_response(response)
+                
+        except aiohttp.ClientError as e:
+            # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
+            raise handle_request_exception(e) from e
+        except TradeStationAPIError:
+            # Re-raise our own exceptions
             raise
+        except Exception as e:
+            # Handle unexpected exceptions
+            self._debug_print(f"Unexpected error: {str(e)}")
+            raise TradeStationAPIError(
+                message=f"Unexpected error during PUT request: {str(e)}",
+                original_error=e
+            ) from e
 
     async def delete(self, url: str) -> Dict[str, Any]:
         """
@@ -236,6 +342,16 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
+            
+        Raises:
+            TradeStationAuthError: When authentication fails
+            TradeStationRateLimitError: When rate limits are exceeded
+            TradeStationResourceNotFoundError: When the requested resource doesn't exist
+            TradeStationValidationError: When the request is invalid
+            TradeStationNetworkError: When network connectivity issues occur
+            TradeStationServerError: When server errors occur
+            TradeStationTimeoutError: When the request times out
+            TradeStationAPIError: For other API errors
         """
         session = await self._ensure_session()
         headers = await self._prepare_request(url)
@@ -247,23 +363,26 @@ class HttpClient:
 
         try:
             async with session.delete(full_url, headers=headers) as response:
-                # Debug print
-                self._debug_print(f"Response status: {response.status}")
-
                 # Process response headers for rate limiting
                 await self._process_response(response, url)
 
-                # Handle HTTP errors
-                if response.status >= 400:
-                    error_text = await response.text()
-                    self._debug_print(f"Error response: {error_text}")
-                    await response.raise_for_status()  # This will raise an appropriate HTTPError
-
-                # Get JSON response
-                return await response.json()
-        except Exception as e:
+                # Handle the response and return the data
+                return await self._handle_response(response)
+                
+        except aiohttp.ClientError as e:
+            # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
+            raise handle_request_exception(e) from e
+        except TradeStationAPIError:
+            # Re-raise our own exceptions
             raise
+        except Exception as e:
+            # Handle unexpected exceptions
+            self._debug_print(f"Unexpected error: {str(e)}")
+            raise TradeStationAPIError(
+                message=f"Unexpected error during DELETE request: {str(e)}",
+                original_error=e
+            ) from e
 
     async def create_stream(
         self,
@@ -281,11 +400,32 @@ class HttpClient:
 
         Returns:
             Stream reader for reading the stream data
+            
+        Raises:
+            TradeStationAuthError: When authentication fails
+            TradeStationRateLimitError: When rate limits are exceeded
+            TradeStationResourceNotFoundError: When the requested resource doesn't exist
+            TradeStationValidationError: When the request is invalid
+            TradeStationNetworkError: When network connectivity issues occur
+            TradeStationServerError: When server errors occur
+            TradeStationStreamError: When streaming-specific errors occur
+            TradeStationAPIError: For other API errors
         """
         session = await self._ensure_session()
 
         # Prepare base headers with authentication
-        base_headers = await self._prepare_request(url)
+        try:
+            base_headers = await self._prepare_request(url)
+        except TradeStationAuthError:
+            # Re-raise authentication errors
+            raise
+        except Exception as e:
+            # Convert other errors during header preparation
+            self._debug_print(f"Error preparing request headers: {str(e)}")
+            raise TradeStationAPIError(
+                message=f"Failed to prepare request headers: {str(e)}",
+                original_error=e
+            ) from e
 
         # Merge custom headers with base headers, prioritizing custom headers
         final_headers = base_headers.copy()
@@ -298,17 +438,50 @@ class HttpClient:
         self._debug_print(f"Making GET stream request to: {full_url}")
         self._debug_print(f"Headers: {final_headers}")
 
-        response = await session.get(
-            full_url,
-            params=params,
-            headers=final_headers,
-            timeout=None,
-        )
+        try:
+            response = await session.get(
+                full_url,
+                params=params,
+                headers=final_headers,
+                timeout=None,
+            )
 
-        await self._process_response(response, url)
-        response.raise_for_status()
-
-        return response.content
+            await self._process_response(response, url)
+            
+            # Call raise_for_status to check for HTTP errors
+            response.raise_for_status()
+            
+            # Handle HTTP errors for streams
+            if response.status >= 400:
+                # Attempt to parse error response body
+                try:
+                    error_data = await response.json()
+                    self._debug_print(f"Stream error response: {error_data}")
+                except:
+                    # If response is not valid JSON, use text
+                    error_text = await response.text()
+                    self._debug_print(f"Stream error response text: {error_text}")
+                    error_data = {"error": error_text}
+                
+                # Map HTTP status to appropriate exception and raise
+                raise map_http_error(response.status, error_data)
+            
+            return response.content
+            
+        except aiohttp.ClientError as e:
+            # Convert aiohttp exceptions to our custom exceptions
+            self._debug_print(f"Stream request error: {str(e)}")
+            raise handle_request_exception(e) from e
+        except TradeStationAPIError:
+            # Re-raise our own exceptions
+            raise
+        except Exception as e:
+            # Handle unexpected exceptions
+            self._debug_print(f"Unexpected error during stream request: {str(e)}")
+            raise TradeStationStreamError(
+                message=f"Unexpected error creating stream: {str(e)}",
+                original_error=e
+            ) from e
 
     async def close(self) -> None:
         """
