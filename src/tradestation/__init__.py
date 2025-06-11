@@ -18,7 +18,7 @@ from .utils.exceptions import (
     TradeStationStreamError,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __all__ = [
     "TradeStationClient",
     "HttpClient",

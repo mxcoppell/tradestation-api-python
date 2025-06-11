@@ -116,7 +116,7 @@ async def handle_quote_request(client: TradeStationClient, symbols: str) -> Dict
     try:
         # Use the retry decorator for the API call
         quotes = await retry_async(
-            lambda: client.market_data.get_quotes(symbols)
+            lambda: client.market_data.get_quote_snapshots(symbols)
         )
         return quotes
     except TradeStationValidationError as e:
@@ -222,7 +222,7 @@ async def main():
         # Example 2: Intentional error to demonstrate validation error handling
         logger.info("Example 2: Demonstrating validation error handling")
         try:
-            invalid_result = await client.market_data.get_quotes("")
+            invalid_result = await client.market_data.get_quote_snapshots("")
         except TradeStationValidationError as e:
             logger.info(f"Caught expected validation error: {str(e)}")
         

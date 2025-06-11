@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-06-11
+
+### Added
+- Improved error handling system with a comprehensive exception hierarchy (closes #364)
+- New exception classes for specific error types (authentication, rate limits, network, server errors)
+- Helper functions for mapping HTTP status codes to appropriate exception types
+- Error handling examples in examples/QuickStart/error_handling.py
+- Detailed documentation on error handling in docs/error_handling.md
+
+### Changed
+- Updated method docstrings in TradeStationClient to include exception information
+- Modified HTTP client to use the new exception system throughout all request methods
+
 ## [1.1.0] - 2025-06-09
 
 ### Fixed
