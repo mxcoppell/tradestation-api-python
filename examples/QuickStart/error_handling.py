@@ -14,6 +14,7 @@ import asyncio
 import time
 import sys
 import logging
+import random
 from typing import Optional, Dict, Any, Callable, TypeVar, Awaitable
 
 from tradestation import TradeStationClient
@@ -243,9 +244,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Missing import for random
-    import random
-    
     # Add SIGINT handler to gracefully exit on Ctrl+C
     try:
         asyncio.run(main())

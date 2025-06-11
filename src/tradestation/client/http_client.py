@@ -451,21 +451,6 @@ class HttpClient:
             # Call raise_for_status to check for HTTP errors
             response.raise_for_status()
             
-            # Handle HTTP errors for streams
-            if response.status >= 400:
-                # Attempt to parse error response body
-                try:
-                    error_data = await response.json()
-                    self._debug_print(f"Stream error response: {error_data}")
-                except:
-                    # If response is not valid JSON, use text
-                    error_text = await response.text()
-                    self._debug_print(f"Stream error response text: {error_text}")
-                    error_data = {"error": error_text}
-                
-                # Map HTTP status to appropriate exception and raise
-                raise map_http_error(response.status, error_data)
-            
             return response.content
             
         except aiohttp.ClientError as e:
