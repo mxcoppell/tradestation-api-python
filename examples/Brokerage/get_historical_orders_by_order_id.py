@@ -48,11 +48,11 @@ async def main():
 
     try:
         # Fetch historical orders by order ID
-        print(f"Fetching historical orders for account(s) {account_ids} and order(s) {order_ids} since {since_date}...")
+        print(
+            f"Fetching historical orders for account(s) {account_ids} and order(s) {order_ids} since {since_date}..."
+        )
         historical_orders = await client.brokerage_service.get_historical_orders_by_order_id(
-            account_ids=account_ids,
-            order_ids=order_ids,
-            since=since_date
+            account_ids=account_ids, order_ids=order_ids, since=since_date
         )
 
         # Process and display the results
@@ -64,15 +64,19 @@ async def main():
                 print(f"  Status: {order.Status} - {order.StatusDescription}")
                 print(f"  Order Type: {order.OrderType}")
                 print(f"  Opened: {order.OpenedDateTime}")
-                print(f"  Closed: {order.ClosedDateTime if hasattr(order, 'ClosedDateTime') else 'N/A'}")
-                
+                print(
+                    f"  Closed: {order.ClosedDateTime if hasattr(order, 'ClosedDateTime') else 'N/A'}"
+                )
+
                 if order.Legs:
                     print(f"  Legs ({len(order.Legs)}):")
                     for i, leg in enumerate(order.Legs, 1):
                         print(f"    Leg {i}:")
                         print(f"      Symbol: {leg.Symbol}")
                         print(f"      Action: {leg.BuyOrSell} {leg.OpenOrClose}")
-                        print(f"      Quantity: {leg.QuantityOrdered} (Filled: {leg.ExecQuantity}, Remaining: {leg.QuantityRemaining})")
+                        print(
+                            f"      Quantity: {leg.QuantityOrdered} (Filled: {leg.ExecQuantity}, Remaining: {leg.QuantityRemaining})"
+                        )
                         print(f"      Execution Price: {leg.ExecutionPrice}")
         else:
             print("No historical orders found for the specified criteria.")
@@ -81,11 +85,13 @@ async def main():
         if historical_orders.Errors:
             print("\nErrors:")
             for error in historical_orders.Errors:
-                print(f"  Account {error.AccountID}, Order {error.OrderID}: {error.Error} - {error.Message}")
+                print(
+                    f"  Account {error.AccountID}, Order {error.OrderID}: {error.Error} - {error.Message}"
+                )
 
     except Exception as e:
         print(f"Error fetching historical orders: {e}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

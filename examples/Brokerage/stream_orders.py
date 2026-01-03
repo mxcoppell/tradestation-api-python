@@ -26,7 +26,10 @@ from dotenv import load_dotenv  # type: ignore
 
 # Use the client directly as in other examples
 from tradestation.client import TradeStationClient
-from tradestation.ts_types.brokerage import StreamOrderResponseData, Account  # Correct type for stream
+from tradestation.ts_types.brokerage import (
+    StreamOrderResponseData,
+    Account,
+)  # Correct type for stream
 
 # Flag to indicate if we're still running
 running = True

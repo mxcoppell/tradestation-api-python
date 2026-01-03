@@ -54,7 +54,8 @@ class TestTradeStationClient:
                 "tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client
             ) as mock_http_client_cls,
             patch(
-                "tradestation.client.tradestation_client.StreamManager", return_value=mock_stream_manager
+                "tradestation.client.tradestation_client.StreamManager",
+                return_value=mock_stream_manager,
             ) as mock_stream_manager_cls,
             patch(
                 "tradestation.client.tradestation_client.MarketDataService",
@@ -126,8 +127,13 @@ class TestTradeStationClient:
 
     def test_get_refresh_token(self, config, mock_http_client, mock_stream_manager, mock_services):
         with (
-            patch("tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client),
-            patch("tradestation.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
+            patch(
+                "tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client
+            ),
+            patch(
+                "tradestation.client.tradestation_client.StreamManager",
+                return_value=mock_stream_manager,
+            ),
             patch(
                 "tradestation.client.tradestation_client.MarketDataService",
                 return_value=mock_services["market_data"],
@@ -162,8 +168,13 @@ class TestTradeStationClient:
 
     def test_close_all_streams(self, config, mock_http_client, mock_stream_manager, mock_services):
         with (
-            patch("tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client),
-            patch("tradestation.client.tradestation_client.StreamManager", return_value=mock_stream_manager),
+            patch(
+                "tradestation.client.tradestation_client.HttpClient", return_value=mock_http_client
+            ),
+            patch(
+                "tradestation.client.tradestation_client.StreamManager",
+                return_value=mock_stream_manager,
+            ),
             patch(
                 "tradestation.client.tradestation_client.MarketDataService",
                 return_value=mock_services["market_data"],

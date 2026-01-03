@@ -30,7 +30,7 @@ class TradeStationClient:
             refresh_token: A refresh token to initialize the client with.
             environment: Either "Live" or "Simulation".
             debug: Whether to print debug messages.
-            
+
         Raises:
             ValueError: When environment is not specified or invalid configuration is provided
             TradeStationAuthError: When authentication fails
@@ -89,7 +89,7 @@ class TradeStationClient:
 
         Returns:
             The current refresh token or None if none is available
-            
+
         Raises:
             TradeStationAuthError: When there are authentication issues
         """
@@ -98,7 +98,7 @@ class TradeStationClient:
     def close_all_streams(self) -> None:
         """
         Closes all active streams
-        
+
         Raises:
             TradeStationStreamError: When there are issues closing streams
             TradeStationNetworkError: When there are network issues during stream closure
@@ -108,7 +108,7 @@ class TradeStationClient:
     async def close(self):
         """
         Close the client and release resources.
-        
+
         Raises:
             TradeStationAPIError: When there are issues closing the client
             TradeStationNetworkError: When there are network issues during closure

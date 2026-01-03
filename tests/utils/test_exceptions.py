@@ -32,13 +32,13 @@ class TestExceptions(unittest.TestCase):
         self.assertIsNone(error.status_code)
         self.assertIsNone(error.request_id)
         self.assertIsNone(error.response)
-        
+
         # Create error with full context
         error = TradeStationAPIError(
             message="API error",
             status_code=500,
             request_id="req-123",
-            response={"error": "server_error"}
+            response={"error": "server_error"},
         )
         self.assertEqual(str(error), "API error (Status: 500) (Request ID: req-123)")
         self.assertEqual(error.status_code, 500)
@@ -50,12 +50,10 @@ class TestExceptions(unittest.TestCase):
         # Test with default message
         error = TradeStationAuthError()
         self.assertIn("Authentication failed", str(error))
-        
+
         # Test with custom message and parameters
         error = TradeStationAuthError(
-            message="Invalid client ID",
-            status_code=401,
-            request_id="req-auth-123"
+            message="Invalid client ID", status_code=401, request_id="req-auth-123"
         )
         self.assertIn("Invalid client ID", str(error))
         self.assertEqual(error.status_code, 401)
@@ -68,7 +66,7 @@ class TestExceptions(unittest.TestCase):
         self.assertIn("API rate limit exceeded", str(error))
         self.assertIn("Retry after 30 seconds", str(error))
         self.assertEqual(error.retry_after, 30)
-        
+
         # Test without retry_after
         error = TradeStationRateLimitError()
         self.assertIn("API rate limit exceeded", str(error))
@@ -81,7 +79,7 @@ class TestExceptions(unittest.TestCase):
         self.assertIn("The requested resource was not found", str(error))
         self.assertIn("Resource: /v3/marketdata/quotes", str(error))
         self.assertEqual(error.resource, "/v3/marketdata/quotes")
-        
+
         # Test without resource
         error = TradeStationResourceNotFoundError()
         self.assertIn("The requested resource was not found", str(error))
@@ -95,7 +93,7 @@ class TestExceptions(unittest.TestCase):
         self.assertIn("The request was invalid", str(error))
         self.assertIn("Validation errors: {'symbol': 'Invalid symbol format'}", str(error))
         self.assertEqual(error.validation_errors, validation_errors)
-        
+
         # Test without validation errors
         error = TradeStationValidationError()
         self.assertIn("The request was invalid", str(error))
@@ -109,7 +107,7 @@ class TestExceptions(unittest.TestCase):
         self.assertIn("Network error occurred", str(error))
         self.assertIn("Original error: Connection refused", str(error))
         self.assertEqual(error.original_error, original)
-        
+
         # Test without original error
         error = TradeStationNetworkError()
         self.assertIn("Network error occurred", str(error))
@@ -121,46 +119,46 @@ class TestExceptions(unittest.TestCase):
         error = map_http_error(400, {"error": "Invalid request"})
         self.assertIsInstance(error, TradeStationValidationError)
         self.assertEqual(error.status_code, 400)
-        
+
         # Test 401 - Auth Error
         error = map_http_error(401, {"error": "Unauthorized"})
         self.assertIsInstance(error, TradeStationAuthError)
         self.assertEqual(error.status_code, 401)
-        
+
         # Test 403 - Auth Error
         error = map_http_error(403, {"error": "Forbidden"})
         self.assertIsInstance(error, TradeStationAuthError)
         self.assertEqual(error.status_code, 403)
-        
+
         # Test 404 - Resource Not Found Error
         error = map_http_error(404, {"error": "Not found"})
         self.assertIsInstance(error, TradeStationResourceNotFoundError)
         self.assertEqual(error.status_code, 404)
-        
+
         # Test 429 - Rate Limit Error
         error = map_http_error(429, {"error": "Too many requests", "retry_after": 30})
         self.assertIsInstance(error, TradeStationRateLimitError)
         self.assertEqual(error.status_code, 429)
         self.assertEqual(error.retry_after, 30)
-        
+
         # Test 500 - Server Error
         error = map_http_error(500, {"error": "Internal server error"})
         self.assertIsInstance(error, TradeStationServerError)
         self.assertEqual(error.status_code, 500)
-        
+
         # Test other status code - Generic API Error
         error = map_http_error(418, {"error": "I'm a teapot"})
         self.assertIsInstance(error, TradeStationAPIError)
         self.assertEqual(error.status_code, 418)
-        
+
         # Test message extraction from different response formats
         error = map_http_error(400, {"error_description": "Detailed error"})
         # Test that the message contains the extracted error description
         self.assertIn("Detailed error", str(error))
-        
+
         error = map_http_error(400, {"error": "Basic error"})
         self.assertIn("Basic error", str(error))
-        
+
         error = map_http_error(400, {"message": "Message format"})
         self.assertIn("Message format", str(error))
 
@@ -175,34 +173,34 @@ class TestExceptions(unittest.TestCase):
         )
         error = handle_request_exception(resp_error)
         self.assertIsInstance(error, TradeStationAuthError)
-        
+
         # Test ClientConnectorError
         connector_error = aiohttp.ClientConnectorError(Mock(), OSError())
         error = handle_request_exception(connector_error)
         self.assertIsInstance(error, TradeStationNetworkError)
-        
+
         # Test ClientOSError
         os_error = aiohttp.ClientOSError()
         error = handle_request_exception(os_error)
         self.assertIsInstance(error, TradeStationNetworkError)
-        
+
         # Test ServerDisconnectedError
         disconnected_error = aiohttp.ServerDisconnectedError()
         error = handle_request_exception(disconnected_error)
         self.assertIsInstance(error, TradeStationNetworkError)
         self.assertIn("Server disconnected unexpectedly", str(error))
-        
+
         # Test ClientPayloadError
         payload_error = aiohttp.ClientPayloadError()
         error = handle_request_exception(payload_error)
         self.assertIsInstance(error, TradeStationAPIError)
         self.assertIn("Error processing server response payload", str(error))
-        
+
         # Test ClientTimeout
         timeout_error = aiohttp.ClientTimeout()
         error = handle_request_exception(timeout_error)
         self.assertIsInstance(error, TradeStationTimeoutError)
-        
+
         # Test generic exception
         generic_error = ValueError("Random error")
         error = handle_request_exception(generic_error)
@@ -211,4 +209,4 @@ class TestExceptions(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()

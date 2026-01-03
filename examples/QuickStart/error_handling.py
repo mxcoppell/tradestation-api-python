@@ -56,49 +56,51 @@ async def retry_async(
 ) -> T:
     """
     Retry an async function with exponential backoff.
-    
+
     Args:
         func: The async function to retry
         max_attempts: Maximum number of retry attempts
         base_delay: Base delay in seconds
         max_delay: Maximum delay in seconds
         retryable_exceptions: Tuple of exceptions that should trigger retry
-        
+
     Returns:
         The result of the function call
-        
+
     Raises:
         The last exception encountered if all retries fail
     """
     attempt = 0
     last_exception = None
-    
+
     while attempt < max_attempts:
         try:
             return await func()
         except retryable_exceptions as e:
             attempt += 1
             last_exception = e
-            
+
             # Get retry_after from RateLimitError if available
             if isinstance(e, TradeStationRateLimitError) and e.retry_after:
                 delay = min(e.retry_after, max_delay)
             else:
                 # Exponential backoff with jitter
-                delay = min(base_delay * (2 ** (attempt - 1)) * (0.5 + 0.5 * random.random()), max_delay)
-            
+                delay = min(
+                    base_delay * (2 ** (attempt - 1)) * (0.5 + 0.5 * random.random()), max_delay
+                )
+
             logger.warning(
                 f"Attempt {attempt}/{max_attempts} failed with {e.__class__.__name__}: {str(e)}. "
                 f"Retrying in {delay:.2f} seconds..."
             )
-            
+
             await asyncio.sleep(delay)
-    
+
     # If we get here, all retries failed
     if last_exception:
         logger.error(f"All {max_attempts} retry attempts failed. Last error: {str(last_exception)}")
         raise last_exception
-    
+
     # This should not happen, but just in case
     raise RuntimeError("Retry logic failed with no exception")
 
@@ -106,19 +108,17 @@ async def retry_async(
 async def handle_quote_request(client: TradeStationClient, symbols: str) -> Dict[str, Any]:
     """
     Example function that handles quote requests with proper error handling.
-    
+
     Args:
         client: TradeStationClient instance
         symbols: Comma-separated symbols to get quotes for
-        
+
     Returns:
         Quote data for the requested symbols
     """
     try:
         # Use the retry decorator for the API call
-        quotes = await retry_async(
-            lambda: client.market_data.get_quote_snapshots(symbols)
-        )
+        quotes = await retry_async(lambda: client.market_data.get_quote_snapshots(symbols))
         return quotes
     except TradeStationValidationError as e:
         # Handle validation errors (e.g., invalid symbols)
@@ -152,13 +152,13 @@ async def handle_quote_request(client: TradeStationClient, symbols: str) -> Dict
 async def handle_streaming(client: TradeStationClient, symbols: str) -> None:
     """
     Example function demonstrating error handling with streaming data.
-    
+
     Args:
         client: TradeStationClient instance
         symbols: Comma-separated symbols for streaming quotes
     """
     stream_id = None
-    
+
     try:
         # Define callback that handles its own errors
         def quote_callback(data):
@@ -168,16 +168,16 @@ async def handle_streaming(client: TradeStationClient, symbols: str) -> None:
             except Exception as e:
                 # Ensure callback errors are caught and don't crash the stream
                 logger.error(f"Error in quote callback: {str(e)}")
-        
+
         # Start stream with retry
         async def start_stream():
             return await client.market_data.stream_quotes(symbols, quote_callback)
-        
+
         stream_id = await retry_async(start_stream)
-        
+
         # Keep stream alive for demo purposes
         await asyncio.sleep(30)
-        
+
     except TradeStationStreamError as e:
         logger.error(f"Stream error: {str(e)}")
     except TradeStationValidationError as e:
@@ -201,7 +201,7 @@ async def handle_streaming(client: TradeStationClient, symbols: str) -> None:
 async def main():
     """Main example function demonstrating error handling patterns."""
     client = None
-    
+
     try:
         # Initialize client with error handling
         try:
@@ -214,23 +214,23 @@ async def main():
         except ValueError as e:
             logger.error(f"Invalid configuration: {str(e)}")
             sys.exit(1)
-        
+
         # Example 1: Handle quote request with retries
         logger.info("Example 1: Fetching quotes with retry logic")
         quotes_result = await handle_quote_request(client, "MSFT,AAPL,AMZN")
         logger.info(f"Quotes result: {quotes_result}")
-        
+
         # Example 2: Intentional error to demonstrate validation error handling
         logger.info("Example 2: Demonstrating validation error handling")
         try:
             invalid_result = await client.market_data.get_quote_snapshots("")
         except TradeStationValidationError as e:
             logger.info(f"Caught expected validation error: {str(e)}")
-        
+
         # Example 3: Stream handling with error management
         logger.info("Example 3: Demonstrating streaming error handling")
         await handle_streaming(client, "MSFT")
-        
+
     except Exception as e:
         logger.exception(f"Unhandled exception: {str(e)}")
     finally:
@@ -249,4 +249,4 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\nExiting due to keyboard interrupt")
-        sys.exit(0) 
+        sys.exit(0)

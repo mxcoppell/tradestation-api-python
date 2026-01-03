@@ -4,7 +4,13 @@ from unittest.mock import AsyncMock, MagicMock
 from tradestation.client.http_client import HttpClient
 from tradestation.services.Brokerage.brokerage_service import BrokerageService
 from tradestation.streaming.stream_manager import StreamManager
-from tradestation.ts_types.brokerage import Balances, Balance, BalanceDetail, CurrencyDetail, BalanceError
+from tradestation.ts_types.brokerage import (
+    Balances,
+    Balance,
+    BalanceDetail,
+    CurrencyDetail,
+    BalanceError,
+)
 
 
 @pytest.fixture

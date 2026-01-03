@@ -98,8 +98,7 @@ class HttpClient:
         except Exception as e:
             # Convert to proper authentication error
             raise TradeStationAuthError(
-                message=f"Failed to obtain valid access token: {str(e)}",
-                original_error=e
+                message=f"Failed to obtain valid access token: {str(e)}", original_error=e
             ) from e
 
         return {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
@@ -126,19 +125,19 @@ class HttpClient:
     async def _handle_response(self, response: ClientResponse) -> Dict[str, Any]:
         """
         Handle API response and parse the JSON data or raise appropriate exceptions.
-        
+
         Args:
             response: The response from the API
-            
+
         Returns:
             Parsed JSON response data
-            
+
         Raises:
             TradeStationAPIError: When an API error occurs
         """
         # Debug print
         self._debug_print(f"Response status: {response.status}")
-        
+
         # Handle HTTP errors
         if response.status >= 400:
             # Attempt to parse error response body
@@ -150,15 +149,15 @@ class HttpClient:
                 error_text = await response.text()
                 self._debug_print(f"Error response text: {error_text}")
                 error_data = {"error": error_text}
-            
+
             # Extract request ID from headers if available
             request_id = response.headers.get("X-Request-ID") or response.headers.get("Request-ID")
             if request_id:
                 error_data["request_id"] = request_id
-                
+
             # Map HTTP status to appropriate exception and raise
             raise map_http_error(response.status, error_data)
-            
+
         # Get JSON response
         try:
             return await response.json()
@@ -168,7 +167,7 @@ class HttpClient:
             raise TradeStationAPIError(
                 message=f"Invalid JSON response from API: {str(e)}",
                 status_code=response.status,
-                original_error=e
+                original_error=e,
             ) from e
 
     async def get(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -181,7 +180,7 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
-            
+
         Raises:
             TradeStationAuthError: When authentication fails
             TradeStationRateLimitError: When rate limits are exceeded
@@ -211,7 +210,7 @@ class HttpClient:
 
                 # Handle the response and return the data
                 return await self._handle_response(response)
-                
+
         except aiohttp.ClientError as e:
             # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
@@ -223,8 +222,7 @@ class HttpClient:
             # Handle unexpected exceptions
             self._debug_print(f"Unexpected error: {str(e)}")
             raise TradeStationAPIError(
-                message=f"Unexpected error during GET request: {str(e)}",
-                original_error=e
+                message=f"Unexpected error during GET request: {str(e)}", original_error=e
             ) from e
 
     async def post(self, url: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -237,7 +235,7 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
-            
+
         Raises:
             TradeStationAuthError: When authentication fails
             TradeStationRateLimitError: When rate limits are exceeded
@@ -264,7 +262,7 @@ class HttpClient:
 
                 # Handle the response and return the data
                 return await self._handle_response(response)
-                
+
         except aiohttp.ClientError as e:
             # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
@@ -276,8 +274,7 @@ class HttpClient:
             # Handle unexpected exceptions
             self._debug_print(f"Unexpected error: {str(e)}")
             raise TradeStationAPIError(
-                message=f"Unexpected error during POST request: {str(e)}",
-                original_error=e
+                message=f"Unexpected error during POST request: {str(e)}", original_error=e
             ) from e
 
     async def put(self, url: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -290,7 +287,7 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
-            
+
         Raises:
             TradeStationAuthError: When authentication fails
             TradeStationRateLimitError: When rate limits are exceeded
@@ -317,7 +314,7 @@ class HttpClient:
 
                 # Handle the response and return the data
                 return await self._handle_response(response)
-                
+
         except aiohttp.ClientError as e:
             # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
@@ -329,8 +326,7 @@ class HttpClient:
             # Handle unexpected exceptions
             self._debug_print(f"Unexpected error: {str(e)}")
             raise TradeStationAPIError(
-                message=f"Unexpected error during PUT request: {str(e)}",
-                original_error=e
+                message=f"Unexpected error during PUT request: {str(e)}", original_error=e
             ) from e
 
     async def delete(self, url: str) -> Dict[str, Any]:
@@ -342,7 +338,7 @@ class HttpClient:
 
         Returns:
             Response data as dictionary
-            
+
         Raises:
             TradeStationAuthError: When authentication fails
             TradeStationRateLimitError: When rate limits are exceeded
@@ -368,7 +364,7 @@ class HttpClient:
 
                 # Handle the response and return the data
                 return await self._handle_response(response)
-                
+
         except aiohttp.ClientError as e:
             # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Request error: {str(e)}")
@@ -380,8 +376,7 @@ class HttpClient:
             # Handle unexpected exceptions
             self._debug_print(f"Unexpected error: {str(e)}")
             raise TradeStationAPIError(
-                message=f"Unexpected error during DELETE request: {str(e)}",
-                original_error=e
+                message=f"Unexpected error during DELETE request: {str(e)}", original_error=e
             ) from e
 
     async def create_stream(
@@ -400,7 +395,7 @@ class HttpClient:
 
         Returns:
             Stream reader for reading the stream data
-            
+
         Raises:
             TradeStationAuthError: When authentication fails
             TradeStationRateLimitError: When rate limits are exceeded
@@ -423,8 +418,7 @@ class HttpClient:
             # Convert other errors during header preparation
             self._debug_print(f"Error preparing request headers: {str(e)}")
             raise TradeStationAPIError(
-                message=f"Failed to prepare request headers: {str(e)}",
-                original_error=e
+                message=f"Failed to prepare request headers: {str(e)}", original_error=e
             ) from e
 
         # Merge custom headers with base headers, prioritizing custom headers
@@ -447,12 +441,12 @@ class HttpClient:
             )
 
             await self._process_response(response, url)
-            
+
             # Call raise_for_status to check for HTTP errors
             response.raise_for_status()
-            
+
             return response.content
-            
+
         except aiohttp.ClientError as e:
             # Convert aiohttp exceptions to our custom exceptions
             self._debug_print(f"Stream request error: {str(e)}")
@@ -464,8 +458,7 @@ class HttpClient:
             # Handle unexpected exceptions
             self._debug_print(f"Unexpected error during stream request: {str(e)}")
             raise TradeStationStreamError(
-                message=f"Unexpected error creating stream: {str(e)}",
-                original_error=e
+                message=f"Unexpected error creating stream: {str(e)}", original_error=e
             ) from e
 
     async def close(self) -> None:

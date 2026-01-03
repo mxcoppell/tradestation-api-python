@@ -17,7 +17,7 @@ from .exceptions import (
 )
 
 __all__ = [
-    "TokenManager", 
+    "TokenManager",
     "RateLimiter",
     "TradeStationAPIError",
     "TradeStationAuthError",
