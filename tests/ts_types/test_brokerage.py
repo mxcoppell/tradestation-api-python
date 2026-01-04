@@ -13,10 +13,10 @@ from tradestation.ts_types.brokerage import (
     BalanceDetail,
     BalanceError,
     Balances,
+    BalancesBOD,
     BODBalance,
     BODBalanceDetail,
     BODCurrencyDetail,
-    BalancesBOD,
     ConditionalOrder,
     CurrencyDetail,
     ErrorResponse,
@@ -29,9 +29,9 @@ from tradestation.ts_types.brokerage import (
     OrderBase,
     OrderByIDError,
     OrderError,
+    OrderLeg,
     Orders,
     OrdersById,
-    OrderLeg,
     OrderStatus,
     PositionError,
     PositionResponse,
@@ -40,8 +40,8 @@ from tradestation.ts_types.brokerage import (
     StreamOrderErrorResponse,
     StreamOrderResponseData,
     StreamStatus,
-    TrailingStop,
     TradingType,
+    TrailingStop,
 )
 
 

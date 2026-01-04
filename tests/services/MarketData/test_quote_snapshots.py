@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from tradestation.services.MarketData.market_data_service import MarketDataService
 from tradestation.ts_types.market_data import QuoteSnapshot

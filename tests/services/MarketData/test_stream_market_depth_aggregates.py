@@ -3,16 +3,17 @@ Test suite for the stream_market_depth_aggregates method in the Market Data Serv
 """
 
 import asyncio
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import aiohttp
+import pytest
 
 from tradestation.services.MarketData.market_data_service import MarketDataService
 from tradestation.ts_types.market_data import (
-    MarketDepthAggregate,
     AggregatedQuoteData,
     Heartbeat,
+    MarketDepthAggregate,
     StreamErrorResponse,
 )
 

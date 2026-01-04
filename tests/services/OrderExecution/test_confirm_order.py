@@ -1,15 +1,16 @@
-import pytest
 from unittest.mock import patch
 
+import pytest
+
 from tradestation.ts_types.order_execution import (
-    OrderRequest,
-    OrderType,
-    OrderSide,
-    TimeInForce,
-    OrderDuration,
-    GroupOrderConfirmationResponse,
     GroupOrderConfirmationDetail,
+    GroupOrderConfirmationResponse,
     GroupOrderResponseError,
+    OrderDuration,
+    OrderRequest,
+    OrderSide,
+    OrderType,
+    TimeInForce,
 )
 
 

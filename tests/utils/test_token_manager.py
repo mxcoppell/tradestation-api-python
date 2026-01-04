@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
 
-from tradestation.utils.token_manager import TokenManager
 from tradestation.ts_types.config import AuthResponse, ClientConfig
+from tradestation.utils.token_manager import TokenManager
 
 
 class MockResponse:
@@ -281,3 +281,124 @@ class TestTokenManager:
                         client_id=None,
                     )
                 )
+
+    def test_constructor_with_client_secret_from_config(self):
+        """Test constructor with client_secret from config."""
+        config = ClientConfig(
+            client_id="test-client-id",
+            client_secret="test-client-secret",
+            refresh_token="test-refresh-token",
+        )
+        token_manager = TokenManager(config)
+        assert token_manager._config.client_id == "test-client-id"
+        assert token_manager._config.client_secret == "test-client-secret"
+        assert token_manager.get_refresh_token() == "test-refresh-token"
+
+    def test_constructor_with_client_secret_from_env(self):
+        """Test constructor with CLIENT_SECRET from environment variable."""
+        with patch.dict(
+            "os.environ", {"CLIENT_ID": "env-client-id", "CLIENT_SECRET": "env-client-secret"}
+        ):
+            token_manager = TokenManager()
+            assert token_manager._config.client_id == "env-client-id"
+            assert token_manager._config.client_secret == "env-client-secret"
+
+    def test_constructor_without_client_secret(self):
+        """Test constructor without client_secret (backward compatibility)."""
+        config = ClientConfig(
+            client_id="test-client-id",
+            refresh_token="test-refresh-token",
+        )
+        token_manager = TokenManager(config)
+        assert token_manager._config.client_id == "test-client-id"
+        assert token_manager._config.client_secret is None
+        assert token_manager.get_refresh_token() == "test-refresh-token"
+
+    def test_constructor_client_secret_config_overrides_env(self):
+        """Test that config client_secret takes precedence over environment variable."""
+        with patch.dict(
+            "os.environ", {"CLIENT_ID": "env-client-id", "CLIENT_SECRET": "env-client-secret"}
+        ):
+            config = ClientConfig(
+                client_id="config-client-id",
+                client_secret="config-client-secret",
+                refresh_token="test-refresh-token",
+            )
+            token_manager = TokenManager(config)
+            assert token_manager._config.client_id == "config-client-id"
+            assert token_manager._config.client_secret == "config-client-secret"
+
+    @pytest.mark.asyncio
+    async def test_refresh_includes_client_secret_when_provided(self):
+        """Test that refresh_access_token includes client_secret in request when provided."""
+        config = ClientConfig(
+            client_id="test-client-id",
+            client_secret="test-client-secret",
+            refresh_token="test-refresh-token",
+        )
+        token_manager = TokenManager(config)
+
+        # Mock response data
+        mock_data = {
+            "access_token": "new_access_token",
+            "refresh_token": "new_refresh_token",
+            "token_type": "bearer",
+            "expires_in": 3600,
+        }
+
+        # Mock the session post
+        with patch("aiohttp.ClientSession") as mock_session_class:
+            mock_session = mock_session_class.return_value.__aenter__.return_value
+            mock_response = MockResponse(200, mock_data)
+            # Create a mock that returns the MockPostContextManager when called
+            mock_post = MagicMock(return_value=MockPostContextManager(mock_response))
+            mock_session.post = mock_post
+
+            await token_manager.refresh_access_token()
+
+            # Verify that post was called with client_secret in data
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            data = call_args[1]["data"]
+
+            assert data["grant_type"] == "refresh_token"
+            assert data["client_id"] == "test-client-id"
+            assert data["client_secret"] == "test-client-secret"
+            assert data["refresh_token"] == "test-refresh-token"
+
+    @pytest.mark.asyncio
+    async def test_refresh_excludes_client_secret_when_not_provided(self):
+        """Test that refresh_access_token does NOT include client_secret when not provided."""
+        config = ClientConfig(
+            client_id="test-client-id",
+            refresh_token="test-refresh-token",
+        )
+        token_manager = TokenManager(config)
+
+        # Mock response data
+        mock_data = {
+            "access_token": "new_access_token",
+            "refresh_token": "new_refresh_token",
+            "token_type": "bearer",
+            "expires_in": 3600,
+        }
+
+        # Mock the session post
+        with patch("aiohttp.ClientSession") as mock_session_class:
+            mock_session = mock_session_class.return_value.__aenter__.return_value
+            mock_response = MockResponse(200, mock_data)
+            # Create a mock that returns the MockPostContextManager when called
+            mock_post = MagicMock(return_value=MockPostContextManager(mock_response))
+            mock_session.post = mock_post
+
+            await token_manager.refresh_access_token()
+
+            # Verify that post was called without client_secret in data
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            data = call_args[1]["data"]
+
+            assert data["grant_type"] == "refresh_token"
+            assert data["client_id"] == "test-client-id"
+            assert "client_secret" not in data
+            assert data["refresh_token"] == "test-refresh-token"

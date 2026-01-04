@@ -13,23 +13,25 @@ Usage:
 """
 
 import asyncio
-import signal
 import json
 import os
+import signal
 from pathlib import Path
 from typing import List
-
-# Ensure the src directory is in the Python path
-# ^^^ This sys.path manipulation might not be the most robust way, but let's try adjusting imports first.
 
 from dotenv import load_dotenv  # type: ignore
 
 # Use the client directly as in other examples
 from tradestation.client import TradeStationClient
-from tradestation.ts_types.brokerage import (
-    StreamOrderResponseData,
+from tradestation.ts_types.brokerage import (  # Correct type for stream
     Account,
-)  # Correct type for stream
+    StreamOrderResponseData,
+)
+
+# Ensure the src directory is in the Python path
+# ^^^ This sys.path manipulation might not be the most robust way, but let's try adjusting imports first.
+
+
 
 # Flag to indicate if we're still running
 running = True

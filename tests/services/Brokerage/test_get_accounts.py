@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from tradestation.client.http_client import HttpClient
 from tradestation.services.Brokerage.brokerage_service import BrokerageService

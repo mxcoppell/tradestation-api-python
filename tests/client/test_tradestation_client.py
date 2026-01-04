@@ -1,11 +1,12 @@
 import os
-import pytest
 from unittest.mock import MagicMock, patch
 
-from tradestation.client.tradestation_client import TradeStationClient
+import pytest
+
 from tradestation.client.http_client import HttpClient
+from tradestation.client.tradestation_client import TradeStationClient
+from tradestation.services import BrokerageService, MarketDataService, OrderExecutionService
 from tradestation.streaming.stream_manager import StreamManager
-from tradestation.services import MarketDataService, OrderExecutionService, BrokerageService
 from tradestation.ts_types.config import ClientConfig
 
 
@@ -196,3 +197,106 @@ class TestTradeStationClient:
 
             client.close_all_streams()
             assert mock_stream_manager.close_all_streams.call_count == 1
+
+    def test_client_initialization_with_client_secret_from_config(self):
+        """Test client initialization with client_secret in config."""
+        config = {
+            "client_id": "test-client-id",
+            "client_secret": "test-client-secret",
+            "refresh_token": "test-refresh-token",
+            "environment": "Simulation",
+        }
+
+        with (
+            patch("tradestation.client.tradestation_client.HttpClient") as mock_http_client,
+            patch("tradestation.client.tradestation_client.StreamManager"),
+            patch("tradestation.client.tradestation_client.MarketDataService", create=True),
+            patch("tradestation.client.tradestation_client.OrderExecutionService", create=True),
+            patch("tradestation.client.tradestation_client.BrokerageService", create=True),
+        ):
+            client = TradeStationClient(config)
+
+            # Verify HttpClient was called with client_secret in config
+            call_args = mock_http_client.call_args[0]
+            config_dict = call_args[0]
+            assert config_dict["client_id"] == "test-client-id"
+            assert config_dict["client_secret"] == "test-client-secret"
+            assert config_dict["refresh_token"] == "test-refresh-token"
+            assert config_dict["environment"] == "Simulation"
+
+    def test_client_initialization_with_client_secret_from_env(self):
+        """Test client initialization with CLIENT_SECRET from environment variable."""
+        config = {
+            "client_id": "test-client-id",
+            "refresh_token": "test-refresh-token",
+            "environment": "Simulation",
+        }
+
+        with (
+            patch.dict("os.environ", {"CLIENT_SECRET": "env-client-secret"}),
+            patch("tradestation.client.tradestation_client.HttpClient") as mock_http_client,
+            patch("tradestation.client.tradestation_client.StreamManager"),
+            patch("tradestation.client.tradestation_client.MarketDataService", create=True),
+            patch("tradestation.client.tradestation_client.OrderExecutionService", create=True),
+            patch("tradestation.client.tradestation_client.BrokerageService", create=True),
+        ):
+            client = TradeStationClient(config)
+
+            # Verify HttpClient was called with client_secret from environment
+            call_args = mock_http_client.call_args[0]
+            config_dict = call_args[0]
+            assert config_dict["client_id"] == "test-client-id"
+            assert config_dict["client_secret"] == "env-client-secret"
+            assert config_dict["refresh_token"] == "test-refresh-token"
+
+    def test_client_initialization_without_client_secret(self):
+        """Test client initialization without client_secret (backward compatibility)."""
+        config = {
+            "client_id": "test-client-id",
+            "refresh_token": "test-refresh-token",
+            "environment": "Simulation",
+        }
+
+        # Clear CLIENT_SECRET from environment if it exists
+        if "CLIENT_SECRET" in os.environ:
+            del os.environ["CLIENT_SECRET"]
+
+        with (
+            patch("tradestation.client.tradestation_client.HttpClient") as mock_http_client,
+            patch("tradestation.client.tradestation_client.StreamManager"),
+            patch("tradestation.client.tradestation_client.MarketDataService", create=True),
+            patch("tradestation.client.tradestation_client.OrderExecutionService", create=True),
+            patch("tradestation.client.tradestation_client.BrokerageService", create=True),
+        ):
+            client = TradeStationClient(config)
+
+            # Verify HttpClient was called without client_secret
+            call_args = mock_http_client.call_args[0]
+            config_dict = call_args[0]
+            assert config_dict["client_id"] == "test-client-id"
+            assert config_dict.get("client_secret") is None
+            assert config_dict["refresh_token"] == "test-refresh-token"
+
+    def test_client_initialization_client_secret_config_overrides_env(self):
+        """Test that config client_secret takes precedence over environment variable."""
+        config = {
+            "client_id": "test-client-id",
+            "client_secret": "config-client-secret",
+            "refresh_token": "test-refresh-token",
+            "environment": "Simulation",
+        }
+
+        with (
+            patch.dict("os.environ", {"CLIENT_SECRET": "env-client-secret"}),
+            patch("tradestation.client.tradestation_client.HttpClient") as mock_http_client,
+            patch("tradestation.client.tradestation_client.StreamManager"),
+            patch("tradestation.client.tradestation_client.MarketDataService", create=True),
+            patch("tradestation.client.tradestation_client.OrderExecutionService", create=True),
+            patch("tradestation.client.tradestation_client.BrokerageService", create=True),
+        ):
+            client = TradeStationClient(config)
+
+            # Verify HttpClient was called with client_secret from config, not env
+            call_args = mock_http_client.call_args[0]
+            config_dict = call_args[0]
+            assert config_dict["client_secret"] == "config-client-secret"

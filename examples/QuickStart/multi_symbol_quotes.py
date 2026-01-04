@@ -1,6 +1,8 @@
 import asyncio
 import json
+
 from dotenv import load_dotenv
+
 from tradestation.client import TradeStationClient
 
 # Load environment variables from .env file (default)

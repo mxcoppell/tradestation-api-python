@@ -11,8 +11,10 @@ Note that the 'ENVIRONMENT' variable in your .env file determines which API endp
 
 import asyncio
 import os
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
+
 from dotenv import load_dotenv
+
 from tradestation.client import TradeStationClient
 
 # Load environment variables from .env file

@@ -47,9 +47,16 @@ class TokenManager:
         if not client_id:
             raise ValueError("Client ID is required")
 
+        # Get client_secret from config or environment
+        client_secret = config.client_secret if config else None
+
+        if not client_secret:
+            client_secret = os.environ.get("CLIENT_SECRET")
+
         # Store configuration
         self._config = ClientConfig(
             client_id=client_id,
+            client_secret=client_secret,
             max_concurrent_streams=config.max_concurrent_streams if config else None,
             environment=config.environment if config else None,
         )
@@ -111,6 +118,10 @@ class TokenManager:
                 "client_id": self._config.client_id,
                 "refresh_token": refresh_token,
             }
+
+            # Conditionally include client_secret if provided (for confidential clients)
+            if self._config.client_secret:
+                data["client_secret"] = self._config.client_secret
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
 

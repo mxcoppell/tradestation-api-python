@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from tradestation.ts_types.config import ClientConfig, AuthResponse, ApiError
+from tradestation.ts_types.config import ApiError, AuthResponse, ClientConfig
 
 
 class TestClientConfig:
@@ -12,6 +12,7 @@ class TestClientConfig:
         assert config.refresh_token is None
         assert config.max_concurrent_streams is None
         assert config.environment is None
+        assert config.client_secret is None
 
     def test_setting_values(self):
         """Test that values can be properly set."""
@@ -25,6 +26,31 @@ class TestClientConfig:
         assert config.refresh_token == "test_refresh_token"
         assert config.max_concurrent_streams == 5
         assert config.environment == "Simulation"
+        assert config.client_secret is None
+
+    def test_setting_client_secret(self):
+        """Test that client_secret can be set."""
+        config = ClientConfig(
+            client_id="test_id",
+            client_secret="test_secret",
+            refresh_token="test_refresh_token",
+            environment="Simulation",
+        )
+        assert config.client_id == "test_id"
+        assert config.client_secret == "test_secret"
+        assert config.refresh_token == "test_refresh_token"
+        assert config.environment == "Simulation"
+
+    def test_client_secret_is_optional(self):
+        """Test that client_secret is optional (backward compatibility)."""
+        # Should not raise error without client_secret
+        config = ClientConfig(
+            client_id="test_id",
+            refresh_token="test_refresh_token",
+            environment="Simulation",
+        )
+        assert config.client_id == "test_id"
+        assert config.client_secret is None
 
     def test_environment_validation(self):
         """Test that environment only accepts valid values."""

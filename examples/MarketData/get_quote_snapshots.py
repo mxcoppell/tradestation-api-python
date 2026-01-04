@@ -10,8 +10,9 @@ Note that the 'ENVIRONMENT' variable in your .env file determines which API endp
 """
 
 import asyncio
-import os
 import json
+import os
+
 from dotenv import load_dotenv
 
 from tradestation.client import TradeStationClient

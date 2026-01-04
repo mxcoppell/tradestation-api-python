@@ -3,21 +3,22 @@ Tests for the TradeStation API exception hierarchy.
 """
 
 import unittest
-import aiohttp
 from unittest.mock import Mock, patch
+
+import aiohttp
 
 from tradestation.utils.exceptions import (
     TradeStationAPIError,
     TradeStationAuthError,
+    TradeStationNetworkError,
     TradeStationRateLimitError,
     TradeStationResourceNotFoundError,
-    TradeStationValidationError,
-    TradeStationNetworkError,
     TradeStationServerError,
-    TradeStationTimeoutError,
     TradeStationStreamError,
-    map_http_error,
+    TradeStationTimeoutError,
+    TradeStationValidationError,
     handle_request_exception,
+    map_http_error,
 )
 
 

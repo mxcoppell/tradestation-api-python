@@ -1,10 +1,10 @@
-from typing import Optional, Dict, Any, Union, cast, Literal
 import os
+from typing import Any, Dict, Literal, Optional, Union, cast
 
+from ..services import BrokerageService, MarketDataService, OrderExecutionService
 from ..ts_types.config import ClientConfig
-from .http_client import HttpClient
 from ..utils.stream_manager import StreamManager
-from ..services import MarketDataService, OrderExecutionService, BrokerageService
+from .http_client import HttpClient
 
 # Remove this import to avoid circular dependency
 # from src.services.MarketData.market_data_service import MarketDataService
@@ -50,6 +50,10 @@ class TradeStationClient:
         # Load from environment if not in config
         if not config_dict.get("client_id"):
             config_dict["client_id"] = os.environ.get("CLIENT_ID")
+
+        # Load client_secret from environment if not in config
+        if not config_dict.get("client_secret"):
+            config_dict["client_secret"] = os.environ.get("CLIENT_SECRET")
 
         # Override config with parameters if provided
         if refresh_token:

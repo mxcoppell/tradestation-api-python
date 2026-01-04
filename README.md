@@ -211,13 +211,28 @@ For a complete error handling example, check out the `examples/QuickStart/error_
 
 The library needs your API keys to talk to TradeStation. The easiest way is the `.env` file (shown in Quick Start).
 
-Other ways:
+### OAuth Client Types
 
-1.  **Environment Variables:** Set `CLIENT_ID`, `REFRESH_TOKEN`, `ENVIRONMENT` directly in your system.
+The library supports both **public** and **confidential** OAuth clients:
+- **Public clients** (default): No client secret needed - just provide `CLIENT_ID` and `REFRESH_TOKEN`
+- **Confidential clients**: Require a `CLIENT_SECRET` for enhanced security in server-side applications
+
+Other ways to provide credentials:
+
+1.  **Environment Variables:** Set `CLIENT_ID`, `REFRESH_TOKEN`, `ENVIRONMENT` (and optionally `CLIENT_SECRET`) directly in your system.
 2.  **Python Dictionary:**
     ```python
+    # Public client (no secret)
     client = TradeStationClient({
         "client_id": "your_id",
+        "refresh_token": "your_token",
+        "environment": "Simulation"
+    })
+    
+    # Confidential client (with secret)
+    client = TradeStationClient({
+        "client_id": "your_id",
+        "client_secret": "your_secret",  # Optional - only for confidential clients
         "refresh_token": "your_token",
         "environment": "Simulation"
     })
@@ -226,11 +241,11 @@ Other ways:
     ```python
     client = TradeStationClient(
         refresh_token="your_token",
-        environment="Live" # CLIENT_ID still needs to be in env or config
+        environment="Live" # CLIENT_ID and CLIENT_SECRET (if needed) can be in env or config
     )
     ```
 
-See [Authentication Guide](docs/authentication.md) for the full scoop.
+See [Authentication Guide](docs/authentication.md) for the full scoop on public vs. confidential clients.
 
 ## Dive Deeper (Documentation) 📚
 

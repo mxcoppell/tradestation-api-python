@@ -6,17 +6,18 @@ from datetime import datetime, timezone
 import pytest
 
 from tradestation.ts_types.order_execution import (
+    OSO,
     ActivationTrigger,
     ActivationTriggers,
     AdvancedOptions,
     CancelOrderResponse,
+    GroupOrderConfirmationDetail,
     GroupOrderConfirmationResponse,
     GroupOrderRequest,
     GroupOrderResponse,
     GroupOrderResponseError,
     GroupOrderResponseSuccess,
     GroupOrderType,
-    GroupOrderConfirmationDetail,
     MarketActivationRule,
     OrderConfirmationResponse,
     OrderDuration,
@@ -32,7 +33,6 @@ from tradestation.ts_types.order_execution import (
     OrderSide,
     OrderStatus,
     OrderType,
-    OSO,
     Route,
     Routes,
     RoutesResponse,

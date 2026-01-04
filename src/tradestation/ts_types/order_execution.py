@@ -5,7 +5,7 @@ This module defines all the data structures related to order execution functiona
 """
 
 from enum import Enum
-from typing import List, Optional, Union, Literal
+from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 

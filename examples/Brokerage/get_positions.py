@@ -9,6 +9,7 @@ This script demonstrates how to:
 
 import asyncio
 import os
+
 from dotenv import load_dotenv
 
 # Import the TradeStation client

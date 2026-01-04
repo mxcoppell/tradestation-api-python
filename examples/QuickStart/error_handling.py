@@ -11,23 +11,23 @@ This example shows:
 """
 
 import asyncio
-import time
-import sys
 import logging
 import random
-from typing import Optional, Dict, Any, Callable, TypeVar, Awaitable
+import sys
+import time
+from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
 
-from tradestation import TradeStationClient
 from tradestation import (
     TradeStationAPIError,
     TradeStationAuthError,
+    TradeStationClient,
+    TradeStationNetworkError,
     TradeStationRateLimitError,
     TradeStationResourceNotFoundError,
-    TradeStationValidationError,
-    TradeStationNetworkError,
     TradeStationServerError,
-    TradeStationTimeoutError,
     TradeStationStreamError,
+    TradeStationTimeoutError,
+    TradeStationValidationError,
 )
 
 # Set up logging

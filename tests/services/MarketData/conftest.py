@@ -1,7 +1,8 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-import sys
 import pathlib
+import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 # Add project root to the Python path to allow 'from tradestation.' imports
 project_root = (
@@ -9,9 +10,9 @@ project_root = (
 )  # tests/services/MarketData -> tests/services -> tests -> root
 sys.path.insert(0, str(project_root))
 
+from tradestation.client.http_client import HttpClient
 from tradestation.services.MarketData.market_data_service import MarketDataService
 from tradestation.streaming.stream_manager import StreamManager
-from tradestation.client.http_client import HttpClient
 
 
 @pytest.fixture

@@ -24,26 +24,29 @@ Requirements:
 
 import asyncio
 import os
-from dotenv import load_dotenv
 from typing import List
+
 import aiohttp
+from dotenv import load_dotenv
 from pydantic import ValidationError
 
 # Import the client
 from tradestation.client import TradeStationClient
+from tradestation.ts_types.brokerage import Account
 
 # Import necessary types from the order execution definitions
 from tradestation.ts_types.order_execution import (
-    GroupOrderRequest,
-    OrderRequest,
-    TimeInForce,
-    OrderType,
-    OrderSide,
-    OrderDuration,
-    GroupOrderConfirmationResponse,
     GroupOrderConfirmationDetail,  # Import the new detail model
 )
-from tradestation.ts_types.brokerage import Account
+from tradestation.ts_types.order_execution import (
+    GroupOrderConfirmationResponse,
+    GroupOrderRequest,
+    OrderDuration,
+    OrderRequest,
+    OrderSide,
+    OrderType,
+    TimeInForce,
+)
 
 
 async def main():

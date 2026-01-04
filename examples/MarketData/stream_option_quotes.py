@@ -10,15 +10,17 @@ This example shows how to:
 """
 
 import asyncio
-import signal
 import json
 import os
-from typing import List, Dict, Any
+import signal
+from typing import Any, Dict, List
+
 from dotenv import load_dotenv
+
 from tradestation.client import TradeStationClient
 
 # Correct the import path for OptionQuoteParams and OptionQuoteLeg
-from tradestation.ts_types.market_data import OptionQuoteParams, OptionQuoteLeg
+from tradestation.ts_types.market_data import OptionQuoteLeg, OptionQuoteParams
 
 # Load environment variables from .env file
 load_dotenv()

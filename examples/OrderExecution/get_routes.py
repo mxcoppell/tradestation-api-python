@@ -21,15 +21,16 @@ Requirements:
 
 import asyncio
 import os
-from dotenv import load_dotenv
+
 import aiohttp
+from dotenv import load_dotenv
 from pydantic import ValidationError
 
 # Import the client
 from tradestation.client import TradeStationClient
 
 # Import necessary types
-from tradestation.ts_types.order_execution import RoutesResponse, Route
+from tradestation.ts_types.order_execution import Route, RoutesResponse
 
 
 async def main():
