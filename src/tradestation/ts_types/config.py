@@ -41,6 +41,7 @@ class ClientConfig(BaseModel):
     """
 
     client_id: Optional[str] = None
+    client_secret: Optional[str] = None
     refresh_token: Optional[str] = None
     max_concurrent_streams: Optional[int] = None
     environment: NormalizedEnvironment = None
