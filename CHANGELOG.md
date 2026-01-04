@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-01-03
+
+### Security
+- Updated urllib3 from 2.3.0 to 2.6.2 to fix multiple critical vulnerabilities:
+  - CVE-2025-66418: Critical security vulnerability
+  - CVE-2025-66471: Critical security vulnerability
+  - CVE-2025-50181: Security vulnerability
+  - CVE-2025-50182: Security vulnerability
+- Updated aiohttp from 3.11.13 to 3.13.3 to fix high severity vulnerability:
+  - CVE-2025-53643: High severity security vulnerability
+- Updated requests from 2.32.3 to 2.32.5 to fix medium severity vulnerability:
+  - CVE-2024-47081: Medium severity security vulnerability
+- Updated black from 23.12.1 to 24.10.0 (dev dependency) to fix medium severity vulnerability:
+  - CVE-2024-21503: Medium severity security vulnerability
+
 ## [1.2.0] - 2025-06-11
 
 ### Added

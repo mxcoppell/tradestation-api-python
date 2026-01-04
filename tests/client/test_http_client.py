@@ -69,7 +69,8 @@ class TestHttpClient:
         """Setup test environment before each test."""
         # Patch the TokenManager and RateLimiter classes
         monkeypatch.setattr(
-            "tradestation.client.http_client.TokenManager", MagicMock(return_value=mock_token_manager)
+            "tradestation.client.http_client.TokenManager",
+            MagicMock(return_value=mock_token_manager),
         )
         monkeypatch.setattr(
             "tradestation.client.http_client.RateLimiter", MagicMock(return_value=mock_rate_limiter)
