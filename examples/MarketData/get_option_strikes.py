@@ -5,16 +5,18 @@ import os
 # from pathlib import Path # Removed sys.path manipulation
 from dotenv import load_dotenv
 
-# Adjust path to include src directory - REMOVED
-# current_dir = Path(__file__).parent
-# project_root = current_dir.parent.parent
-# sys.path.insert(0, str(project_root / "src"))
-
 # Direct import from src directory structure
 from tradestation.client import TradeStationClient
 
 # Corrected import path and class name for ApiError
 from tradestation.ts_types.config import ApiError
+
+# Adjust path to include src directory - REMOVED
+# current_dir = Path(__file__).parent
+# project_root = current_dir.parent.parent
+# sys.path.insert(0, str(project_root / "src"))
+
+
 
 
 # Load environment variables from .env file

@@ -3,10 +3,11 @@ Test suite for the stream_bars method in the Market Data Service.
 """
 
 import asyncio
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import aiohttp
+import pytest
 
 from tradestation.services.MarketData.market_data_service import MarketDataService
 from tradestation.ts_types.market_data import Bar, Heartbeat, StreamErrorResponse

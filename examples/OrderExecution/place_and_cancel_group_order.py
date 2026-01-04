@@ -30,12 +30,13 @@ Requirements:
 """
 
 import asyncio
-from decimal import Decimal, ROUND_DOWN
-from dotenv import load_dotenv
-from typing import List, Optional, Dict
-import aiohttp
-from pydantic import ValidationError
 import traceback
+from decimal import ROUND_DOWN, Decimal
+from typing import Dict, List, Optional
+
+import aiohttp
+from dotenv import load_dotenv
+from pydantic import ValidationError
 
 # Import the client
 from tradestation.client import TradeStationClient
@@ -44,14 +45,14 @@ from tradestation.client import TradeStationClient
 from tradestation.ts_types.brokerage import Account, Order, Orders
 from tradestation.ts_types.market_data import Quote, QuoteSnapshot
 from tradestation.ts_types.order_execution import (
-    OrderRequest,
-    GroupOrderRequest,
-    TimeInForce,
-    OrderType,
-    OrderSide,
-    OrderDuration,
-    GroupOrderResponse,
     CancelOrderResponse,
+    GroupOrderRequest,
+    GroupOrderResponse,
+    OrderDuration,
+    OrderRequest,
+    OrderSide,
+    OrderType,
+    TimeInForce,
 )
 
 

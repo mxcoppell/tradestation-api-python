@@ -4,10 +4,10 @@ Tests for the StreamManager class.
 
 import asyncio
 import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import aiohttp
+import pytest
 from aiohttp import WSMsgType
 from pydantic import ValidationError
 

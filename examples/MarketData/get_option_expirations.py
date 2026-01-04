@@ -10,6 +10,7 @@ This example shows how to:
 
 import asyncio
 import os
+
 from dotenv import load_dotenv
 
 from tradestation.client import TradeStationClient

@@ -1,20 +1,21 @@
 from typing import Any, Dict, List, Optional, Union
 
+import aiohttp  # for catching 404 in bar history
+
 from ...client.http_client import HttpClient
 from ...streaming.stream_manager import StreamManager
 from ...ts_types.market_data import (
-    SymbolDetailsResponse,
-    QuoteSnapshot,
-    SymbolNames,
-    Expirations,
     BarsResponse,
-    SpreadTypes,
-    Strikes,
+    Expirations,
+    OptionQuoteParams,
+    QuoteSnapshot,
     RiskRewardAnalysisInput,
     RiskRewardAnalysisResult,
-    OptionQuoteParams,
+    SpreadTypes,
+    Strikes,
+    SymbolDetailsResponse,
+    SymbolNames,
 )
-import aiohttp  # for catching 404 in bar history
 
 
 class MarketDataService:

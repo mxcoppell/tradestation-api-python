@@ -13,9 +13,9 @@ Usage:
 """
 
 import asyncio
-import signal
 import json
 import os
+import signal
 from pathlib import Path
 from typing import List
 

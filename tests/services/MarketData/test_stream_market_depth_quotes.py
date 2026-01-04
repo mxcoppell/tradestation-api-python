@@ -2,13 +2,14 @@
 Test suite for the stream_market_depth_quotes method.
 """
 
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import aiohttp
+import pytest
 
 from tradestation.services.MarketData.market_data_service import MarketDataService
-from tradestation.ts_types.market_data import MarketDepthQuote, Heartbeat, StreamErrorResponse
+from tradestation.ts_types.market_data import Heartbeat, MarketDepthQuote, StreamErrorResponse
 
 
 @pytest.fixture

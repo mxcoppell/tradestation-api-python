@@ -1,15 +1,11 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from tradestation.client.http_client import HttpClient
 from tradestation.services.Brokerage.brokerage_service import BrokerageService
 from tradestation.streaming.stream_manager import StreamManager
-from tradestation.ts_types.brokerage import (
-    Orders,
-    Order,
-    OrderLeg,
-    OrderError,
-)
+from tradestation.ts_types.brokerage import Order, OrderError, OrderLeg, Orders
 
 
 @pytest.fixture

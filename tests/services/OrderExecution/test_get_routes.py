@@ -1,5 +1,6 @@
 import pytest
-from tradestation.ts_types.order_execution import Routes, Route
+
+from tradestation.ts_types.order_execution import Route, Routes
 
 
 class TestGetRoutes:

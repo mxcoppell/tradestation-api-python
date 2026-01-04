@@ -1,13 +1,14 @@
 import pytest
+
 from tradestation.ts_types.order_execution import (
+    OrderDuration,
     OrderRequest,
     OrderResponse,
-    TimeInForce,
-    OrderDuration,
-    OrderType,
-    OrderSide,
-    OrderResponseSuccess,
     OrderResponseError,
+    OrderResponseSuccess,
+    OrderSide,
+    OrderType,
+    TimeInForce,
 )
 
 

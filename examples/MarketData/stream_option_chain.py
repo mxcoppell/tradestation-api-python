@@ -10,9 +10,11 @@ This example shows how to:
 """
 
 import asyncio
-import signal
 import json
+import signal
+
 from dotenv import load_dotenv
+
 from tradestation.client import TradeStationClient
 
 # Load environment variables from .env file

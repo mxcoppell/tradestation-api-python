@@ -9,8 +9,9 @@ This example shows how to:
 
 import asyncio
 import os
+from typing import Any, Dict, List
+
 from dotenv import load_dotenv
-from typing import List, Dict, Any
 
 from tradestation.client import TradeStationClient
 

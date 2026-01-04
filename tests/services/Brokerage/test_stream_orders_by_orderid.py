@@ -2,10 +2,11 @@
 Test suite for the stream_orders_by_order_id method in BrokerageService.
 """
 
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock
+
 import aiohttp
+import pytest
 
 from tradestation.services.Brokerage.brokerage_service import BrokerageService
 

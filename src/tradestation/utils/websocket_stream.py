@@ -1,6 +1,7 @@
 import asyncio
 import json
-from typing import Dict, List, Optional, Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable, Dict, List, Optional
+
 import aiohttp
 
 

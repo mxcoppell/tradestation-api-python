@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from tradestation.ts_types.market_data import SpreadTypes
 

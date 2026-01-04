@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
 
-from tradestation.utils.token_manager import TokenManager
 from tradestation.ts_types.config import AuthResponse, ClientConfig
+from tradestation.utils.token_manager import TokenManager
 
 
 class MockResponse:
@@ -296,10 +296,9 @@ class TestTokenManager:
 
     def test_constructor_with_client_secret_from_env(self):
         """Test constructor with CLIENT_SECRET from environment variable."""
-        with patch.dict("os.environ", {
-            "CLIENT_ID": "env-client-id",
-            "CLIENT_SECRET": "env-client-secret"
-        }):
+        with patch.dict(
+            "os.environ", {"CLIENT_ID": "env-client-id", "CLIENT_SECRET": "env-client-secret"}
+        ):
             token_manager = TokenManager()
             assert token_manager._config.client_id == "env-client-id"
             assert token_manager._config.client_secret == "env-client-secret"
@@ -317,10 +316,9 @@ class TestTokenManager:
 
     def test_constructor_client_secret_config_overrides_env(self):
         """Test that config client_secret takes precedence over environment variable."""
-        with patch.dict("os.environ", {
-            "CLIENT_ID": "env-client-id",
-            "CLIENT_SECRET": "env-client-secret"
-        }):
+        with patch.dict(
+            "os.environ", {"CLIENT_ID": "env-client-id", "CLIENT_SECRET": "env-client-secret"}
+        ):
             config = ClientConfig(
                 client_id="config-client-id",
                 client_secret="config-client-secret",
@@ -352,15 +350,17 @@ class TestTokenManager:
         with patch("aiohttp.ClientSession") as mock_session_class:
             mock_session = mock_session_class.return_value.__aenter__.return_value
             mock_response = MockResponse(200, mock_data)
-            mock_session.post.return_value = MockPostContextManager(mock_response)
+            # Create a mock that returns the MockPostContextManager when called
+            mock_post = MagicMock(return_value=MockPostContextManager(mock_response))
+            mock_session.post = mock_post
 
             await token_manager.refresh_access_token()
 
             # Verify that post was called with client_secret in data
-            mock_session.post.assert_called_once()
-            call_args = mock_session.post.call_args
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
             data = call_args[1]["data"]
-            
+
             assert data["grant_type"] == "refresh_token"
             assert data["client_id"] == "test-client-id"
             assert data["client_secret"] == "test-client-secret"
@@ -387,15 +387,17 @@ class TestTokenManager:
         with patch("aiohttp.ClientSession") as mock_session_class:
             mock_session = mock_session_class.return_value.__aenter__.return_value
             mock_response = MockResponse(200, mock_data)
-            mock_session.post.return_value = MockPostContextManager(mock_response)
+            # Create a mock that returns the MockPostContextManager when called
+            mock_post = MagicMock(return_value=MockPostContextManager(mock_response))
+            mock_session.post = mock_post
 
             await token_manager.refresh_access_token()
 
             # Verify that post was called without client_secret in data
-            mock_session.post.assert_called_once()
-            call_args = mock_session.post.call_args
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
             data = call_args[1]["data"]
-            
+
             assert data["grant_type"] == "refresh_token"
             assert data["client_id"] == "test-client-id"
             assert "client_secret" not in data

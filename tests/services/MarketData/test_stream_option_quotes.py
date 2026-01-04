@@ -2,23 +2,24 @@
 Test suite for the stream_option_quotes method in the Market Data Service.
 """
 
-import pytest
+import json
 import re
 from unittest.mock import AsyncMock, MagicMock, patch
-import json
-import aiohttp
 
-from tradestation.services.MarketData.market_data_service import MarketDataService
-from tradestation.ts_types.market_data import (
-    OptionQuoteParams,
-    OptionQuoteLeg,
-    Spread,
-    Heartbeat,
-    StreamErrorResponse,
-)
+import aiohttp
+import pytest
 
 # from tradestation.utils.websocket_stream import WebSocketStream
 from pydantic import ValidationError
+
+from tradestation.services.MarketData.market_data_service import MarketDataService
+from tradestation.ts_types.market_data import (
+    Heartbeat,
+    OptionQuoteLeg,
+    OptionQuoteParams,
+    Spread,
+    StreamErrorResponse,
+)
 
 
 @pytest.fixture

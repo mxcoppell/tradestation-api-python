@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from tradestation.ts_types.config import ClientConfig, AuthResponse, ApiError
+from tradestation.ts_types.config import ApiError, AuthResponse, ClientConfig
 
 
 class TestClientConfig:

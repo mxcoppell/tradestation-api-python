@@ -11,8 +11,6 @@ import aiohttp
 from aiohttp import ClientResponse, ClientSession
 
 from ..ts_types.config import ClientConfig
-from ..utils.rate_limiter import RateLimiter
-from ..utils.token_manager import TokenManager
 from ..utils.exceptions import (
     TradeStationAPIError,
     TradeStationAuthError,
@@ -22,9 +20,11 @@ from ..utils.exceptions import (
     TradeStationServerError,
     TradeStationTimeoutError,
     TradeStationValidationError,
-    map_http_error,
     handle_request_exception,
+    map_http_error,
 )
+from ..utils.rate_limiter import RateLimiter
+from ..utils.token_manager import TokenManager
 
 
 class HttpClient:

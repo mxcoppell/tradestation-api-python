@@ -1,4 +1,5 @@
-from typing import List, Optional, Union, Literal, ForwardRef
+from typing import ForwardRef, List, Literal, Optional, Union
+
 from pydantic import BaseModel, Field
 
 

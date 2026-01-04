@@ -1,12 +1,13 @@
 import pytest
+
 from tradestation.ts_types.order_execution import (
-    OrderReplaceRequest,
-    ReplaceOrderResponse,
-    OrderType,
     OrderDuration,
-    OrderReplaceTimeInForce,
     OrderReplaceAdvancedOptions,
+    OrderReplaceRequest,
+    OrderReplaceTimeInForce,
     OrderReplaceTrailingStop,
+    OrderType,
+    ReplaceOrderResponse,
 )
 
 

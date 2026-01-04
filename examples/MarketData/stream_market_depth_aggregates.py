@@ -1,8 +1,9 @@
 import asyncio
-import os
 import logging
+import os
 
 from dotenv import load_dotenv
+
 from tradestation.client import TradeStationClient
 from tradestation.ts_types.market_data import MarketDepthAggregate
 

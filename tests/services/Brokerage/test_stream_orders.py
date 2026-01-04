@@ -2,13 +2,14 @@
 Test suite for the stream_orders method in the Brokerage Service.
 """
 
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import aiohttp
+import pytest
 
 from tradestation.services.Brokerage.brokerage_service import BrokerageService
-from tradestation.ts_types.brokerage import Order, StreamStatus, StreamOrderErrorResponse
+from tradestation.ts_types.brokerage import Order, StreamOrderErrorResponse, StreamStatus
 from tradestation.ts_types.market_data import Heartbeat
 
 

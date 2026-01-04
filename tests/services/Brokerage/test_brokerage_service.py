@@ -1,7 +1,8 @@
 import json
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from tradestation.client.http_client import HttpClient
 from tradestation.services.Brokerage.brokerage_service import BrokerageService

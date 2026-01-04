@@ -3,13 +3,14 @@ Test suite for the stream_quotes method in the Market Data Service.
 """
 
 import asyncio
-import pytest
 import json
 from unittest.mock import AsyncMock, MagicMock
+
 import aiohttp
+import pytest
 
 from tradestation.services.MarketData.market_data_service import MarketDataService
-from tradestation.ts_types.market_data import QuoteStream, Heartbeat, StreamErrorResponse
+from tradestation.ts_types.market_data import Heartbeat, QuoteStream, StreamErrorResponse
 
 # Remove WebSocketStream import as it's no longer used directly by stream_quotes
 # from tradestation.utils.websocket_stream import WebSocketStream

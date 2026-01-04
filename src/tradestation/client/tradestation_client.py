@@ -1,10 +1,10 @@
-from typing import Optional, Dict, Any, Union, cast, Literal
 import os
+from typing import Any, Dict, Literal, Optional, Union, cast
 
+from ..services import BrokerageService, MarketDataService, OrderExecutionService
 from ..ts_types.config import ClientConfig
-from .http_client import HttpClient
 from ..utils.stream_manager import StreamManager
-from ..services import MarketDataService, OrderExecutionService, BrokerageService
+from .http_client import HttpClient
 
 # Remove this import to avoid circular dependency
 # from src.services.MarketData.market_data_service import MarketDataService
