@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-03-18
+
+### Security
+
+- Updated black from 24.10.0 to 26.3.1 to fix high severity vulnerability:
+  - Arbitrary file writes from unsanitized user input in cache file name
+- Updated filelock from 3.20.2 to 3.25.2 to fix medium severity vulnerability:
+  - TOCTOU symlink vulnerability in SoftFileLock (patched in 3.20.3)
+- Updated virtualenv from 20.36.0 to 21.2.0 to fix medium severity vulnerability:
+  - TOCTOU vulnerabilities in directory creation (patched in 20.36.1)
+
 ## [1.3.1] - 2026-01-08
 
 ### Security
