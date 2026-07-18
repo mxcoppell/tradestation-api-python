@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import aiohttp
 import pytest
+import pytest_asyncio
 from aiohttp import WSMsgType
 from pydantic import ValidationError
 
@@ -46,7 +47,7 @@ def stream_manager(mock_token_manager):
     return manager
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def cleanup_after_test(stream_manager):
     """Fixture to clean up after each test."""
     yield
